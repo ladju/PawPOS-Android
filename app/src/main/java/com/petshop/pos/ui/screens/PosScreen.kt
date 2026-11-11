@@ -268,6 +268,7 @@ fun PosScreen(
             onUpdateQuantity = { id, qty -> viewModel.updateQuantity(id, qty) },
             onRemoveItem = { id -> viewModel.removeFromCart(id) },
             onClearCart = { viewModel.clearCart() },
+            onToggleTax = { viewModel.toggleTax(it) },
             onOpenCheckout = {
                 isCartSheetOpen = false
                 viewModel.openCheckoutDialog()
@@ -469,6 +470,7 @@ fun CartModalSheet(
     onUpdateQuantity: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit,
     onClearCart: () -> Unit,
+    onToggleTax: (Boolean) -> Unit = {},
     onOpenCheckout: () -> Unit
 ) {
     ModalBottomSheet(
@@ -604,10 +606,27 @@ fun CartModalSheet(
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Tax (5%)", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-                Text(formatCurrency(uiState.taxAmount), fontWeight = FontWeight.SemiBold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = uiState.taxRate > 0,
+                        onCheckedChange = { onToggleTax(it) },
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (uiState.taxRate > 0) "Tax (${(uiState.taxRate * 100).toInt()}%)" else "Apply Tax (Optional)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
+                }
+                Text(
+                    text = if (uiState.taxRate > 0) formatCurrency(uiState.taxAmount) else "Rp 0 (Not included)",
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (uiState.taxRate > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -719,7 +738,11 @@ fun CheckoutDialog(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Subtotal ${formatCurrency(uiState.subtotal)} + Tax (${(uiState.taxRate * 100).toInt()}%) ${formatCurrency(uiState.taxAmount)}",
+                            text = if (uiState.taxRate > 0 && uiState.taxAmount > 0) {
+                                "Subtotal ${formatCurrency(uiState.discountedSubtotal)} + Tax (${(uiState.taxRate * 100).toInt()}%) ${formatCurrency(uiState.taxAmount)}"
+                            } else {
+                                "Subtotal ${formatCurrency(uiState.discountedSubtotal)} • Tax Not Included (Small Business 0%)"
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )

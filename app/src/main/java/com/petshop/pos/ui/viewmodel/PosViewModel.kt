@@ -20,7 +20,7 @@ data class PosUiState(
     val searchQuery: String = "",
     val cartItems: List<CartItem> = emptyList(),
     val discountAmount: Double = 0.0,
-    val taxRate: Double = 0.05, // 5% default sales tax
+    val taxRate: Double = 0.0, // Default 0.0 (Tax not included for small businesses / UMKM)
     val paymentMethod: PaymentMethod = PaymentMethod.CASH,
     val cashTendered: Double = 0.0,
     val customerName: String = "",
@@ -219,6 +219,14 @@ class PosViewModel(
                 _uiState.update { it.copy(errorMessage = error.localizedMessage ?: "Checkout failed") }
             }
         }
+    }
+
+    fun setTaxRate(rate: Double) {
+        _uiState.update { it.copy(taxRate = rate) }
+    }
+
+    fun toggleTax(enabled: Boolean, defaultRate: Double = 0.11) {
+        _uiState.update { it.copy(taxRate = if (enabled) defaultRate else 0.0) }
     }
 
     fun dismissReceipt() {

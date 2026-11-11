@@ -24,7 +24,7 @@ fun SettingsScreen(
     var storeName by remember { mutableStateOf("PawPlace Pet Shop & Grooming Care") }
     var storePhone by remember { mutableStateOf("+62 812-3456-7890") }
     var storeAddress by remember { mutableStateOf("Jl. Sunset Road No. 88, Kuta, Bali") }
-    var selectedTaxRate by remember { mutableStateOf(5) } // 0, 5, or 11%
+    var selectedTaxRate by remember { mutableStateOf(0) } // 0% (No Tax default for small business), 5, or 11%
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -197,7 +197,7 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Sales Tax Calculation (PPN)",
+                            text = "Sales Tax Calculation (Optional / PPN)",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -206,7 +206,7 @@ fun SettingsScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            listOf(0 to "0% (Tax Inclusive)", 5 to "5% PPN", 11 to "11% PPN").forEach { (rate, label) ->
+                            listOf(0 to "0% (No Tax / UMKM)", 5 to "5% Service Tax", 11 to "11% PPN").forEach { (rate, label) ->
                                 FilterChip(
                                     selected = selectedTaxRate == rate,
                                     onClick = { selectedTaxRate = rate },
