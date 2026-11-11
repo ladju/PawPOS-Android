@@ -44,6 +44,7 @@ fun InventoryScreen(
     val products by viewModel.products.collectAsState()
     val lowStockCount by viewModel.lowStockCount.collectAsState()
     var quickTypeProduct by remember { mutableStateOf<ProductEntity?>(null) }
+    var quickCategoryProduct by remember { mutableStateOf<ProductEntity?>(null) }
 
     Scaffold(
         floatingActionButton = {
@@ -177,6 +178,7 @@ fun InventoryScreen(
                             onQuickStockStep = { delta -> viewModel.quickStepStock(product.id, delta) },
                             onAdjustStock = { viewModel.openAdjustStockDialog(product) },
                             onEdit = { viewModel.openEditProductDialog(product) },
+                            onEditCategory = { quickCategoryProduct = product },
                             onEditType = { quickTypeProduct = product }
                         )
                     }
@@ -254,6 +256,75 @@ fun InventoryScreen(
         )
     }
 
+    // Quick Change Pet Category Dialog
+    quickCategoryProduct?.let { product ->
+        AlertDialog(
+            onDismissRequest = { quickCategoryProduct = null },
+            title = {
+                Column {
+                    Text("Edit Pet Category", fontWeight = FontWeight.Bold)
+                    Text(product.name, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Select new pet category for this product:", style = MaterialTheme.typography.labelMedium)
+                    PetCategory.entries.filter { it != PetCategory.ALL }.forEach { category ->
+                        val isCurrent = category == product.category
+                        Surface(
+                            color = if (isCurrent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.saveProduct(
+                                        id = product.id,
+                                        barcode = product.barcode,
+                                        name = product.name,
+                                        category = category,
+                                        productType = product.productType,
+                                        costPrice = product.costPrice,
+                                        sellingPrice = product.sellingPrice,
+                                        currentStock = product.currentStock,
+                                        minStockAlert = product.minStockAlert,
+                                        unit = product.unit,
+                                        expiryDate = product.expiryDate,
+                                        description = product.description,
+                                        imageUri = product.imageUri
+                                    )
+                                    quickCategoryProduct = null
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "${category.icon} ${category.displayName}",
+                                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 13.sp
+                                )
+                                if (isCurrent) {
+                                    Text("Active ✓", color = MaterialTheme.colorScheme.primary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { quickCategoryProduct = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     // Add / Edit Product Sheet
     if (uiState.isAddEditSheetOpen) {
         AddEditProductSheet(
@@ -293,6 +364,7 @@ fun InventoryItemCard(
     onQuickStockStep: (Int) -> Unit,
     onAdjustStock: () -> Unit,
     onEdit: () -> Unit,
+    onEditCategory: () -> Unit,
     onEditType: () -> Unit
 ) {
     Card(
@@ -345,7 +417,7 @@ fun InventoryItemCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Barcode & Product Type Tag (Editable)
+            // Barcode & Editable Category / Type Badges
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -369,29 +441,61 @@ fun InventoryItemCard(
                     }
                 }
 
-                // Interactive Editable Product Type Badge
-                Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.clickable { onEditType() }
+                // Interactive Editable Pet Category & Product Type Badges
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    // Category Badge (Editable)
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.clickable { onEditCategory() }
                     ) {
-                        Text(
-                            text = "${product.productType.icon} ${product.productType.displayName}",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Edit Type",
-                            modifier = Modifier.size(12.dp),
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "${product.category.icon} ${product.category.displayName}",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = "Edit Category",
+                                modifier = Modifier.size(12.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+
+                    // Product Type Badge (Editable)
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.clickable { onEditType() }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "${product.productType.icon} ${product.productType.displayName}",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = "Edit Type",
+                                modifier = Modifier.size(12.dp),
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
                     }
                 }
             }
