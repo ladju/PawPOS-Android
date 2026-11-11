@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun SettingsScreen(
     onNavigateToInventory: () -> Unit = {},
+    isDarkTheme: Boolean = true,
+    onToggleTheme: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var storeName by remember { mutableStateOf("PawPlace Pet Shop & Grooming Care") }
@@ -85,6 +87,76 @@ fun SettingsScreen(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Appearance & Theme Mode Card (Light / Dark)
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Appearance & Theme Mode",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Switch between Light Mode and OLED Dark Mode",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                }
+                            }
+                            Surface(
+                                color = if (isDarkTheme) Color(0xFF334155) else Color(0xFFFEF3C7),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    text = if (isDarkTheme) "DARK ACTIVE" else "LIGHT ACTIVE",
+                                    color = if (isDarkTheme) Color.White else Color(0xFF92400E),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            FilterChip(
+                                selected = !isDarkTheme,
+                                onClick = { onToggleTheme(false) },
+                                label = { Text("☀️ Light Mode") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = isDarkTheme,
+                                onClick = { onToggleTheme(true) },
+                                label = { Text("🌙 Dark Mode") },
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }

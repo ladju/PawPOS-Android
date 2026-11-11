@@ -156,9 +156,9 @@ fun PosScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
-                                    text = "Order • Edit",
+                                    text = "${uiState.totalItemsCount} items • Tap to Review",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                 )
                                 Text(
                                     text = formatCurrency(uiState.grandTotal),
@@ -169,9 +169,9 @@ fun PosScreen(
                             }
                         }
 
-                        // Right side: Quick-Pay CTA directly opening CheckoutDialog
+                        // Right side: Unified Pay CTA opening Cart/Review Sheet directly (no separate edit button)
                         Button(
-                            onClick = { viewModel.openCheckoutDialog() },
+                            onClick = { isCartSheetOpen = true },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Teal40
                             ),
@@ -488,7 +488,7 @@ fun CartModalSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Current Order (${uiState.totalItemsCount})",
+                    text = "Review Order & Items (${uiState.totalItemsCount})",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )

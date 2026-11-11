@@ -29,6 +29,8 @@ fun MainAppScreen(
     posViewModel: PosViewModel,
     inventoryViewModel: InventoryViewModel,
     analyticsViewModel: AnalyticsViewModel,
+    isDarkTheme: Boolean = true,
+    onToggleTheme: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableStateOf(MainNavigationTab.POS) }
@@ -106,6 +108,8 @@ fun MainAppScreen(
             MainNavigationTab.SETTINGS -> {
                 SettingsScreen(
                     onNavigateToInventory = { selectedTab = MainNavigationTab.INVENTORY },
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme,
                     modifier = Modifier.padding(innerPadding)
                 )
             }

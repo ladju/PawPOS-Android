@@ -52,12 +52,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            PetShopPOSTheme {
+            var isDarkTheme by androidx.compose.runtime.remember {
+                androidx.compose.runtime.mutableStateOf<Boolean?>(null)
+            }
+            val darkTheme = isDarkTheme ?: androidx.compose.foundation.isSystemInDarkTheme()
+
+            PetShopPOSTheme(darkTheme = darkTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     MainAppScreen(
                         posViewModel = posViewModel,
                         inventoryViewModel = inventoryViewModel,
-                        analyticsViewModel = analyticsViewModel
+                        analyticsViewModel = analyticsViewModel,
+                        isDarkTheme = darkTheme,
+                        onToggleTheme = { isDarkTheme = it }
                     )
                 }
             }
