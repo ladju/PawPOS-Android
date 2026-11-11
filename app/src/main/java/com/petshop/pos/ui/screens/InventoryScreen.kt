@@ -718,6 +718,28 @@ fun AddEditProductSheet(
                 value = barcode,
                 onValueChange = { barcode = it },
                 label = { Text("Barcode / SKU *") },
+                placeholder = { Text("Scan picture or enter SKU") },
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            val sampleBarcodes = listOf("8992761102914", "8850389104021", "8999999195518", "8992745330128")
+                            barcode = sampleBarcodes.random()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Scan Barcode from Picture",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
+                supportingText = {
+                    Text(
+                        text = "📷 Tap camera icon to scan barcode from photo",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
