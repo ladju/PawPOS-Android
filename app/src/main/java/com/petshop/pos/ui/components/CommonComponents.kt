@@ -7,6 +7,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.CameraAlt
@@ -521,6 +523,67 @@ fun ThermalReceiptView(
             if (transaction.paymentMethod == PaymentMethod.CASH) {
                 ReceiptLine(label = "Cash Tendered:", value = formatCurrency(transaction.cashTendered))
                 ReceiptLine(label = "Change Returned:", value = formatCurrency(transaction.changeGiven))
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Dynamic "Scan for WhatsApp Receipt" Section (Option 1)
+            Surface(
+                color = Color(0xFFF0FDF4),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, Color(0xFF10B981)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text("📲", fontSize = 12.sp)
+                        Text(
+                            text = "SCAN FOR WHATSAPP RECEIPT",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Color(0xFF047857)
+                        )
+                    }
+                    Text(
+                        text = "Customer points camera to receive receipt in chat",
+                        fontSize = 10.sp,
+                        color = Color(0xFF475569),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Surface(
+                        color = Color.White,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                        modifier = Modifier.size(130.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.QrCode2,
+                                    contentDescription = "WhatsApp Receipt QR Code",
+                                    tint = Color(0xFF075E54),
+                                    modifier = Modifier.size(92.dp)
+                                )
+                                Text(
+                                    text = "wa.me / ${transaction.invoiceNumber}",
+                                    fontSize = 8.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

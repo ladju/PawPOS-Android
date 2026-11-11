@@ -1,5 +1,8 @@
 package com.petshop.pos.ui.screens
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -966,12 +969,33 @@ fun ReceiptDialog(
         ) {
             ThermalReceiptView(transaction = transaction, items = items)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
+            val context = LocalContext.current
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Button(
+                    onClick = {
+                        val storePhone = "6281234567890"
+                        val customerMsg = "Hi PawPlace! Please send my digital receipt for Invoice ${transaction.invoiceNumber} (Total: ${formatCurrency(transaction.grandTotal)}) 🐾"
+                        val encoded = java.net.URLEncoder.encode(customerMsg, "UTF-8")
+                        val uri = Uri.parse("https://wa.me/$storePhone?text=$encoded")
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            android.widget.Toast.makeText(context, "WhatsApp not installed", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("💬 WhatsApp", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f),
@@ -981,15 +1005,17 @@ fun ReceiptDialog(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("Print")
                 }
+            }
 
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text("New Sale")
-                }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("New Sale ➔", fontWeight = FontWeight.Bold)
             }
         }
     }
