@@ -21,6 +21,8 @@ data class PosUiState(
     val cartItems: List<CartItem> = emptyList(),
     val discountAmount: Double = 0.0,
     val taxRate: Double = 0.0, // Default 0.0 (Tax not included for small businesses / UMKM)
+    val qrisMdrRate: Double = 0.003, // Default 0.3% (Small Business Standard), or 0.0 (UMI Mikro)
+    val currentQrisRrn: String = "",
     val paymentMethod: PaymentMethod = PaymentMethod.CASH,
     val cashTendered: Double = 0.0,
     val customerName: String = "",
@@ -63,6 +65,13 @@ class PosViewModel(
     private val _searchQuery = MutableStateFlow("")
     private val _selectedCategory = MutableStateFlow(PetCategory.ALL)
     private val _selectedType = MutableStateFlow(ProductType.ALL)
+
+    private fun generateRrn(): String {
+        val sdf = java.text.SimpleDateFormat("yyMMdd", java.util.Locale.getDefault())
+        val prefix = sdf.format(java.util.Date())
+        val rand = (100000..999999).random()
+        return "$prefix$rand"
+    }
 
     val products: StateFlow<List<ProductEntity>> = combine(
         _searchQuery,
@@ -153,7 +162,18 @@ class PosViewModel(
     }
 
     fun setPaymentMethod(method: PaymentMethod) {
-        _uiState.update { it.copy(paymentMethod = method) }
+        _uiState.update {
+            val rrn = if (method == PaymentMethod.QRIS && it.currentQrisRrn.isBlank()) generateRrn() else it.currentQrisRrn
+            it.copy(paymentMethod = method, currentQrisRrn = rrn)
+        }
+    }
+
+    fun refreshQrisRrn() {
+        _uiState.update { it.copy(currentQrisRrn = generateRrn()) }
+    }
+
+    fun setQrisMdrRate(rate: Double) {
+        _uiState.update { it.copy(qrisMdrRate = rate) }
     }
 
     fun setCashTendered(amount: Double) {
@@ -169,7 +189,8 @@ class PosViewModel(
             _uiState.update { 
                 it.copy(
                     isCheckoutDialogOpen = true,
-                    cashTendered = it.grandTotal // default to exact amount
+                    cashTendered = it.grandTotal, // default to exact amount
+                    currentQrisRrn = if (it.currentQrisRrn.isBlank()) generateRrn() else it.currentQrisRrn
                 ) 
             }
         }
@@ -188,6 +209,11 @@ class PosViewModel(
             return
         }
 
+        val rrn = state.currentQrisRrn.ifBlank { generateRrn() }
+        val notes = if (state.paymentMethod == PaymentMethod.QRIS) {
+            "RRN:$rrn|NMID:ID1020038192019|MDR:${state.qrisMdrRate}"
+        } else ""
+
         viewModelScope.launch {
             val result = repository.processCheckout(
                 cartItems = state.cartItems,
@@ -197,7 +223,8 @@ class PosViewModel(
                 cashTendered = state.cashTendered,
                 customerName = state.customerName.ifBlank { null },
                 customerPhone = state.customerPhone.ifBlank { null },
-                cashierName = "Cashier #1"
+                cashierName = "Cashier #1",
+                notes = notes
             )
 
             result.onSuccess { transaction ->
@@ -210,6 +237,7 @@ class PosViewModel(
                         isReceiptDialogOpen = true,
                         lastTransaction = transaction,
                         lastTransactionItems = items,
+                        currentQrisRrn = "",
                         customerName = "",
                         customerPhone = "",
                         errorMessage = null

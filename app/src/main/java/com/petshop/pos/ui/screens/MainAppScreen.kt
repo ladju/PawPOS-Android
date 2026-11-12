@@ -32,7 +32,7 @@ enum class MainNavigationTab(
     POS("Cashier", "Samsung One UI 8 • Solo Counter Mode", Icons.Default.PointOfSale),
     INVENTORY("Inventory", "26dp Focus Blocks • Quick Stock Steppers", Icons.Default.Inventory2),
     SCANNER("Scanner", "Camera & Picture Barcode Reader", Icons.Default.QrCodeScanner),
-    ANALYTICS("History", "Digital WhatsApp QR Receipts & Analytics", Icons.Default.History),
+    ANALYTICS("Recap", "Sales Recap • Cash Drawer & QRIS Audit", Icons.Default.Assessment),
     SETTINGS("Settings", "Store Profile & One UI Preferences", Icons.Default.Settings)
 }
 
@@ -236,6 +236,7 @@ fun MainAppScreen(
             MainNavigationTab.ANALYTICS -> {
                 AnalyticsScreen(
                     viewModel = analyticsViewModel,
+                    qrisMdrRate = posUiState.qrisMdrRate,
                     onRestockClick = { selectedTab = MainNavigationTab.INVENTORY },
                     modifier = Modifier.padding(innerPadding)
                 )
@@ -245,6 +246,8 @@ fun MainAppScreen(
                     onNavigateToInventory = { selectedTab = MainNavigationTab.INVENTORY },
                     isDarkTheme = isDarkTheme,
                     onToggleTheme = onToggleTheme,
+                    qrisMdrRate = posUiState.qrisMdrRate,
+                    onSelectMdrRate = { posViewModel.setQrisMdrRate(it) },
                     modifier = Modifier.padding(innerPadding)
                 )
             }

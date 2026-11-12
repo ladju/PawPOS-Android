@@ -42,10 +42,8 @@ enum class ProductType(
 }
 
 enum class PaymentMethod(val displayName: String) {
-    CASH("Cash"),
-    CARD("Debit/Credit Card"),
-    QRIS("QRIS / E-Wallet"),
-    TRANSFER("Bank Transfer")
+    CASH("💵 Cash"),
+    QRIS("📲 QRIS Instant")
 }
 
 enum class StockChangeReason(val displayName: String) {

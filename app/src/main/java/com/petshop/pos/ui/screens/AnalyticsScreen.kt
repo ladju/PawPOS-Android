@@ -1,5 +1,8 @@
 package com.petshop.pos.ui.screens
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,30 +18,48 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.petshop.pos.data.local.entity.PaymentMethod
 import com.petshop.pos.ui.components.*
 import com.petshop.pos.ui.theme.AmberPrimary
 import com.petshop.pos.ui.theme.CoralAccent
 import com.petshop.pos.ui.theme.GreenSuccess
+import com.petshop.pos.ui.theme.OneUiBlue
+import com.petshop.pos.ui.theme.OneUiGreen
 import com.petshop.pos.ui.theme.Teal40
 import com.petshop.pos.ui.viewmodel.AnalyticsViewModel
+import kotlin.math.roundToLong
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
     viewModel: AnalyticsViewModel,
+    qrisMdrRate: Double = 0.003,
     onRestockClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val transactions by viewModel.transactions.collectAsState()
+    val context = LocalContext.current
+
+    val openingFloat = 200000.0
+    val cashTransactions = remember(transactions) { transactions.filter { it.paymentMethod == PaymentMethod.CASH } }
+    val qrisTransactions = remember(transactions) { transactions.filter { it.paymentMethod == PaymentMethod.QRIS } }
+    val cashSalesTotal = remember(cashTransactions) { cashTransactions.sumOf { it.grandTotal } }
+    val qrisSalesTotal = remember(qrisTransactions) { qrisTransactions.sumOf { it.grandTotal } }
+    val expectedCashInTill = openingFloat + cashSalesTotal
+    val qrisMdrFee = (qrisSalesTotal * qrisMdrRate).roundToLong().toDouble()
+    val qrisNetSettlement = qrisSalesTotal - qrisMdrFee
+    val mdrPercentText = if (qrisMdrRate == 0.0) "0.0% UMI" else "0.3% Regular"
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Sales & Analytics", fontWeight = FontWeight.Bold) },
+                title = { Text("Sales Recap & Shift Z-Report", fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = { viewModel.refreshAnalytics() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
@@ -77,6 +98,149 @@ fun AnalyticsScreen(
                     iconTint = GreenSuccess,
                     modifier = Modifier.weight(1f)
                 )
+            }
+
+            // Payment Tender Breakdown & Cash Drawer Audit (One UI 8 Focus Block)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(22.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "💳 Payment Tender & Drawer Audit",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Surface(
+                            color = OneUiGreen.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(50)
+                        ) {
+                            Text(
+                                text = "SHIFT #SH-102 ACTIVE",
+                                color = OneUiGreen,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    // Cash in Drawer Subcard
+                    Surface(
+                        color = OneUiGreen.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, OneUiGreen.copy(alpha = 0.3f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("💵 Cash in Drawer (${cashTransactions.size}x)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(formatCurrency(cashSalesTotal), fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = OneUiGreen)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Opening Drawer Float:", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
+                                Text(formatCurrency(openingFloat), fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                            }
+                            HorizontalDivider(color = OneUiGreen.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 2.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Expected Cash in Till:", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(formatCurrency(expectedCashInTill), fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = OneUiGreen)
+                            }
+                        }
+                    }
+
+                    // QRIS Instant Settlement Subcard
+                    Surface(
+                        color = OneUiBlue.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, OneUiBlue.copy(alpha = 0.3f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("📲 QRIS Instant (${qrisTransactions.size}x)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(formatCurrency(qrisSalesTotal), fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = OneUiBlue)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("QRIS MDR Fee ($mdrPercentText):", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
+                                Text("-${formatCurrency(qrisMdrFee)}", fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                            }
+                            HorizontalDivider(color = OneUiBlue.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 2.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Net BCA Bank Settlement:", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(formatCurrency(qrisNetSettlement), fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = OneUiGreen)
+                            }
+                        }
+                    }
+
+                    // Send Shift Z-Report to WhatsApp Button
+                    Button(
+                        onClick = {
+                            val reportText = buildString {
+                                appendLine("🐾 *PAWPLACE POS — SHIFT Z-REPORT*")
+                                appendLine("Shift: #SH-102")
+                                appendLine("--------------------------------")
+                                appendLine("Total Revenue: *${formatCurrency(uiState.dailySummary.totalRevenue)}*")
+                                appendLine("Transactions: ${uiState.dailySummary.transactionCount}x")
+                                appendLine("--------------------------------")
+                                appendLine("💵 *CASH DRAWER AUDIT*")
+                                appendLine("Opening Float: ${formatCurrency(openingFloat)}")
+                                appendLine("Cash Sales (${cashTransactions.size}x): ${formatCurrency(cashSalesTotal)}")
+                                appendLine("Expected in Till: *${formatCurrency(expectedCashInTill)}*")
+                                appendLine("--------------------------------")
+                                appendLine("📲 *QRIS BCA SETTLEMENT*")
+                                appendLine("QRIS Gross (${qrisTransactions.size}x): ${formatCurrency(qrisSalesTotal)}")
+                                appendLine("BI MDR Fee ($mdrPercentText): -${formatCurrency(qrisMdrFee)}")
+                                appendLine("Net Bank Settlement: *${formatCurrency(qrisNetSettlement)}*")
+                            }
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("https://wa.me/?text=${Uri.encode(reportText)}")
+                            }
+                            runCatching { context.startActivity(intent) }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF075E54)),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("📲 Send Shift Z-Report to Owner WhatsApp", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
             }
 
             // Low Stock Alert Card

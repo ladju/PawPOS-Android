@@ -21,6 +21,8 @@ fun SettingsScreen(
     onNavigateToInventory: () -> Unit = {},
     isDarkTheme: Boolean = true,
     onToggleTheme: (Boolean) -> Unit = {},
+    qrisMdrRate: Double = 0.003,
+    onSelectMdrRate: (Double) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var storeName by remember { mutableStateOf("PawPlace Pet Shop & Grooming Care") }
@@ -283,6 +285,41 @@ fun SettingsScreen(
                                     selected = selectedTaxRate == rate,
                                     onClick = { selectedTaxRate = rate },
                                     label = { Text(label, fontSize = 11.sp, fontWeight = if (selectedTaxRate == rate) FontWeight.Bold else FontWeight.Normal) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = "Bank Indonesia QRIS MDR Rate (Merchant Discount Rate)",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(
+                                0.0 to "0.0% (UMI Mikro)",
+                                0.003 to "0.3% (Small Business)"
+                            ).forEach { (rate, label) ->
+                                val isSelected = qrisMdrRate == rate
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        onSelectMdrRate(rate)
+                                        feedbackMessage = "📲 QRIS MDR Rate updated to $label"
+                                    },
+                                    label = {
+                                        Text(
+                                            text = label,
+                                            fontSize = 11.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
                                     modifier = Modifier.weight(1f)
                                 )
                             }
