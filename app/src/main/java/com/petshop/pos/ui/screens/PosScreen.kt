@@ -285,6 +285,10 @@ fun PosScreen(
         CheckoutDialog(
             uiState = uiState,
             onDismiss = { viewModel.closeCheckoutDialog() },
+            onBackToCart = {
+                viewModel.closeCheckoutDialog()
+                isCartSheetOpen = true
+            },
             onPaymentMethodChanged = { viewModel.setPaymentMethod(it) },
             onCashTenderedChanged = { viewModel.setCashTendered(it) },
             onCustomerDetailsChanged = { name, phone -> viewModel.setCustomerDetails(name, phone) },
@@ -678,6 +682,7 @@ fun CartModalSheet(
 fun CheckoutDialog(
     uiState: PosUiState,
     onDismiss: () -> Unit,
+    onBackToCart: () -> Unit = onDismiss,
     onPaymentMethodChanged: (PaymentMethod) -> Unit,
     onCashTenderedChanged: (Double) -> Unit,
     onCustomerDetailsChanged: (String, String) -> Unit,
@@ -707,17 +712,52 @@ fun CheckoutDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Checkout Payment",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onBackToCart) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back to Review Cart")
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Checkout Payment",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Tappable Order items summary strip to return to cart details
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onBackToCart() }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🛍️ ${uiState.totalItemsCount} items in cart",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Review Items ✎",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Total display
                 Surface(
