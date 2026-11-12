@@ -12,32 +12,34 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Teal80,
-    secondary = Amber80,
-    tertiary = CoralAccent,
-    background = Slate900,
-    surface = Slate800,
-    onPrimary = Slate900,
-    onSecondary = Slate900,
-    onBackground = Slate50,
-    onSurface = Slate50
+    primary = OneUiBlue,
+    secondary = OneUiAmber,
+    tertiary = OneUiCoral,
+    background = OneUiOledBlack,
+    surface = OneUiDarkSurface,
+    surfaceVariant = OneUiDarkSurface2,
+    onPrimary = androidx.compose.ui.graphics.Color.White,
+    onSecondary = OneUiOledBlack,
+    onBackground = androidx.compose.ui.graphics.Color(0xFFFAFAFA),
+    onSurface = androidx.compose.ui.graphics.Color(0xFFFAFAFA)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Teal40,
-    secondary = AmberPrimary,
-    tertiary = CoralAccent,
-    background = Slate50,
-    surface = androidx.compose.ui.graphics.Color.White,
+    primary = OneUiBlue,
+    secondary = OneUiAmber,
+    tertiary = OneUiCoral,
+    background = OneUiLightCanvas,
+    surface = OneUiLightSurface,
+    surfaceVariant = OneUiLightSurface2,
     onPrimary = androidx.compose.ui.graphics.Color.White,
-    onSecondary = Slate900,
-    onBackground = Slate900,
-    onSurface = Slate900
+    onSecondary = OneUiOledBlack,
+    onBackground = OneUiOledBlack,
+    onSurface = OneUiOledBlack
 )
 
 @Composable
 fun PetShopPOSTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true, // Default to Samsung One UI OLED Dark Mode
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
@@ -45,8 +47,8 @@ fun PetShopPOSTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 

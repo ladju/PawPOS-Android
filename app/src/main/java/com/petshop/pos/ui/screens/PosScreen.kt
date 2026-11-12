@@ -172,19 +172,20 @@ fun PosScreen(
                             }
                         }
 
-                        // Right side: Unified Pay CTA opening Cart/Review Sheet directly (no separate edit button)
+                        // Right side: Samsung One UI Pill-Shaped Primary Charge CTA
                         Button(
                             onClick = { isCartSheetOpen = true },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Teal40
+                                containerColor = Teal40,
+                                contentColor = Color.White
                             ),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                            shape = CircleShape,
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 13.dp)
                         ) {
                             Text(
-                                text = "Pay ${formatCurrency(uiState.grandTotal)} ➔",
+                                text = "Charge ${formatCurrency(uiState.grandTotal)}",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp
+                                fontSize = 14.sp
                             )
                         }
                     }
@@ -312,11 +313,11 @@ fun ProductCard(
     val isInCart = inCartQuantity > 0
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = if (isInCart) Color(0xFFF0FDFA) else MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         border = if (isInCart) BorderStroke(2.dp, Teal40) else null,
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isInCart) 4.dp else 2.dp),
-        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(20.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = product.currentStock > 0 || product.productType.isService || product.category == PetCategory.SERVICES) {

@@ -53,17 +53,16 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             var isDarkTheme by androidx.compose.runtime.remember {
-                androidx.compose.runtime.mutableStateOf<Boolean?>(null)
+                androidx.compose.runtime.mutableStateOf(true)
             }
-            val darkTheme = isDarkTheme ?: androidx.compose.foundation.isSystemInDarkTheme()
 
-            PetShopPOSTheme(darkTheme = darkTheme) {
+            PetShopPOSTheme(darkTheme = isDarkTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     MainAppScreen(
                         posViewModel = posViewModel,
                         inventoryViewModel = inventoryViewModel,
                         analyticsViewModel = analyticsViewModel,
-                        isDarkTheme = darkTheme,
+                        isDarkTheme = isDarkTheme,
                         onToggleTheme = { isDarkTheme = it }
                     )
                 }
