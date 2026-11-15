@@ -112,8 +112,16 @@ PawPOS is a high-speed, offline-first **Point of Sale & Inventory Control** app 
 - Bottom **Scan for WhatsApp Receipt** QR block (`wa.me / INV-...`).
 
 ### D. Sales Recap & Shift Z-Report (`AnalyticsScreen`)
-- **KPI Row**: Today's Revenue (IDR) & Gross Profit.
-- **Payment Tender & Drawer Audit Card**:
+- **Timeframe Aggregations**:
+  - Horizontal pill switcher: `[ 📅 Today (Shift) ]`, `[ 🗓️ This Week ]`, `[ 📈 This Month (MTD) ]`, `[ 🏛️ This Year ]`.
+  - Dynamically calculates Turnover, Gross Margin %, Total Orders, and Average Order Value (AOV).
+- **KPI Row**: Period Turnover & Gross Profit (~32% estimated margin + AOV).
+- **Month-to-Date (MTD) Financial Audit & Tax Card** (Featured in Month / Year modes):
+  - `● 100% BALANCED & RECONCILED` financial health badge.
+  - **Tender Split**: `💵 Cash Collected MTD` vs `🏦 Net BCA QRIS Deposit` (after MDR fee deduction).
+  - **Accounting Ledger**: Gross Turnover, QRIS MDR Fees, AOV, and **Estimated UMKM Final Tax (0.5% PP 55 / 2022)**.
+  - **`📲 Export MTD Financial Audit to WhatsApp`** CTA (`#075E54`).
+- **Daily Shift Cash Drawer & Tender Audit** (Featured in Today / Week modes):
   - `SHIFT #SH-102 ACTIVE` badge.
   - **💵 Cash in Drawer**: Opening Float (`Rp 200.000`) + Cash Sales = **Expected Cash in Till**.
   - **📲 QRIS Instant**: Gross QRIS - BI MDR Fee (`0.0% UMI` or `0.3% Regular`) = **Net BCA Bank Settlement**.

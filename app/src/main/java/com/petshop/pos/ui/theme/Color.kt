@@ -20,8 +20,16 @@ val OneUiLightDivider = Color(0xFFE5E5EA)    // Inset 1px Hairline (Light Mode)
 val OneUiCalcGreen = Color(0xFF169B7C)       // Samsung Calculator "=" Teal-Green
 val OneUiCoral = Color(0xFFFF453A)           // Samsung Calculator "C" Coral-Red
 val OneUiAmber = Color(0xFFFF9F0A)           // Low Stock Alert Amber
+val WhatsAppGreen = Color(0xFF075E54)        // WhatsApp Official Green
+
+// Surface & Text Roles aligned with DESIGN.md
+val OnSurfaceDark = Color(0xFFFAFAFA)
+val OnSurfaceMutedDark = Color(0xFF8E8E93)
+val OnSurfaceLight = Color(0xFF010101)
+val OnSurfaceMutedLight = Color(0xFF64748B)
 
 // Mapped Brand Tokens for Screens & Components
+val OneUiGreen = OneUiCalcGreen
 val Teal80 = OneUiBlue
 val TealGrey80 = Color(0xFFCCE8E4)
 val Amber80 = Color(0xFFFDE68A)
