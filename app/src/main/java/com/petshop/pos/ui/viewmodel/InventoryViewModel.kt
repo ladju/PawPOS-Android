@@ -7,6 +7,7 @@ import com.petshop.pos.data.local.entity.ProductEntity
 import com.petshop.pos.data.local.entity.ProductType
 import com.petshop.pos.data.local.entity.StockChangeReason
 import com.petshop.pos.data.repository.PetShopRepository
+import com.petshop.pos.util.InventoryCsvHelper
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -188,6 +189,43 @@ class InventoryViewModel(
             repository.deleteProduct(product)
             _uiState.update { it.copy(infoMessage = "Product '${product.name}' removed.") }
         }
+    }
+
+    fun buildInventoryCsv(): String {
+        return InventoryCsvHelper.exportToCsv(products.value)
+    }
+
+    fun importInventoryCsv(csvContent: String) {
+        val parsed = InventoryCsvHelper.parseCsv(csvContent)
+        if (parsed.products.isEmpty()) {
+            val detail = parsed.errors.firstOrNull() ?: "No valid product rows found in CSV."
+            _uiState.update { it.copy(errorMessage = detail) }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val summary = repository.upsertProductsFromCsv(parsed.products)
+                val skippedText = if (parsed.skippedRows > 0) " (${parsed.skippedRows} skipped)" else ""
+                _uiState.update {
+                    it.copy(
+                        infoMessage = "CSV imported: ${summary.addedCount} added, ${summary.updatedCount} updated$skippedText."
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(errorMessage = "CSV import failed: ${e.message ?: "Unknown error"}")
+                }
+            }
+        }
+    }
+
+    fun showInfoMessage(message: String) {
+        _uiState.update { it.copy(infoMessage = message) }
+    }
+
+    fun showErrorMessage(message: String) {
+        _uiState.update { it.copy(errorMessage = message) }
     }
 
     fun clearMessages() {

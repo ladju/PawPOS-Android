@@ -92,7 +92,11 @@ data class AppStrings(
     val checkoutBtn: String,
     val cashLabel: String,
     val qrisLabel: String,
-    val addProductBtn: String
+    val addProductBtn: String,
+    val importCsvBtn: String,
+    val exportCsvBtn: String,
+    val csvExportSuccess: String,
+    val csvFormatHint: String
 )
 
 val EnglishStrings = AppStrings(
@@ -175,7 +179,11 @@ val EnglishStrings = AppStrings(
     checkoutBtn = "Checkout",
     cashLabel = "Cash",
     qrisLabel = "QRIS",
-    addProductBtn = "Add Product"
+    addProductBtn = "Add Product",
+    importCsvBtn = "Import CSV",
+    exportCsvBtn = "Export CSV",
+    csvExportSuccess = "Inventory CSV exported successfully!",
+    csvFormatHint = "Columns: barcode, name, category, productType, costPrice, sellingPrice, currentStock, minStockAlert, unit"
 )
 
 val IndonesianStrings = AppStrings(
@@ -258,7 +266,11 @@ val IndonesianStrings = AppStrings(
     checkoutBtn = "Bayar",
     cashLabel = "Tunai",
     qrisLabel = "QRIS",
-    addProductBtn = "Tambah Produk"
+    addProductBtn = "Tambah Produk",
+    importCsvBtn = "Impor CSV",
+    exportCsvBtn = "Ekspor CSV",
+    csvExportSuccess = "CSV inventaris berhasil diekspor!",
+    csvFormatHint = "Kolom: barcode, name, category, productType, costPrice, sellingPrice, currentStock, minStockAlert, unit"
 )
 
 fun stringsFor(language: AppLanguage): AppStrings = when (language) {

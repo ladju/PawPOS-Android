@@ -1,5 +1,8 @@
 package com.petshop.pos.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -32,6 +36,9 @@ import com.petshop.pos.ui.components.*
 import com.petshop.pos.ui.theme.*
 import com.petshop.pos.ui.viewmodel.InventoryViewModel
 import com.petshop.pos.ui.viewmodel.StockFilter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,13 +51,60 @@ fun InventoryScreen(
     val lowStockCount by viewModel.lowStockCount.collectAsState()
     var quickTypeProduct by remember { mutableStateOf<ProductEntity?>(null) }
     var quickCategoryProduct by remember { mutableStateOf<ProductEntity?>(null) }
+    val strings = LocalAppStrings.current
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.infoMessage, uiState.errorMessage) {
+        val msg = uiState.infoMessage ?: uiState.errorMessage
+        if (msg != null) {
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearMessages()
+        }
+    }
+
+    val exportCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val csvData = viewModel.buildInventoryCsv()
+                context.contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(csvData.toByteArray(Charsets.UTF_8))
+                }
+                viewModel.showInfoMessage(strings.csvExportSuccess)
+            } catch (e: Exception) {
+                viewModel.showErrorMessage("Export failed: ${e.message ?: "Unknown error"}")
+            }
+        }
+    }
+
+    val importCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val csvText = context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use {
+                    it.readText()
+                }
+                if (csvText != null) {
+                    viewModel.importInventoryCsv(csvText)
+                } else {
+                    viewModel.showErrorMessage("Unable to read selected CSV file.")
+                }
+            } catch (e: Exception) {
+                viewModel.showErrorMessage("Import failed: ${e.message ?: "Unknown error"}")
+            }
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { viewModel.openAddProductDialog() },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Add Product") },
+                text = { Text(strings.addProductBtn) },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             )
@@ -81,6 +135,51 @@ fun InventoryScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
+
+            // CSV Import / Export Action Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        importCsvLauncher.launch(
+                            arrayOf("text/csv", "text/comma-separated-values", "application/csv", "text/plain", "*/*")
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.UploadFile,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(strings.importCsvBtn, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        val stamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
+                        exportCsvLauncher.launch("pawpos_inventory_$stamp.csv")
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(strings.exportCsvBtn, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
 
             // Product Type Filter Pills (Dry Cat Food, Wet Cat Food, Bird Food, Fish Food, obat cacing, Accesories, Grooming, Cat Litter)
             ProductTypePills(

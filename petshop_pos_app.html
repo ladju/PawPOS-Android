@@ -790,9 +790,16 @@
             <input id="invSearchInput" type="text" placeholder="Search inventory name, category, or SKU..." class="w-full bg-transparent text-sm font-medium focus:outline-none" style="color: var(--oneui-text);">
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <button data-action="setInvFilter" data-arg="ALL" id="invFilterAll" class="oneui-chip active">All Items</button>
             <button data-action="setInvFilter" data-arg="LOW" id="invFilterLow" class="oneui-chip">⚠️ Low Stock</button>
+            <button data-action="importInventoryCsv" id="btnImportCsv" class="h-[42px] px-4 rounded-full font-bold text-xs flex items-center gap-1.5 transition active:scale-95" style="background-color: var(--oneui-surface-2); color: var(--oneui-text);">
+              <span>📥</span> <span id="importCsvLabel">Import CSV</span>
+            </button>
+            <button data-action="exportInventoryCsv" id="btnExportCsv" class="h-[42px] px-4 rounded-full font-bold text-xs flex items-center gap-1.5 transition active:scale-95" style="background-color: var(--oneui-surface-2); color: var(--oneui-text);">
+              <span>📤</span> <span id="exportCsvLabel">Export CSV</span>
+            </button>
+            <input type="file" id="invCsvFileInput" accept=".csv,text/csv,text/plain" class="hidden">
             <button data-action="toggleAddProductBlock" id="addProductToggleBtn" class="h-[42px] px-5 rounded-full font-bold text-xs text-white flex items-center gap-1.5 transition active:scale-95" style="background-color: var(--oneui-blue);">
               <span>＋</span> <span id="addProductToggleText">New Product</span>
             </button>
@@ -4065,7 +4072,116 @@ Minimum version required to store current data is: `+i+`.
       setTxt("recapShareWaText", isId
         ? (recapTimeframe === "month" ? "Bagikan Laba Rugi Bulanan ke WhatsApp Owner" : "Bagikan Laporan Penjualan ke WhatsApp")
         : (recapTimeframe === "month" ? "Share Monthly P&L to Owner WhatsApp" : "Share Sales Report via WhatsApp"));
+      setTxt("importCsvLabel", isId ? "Impor CSV" : "Import CSV");
+      setTxt("exportCsvLabel", isId ? "Ekspor CSV" : "Export CSV");
     }
+
+    function exportInventoryCsv() {
+      const headers = ["barcode", "name", "category", "productType", "costPrice", "sellingPrice", "currentStock", "minStockAlert", "unit"];
+      const esc = (v) => {
+        const s = String(v ?? "");
+        return /[,"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const rows = products.map(p => [
+        esc(p.barcode || p.id),
+        esc(p.name),
+        esc(p.category || "ALL"),
+        esc(p.productType || p.category || "ALL"),
+        Math.round((p.price || 0) * 0.65),
+        p.price || 0,
+        p.stock ?? 0,
+        5,
+        "pcs"
+      ].join(","));
+      const csv = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `pawpos_inventory_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast(appLang === "id" ? "📤 CSV inventaris berhasil diekspor!" : "📤 Inventory CSV exported!");
+    }
+
+    function importInventoryCsvFromFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = String(e.target.result || "").replace(/^\uFEFF/, "").trim();
+        if (!text) { showToast("⚠️ Empty CSV file"); return; }
+        const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+        if (lines.length === 0) return;
+        const delim = (lines[0].split(";").length > lines[0].split(",").length) ? ";" : ",";
+        const parseLine = (line) => {
+          const out = []; let cur = ""; let q = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (q) {
+              if (ch === '"' && line[i+1] === '"') { cur += '"'; i++; }
+              else if (ch === '"') q = false;
+              else cur += ch;
+            } else {
+              if (ch === '"') q = true;
+              else if (ch === delim) { out.push(cur.trim()); cur = ""; }
+              else cur += ch;
+            }
+          }
+          out.push(cur.trim());
+          return out;
+        };
+        const firstCols = parseLine(lines[0]).map(c => c.toLowerCase());
+        const hasHeader = firstCols.some(c => ["barcode", "sku", "name", "sellingprice", "price", "currentstock", "stock"].includes(c));
+        const dataLines = hasHeader ? lines.slice(1) : lines;
+        const idxOf = (keys, fallback) => {
+          if (!hasHeader) return fallback;
+          for (const k of keys) { const i = firstCols.indexOf(k); if (i !== -1) return i; }
+          return fallback;
+        };
+        const iBarcode = idxOf(["barcode", "sku"], 0);
+        const iName = idxOf(["name", "product_name", "nama"], 1);
+        const iCat = idxOf(["category", "kategori"], 2);
+        const iPrice = idxOf(["sellingprice", "price", "harga_jual", "harga"], 5);
+        const iStock = idxOf(["currentstock", "stock", "qty", "stok"], 6);
+
+        let added = 0, updated = 0;
+        for (const ln of dataLines) {
+          const cols = parseLine(ln);
+          const barcode = cols[iBarcode] || "";
+          const name = cols[iName] || "";
+          if (!barcode || !name) continue;
+          const cat = cols[iCat] || "Pets";
+          const price = parseInt(String(cols[iPrice] || "0").replace(/[^0-9]/g, ""), 10) || 0;
+          const stock = parseInt(String(cols[iStock] || "0").replace(/[^0-9]/g, ""), 10) || 0;
+          const existing = products.find(p => String(p.barcode) === barcode);
+          if (existing) {
+            existing.name = name;
+            existing.category = cat;
+            existing.price = price;
+            existing.stock = stock;
+            updated++;
+          } else {
+            products.unshift({ id: Date.now() + added, name, barcode, category: cat, price, stock, emoji: "🐾" });
+            added++;
+          }
+        }
+        if (typeof saveState === "function") saveState();
+        renderInventoryFocusList();
+        if (typeof renderPosGrid === "function") renderPosGrid();
+        showToast(appLang === "id"
+          ? `📥 CSV diimpor: ${added} baru, ${updated} diperbarui`
+          : `📥 CSV imported: ${added} added, ${updated} updated`);
+      };
+      reader.readAsText(file);
+    }
+
+    document.getElementById("invCsvFileInput")?.addEventListener("change", (ev) => {
+      const f = ev.target.files && ev.target.files[0];
+      if (f) importInventoryCsvFromFile(f);
+      ev.target.value = "";
+    });
 
     function toggleLanguage() {
       appLang = appLang === "en" ? "id" : "en";
@@ -4339,6 +4455,12 @@ Minimum version required to store current data is: `+i+`.
           break;
         case "toggleAddProductBlock":
           document.getElementById("invAddProductCard").classList.toggle("hidden");
+          break;
+        case "importInventoryCsv":
+          document.getElementById("invCsvFileInput")?.click();
+          break;
+        case "exportInventoryCsv":
+          exportInventoryCsv();
           break;
         case "setNewProdEmoji":
           newProdSelectedEmoji = arg;

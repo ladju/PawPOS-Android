@@ -256,4 +256,61 @@ class PetShopRepository(
             itemsSold = totalItems
         )
     }
+
+    data class CsvImportSummary(
+        val addedCount: Int,
+        val updatedCount: Int
+    )
+
+    suspend fun upsertProductsFromCsv(products: List<ProductEntity>): CsvImportSummary {
+        var added = 0
+        var updated = 0
+
+        database.withTransaction {
+            for (incoming in products) {
+                val existing = productDao.getProductByBarcode(incoming.barcode)
+                if (existing != null) {
+                    val updatedEntity = incoming.copy(
+                        id = existing.id,
+                        imageUri = existing.imageUri,
+                        isActive = true
+                    )
+                    productDao.updateProduct(updatedEntity)
+                    if (existing.currentStock != incoming.currentStock) {
+                        stockMovementDao.insertMovement(
+                            StockMovementEntity(
+                                productId = existing.id,
+                                productName = updatedEntity.name,
+                                quantityChange = incoming.currentStock - existing.currentStock,
+                                previousStock = existing.currentStock,
+                                resultingStock = incoming.currentStock,
+                                reason = StockChangeReason.AUDIT,
+                                note = "CSV inventory import"
+                            )
+                        )
+                    }
+                    updated++
+                } else {
+                    val newId = productDao.insertProduct(incoming)
+                    if (incoming.currentStock > 0) {
+                        stockMovementDao.insertMovement(
+                            StockMovementEntity(
+                                productId = newId,
+                                productName = incoming.name,
+                                quantityChange = incoming.currentStock,
+                                previousStock = 0,
+                                resultingStock = incoming.currentStock,
+                                reason = StockChangeReason.RESTOCK,
+                                note = "CSV inventory import"
+                            )
+                        )
+                    }
+                    added++
+                }
+            }
+        }
+
+        return CsvImportSummary(addedCount = added, updatedCount = updated)
+    }
 }
+
