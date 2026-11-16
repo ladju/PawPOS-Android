@@ -29,8 +29,7 @@ import com.petshop.pos.data.local.entity.ProductEntity
 import com.petshop.pos.data.local.entity.ProductType
 import com.petshop.pos.data.local.entity.StockChangeReason
 import com.petshop.pos.ui.components.*
-import com.petshop.pos.ui.theme.CoralAccent
-import com.petshop.pos.ui.theme.TealLight
+import com.petshop.pos.ui.theme.*
 import com.petshop.pos.ui.viewmodel.InventoryViewModel
 import com.petshop.pos.ui.viewmodel.StockFilter
 
@@ -923,6 +922,7 @@ fun AddEditProductSheet(
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
                     Text("Cancel")
                 }
+            }
         )
     }
 }
