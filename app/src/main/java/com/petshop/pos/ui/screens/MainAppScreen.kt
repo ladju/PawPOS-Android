@@ -18,6 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.petshop.pos.ui.components.formatCurrency
+import com.petshop.pos.ui.theme.AppLanguage
+import com.petshop.pos.ui.theme.AppStrings
+import com.petshop.pos.ui.theme.LocalAppStrings
 import com.petshop.pos.ui.theme.OneUiAmber
 import com.petshop.pos.ui.theme.OneUiBlue
 import com.petshop.pos.ui.viewmodel.AnalyticsViewModel
@@ -25,15 +28,29 @@ import com.petshop.pos.ui.viewmodel.InventoryViewModel
 import com.petshop.pos.ui.viewmodel.PosViewModel
 
 enum class MainNavigationTab(
-    val title: String,
-    val subtitle: String,
     val icon: ImageVector
 ) {
-    POS("Cashier", "Samsung One UI 8 • Solo Counter Mode", Icons.Default.PointOfSale),
-    INVENTORY("Inventory", "26dp Focus Blocks • Quick Stock Steppers", Icons.Default.Inventory2),
-    SCANNER("Scanner", "Camera & Picture Barcode Reader", Icons.Default.QrCodeScanner),
-    ANALYTICS("Recap", "Sales Recap • Cash Drawer & QRIS Audit", Icons.Default.Assessment),
-    SETTINGS("Settings", "Store Profile & One UI Preferences", Icons.Default.Settings)
+    POS(Icons.Default.PointOfSale),
+    INVENTORY(Icons.Default.Inventory2),
+    SCANNER(Icons.Default.QrCodeScanner),
+    ANALYTICS(Icons.Default.Assessment),
+    SETTINGS(Icons.Default.Settings);
+
+    fun localizedTitle(strings: AppStrings): String = when (this) {
+        POS -> strings.navCashier
+        INVENTORY -> strings.navInventory
+        SCANNER -> strings.navScanner
+        ANALYTICS -> strings.navRecap
+        SETTINGS -> strings.navSettings
+    }
+
+    fun localizedSubtitle(strings: AppStrings): String = when (this) {
+        POS -> strings.subCashier
+        INVENTORY -> strings.subInventory
+        SCANNER -> strings.subScanner
+        ANALYTICS -> strings.subRecap
+        SETTINGS -> strings.subSettings
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,11 +61,14 @@ fun MainAppScreen(
     analyticsViewModel: AnalyticsViewModel,
     isDarkTheme: Boolean = true,
     onToggleTheme: (Boolean) -> Unit = {},
+    appLanguage: AppLanguage = AppLanguage.EN,
+    onSelectLanguage: (AppLanguage) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableStateOf(MainNavigationTab.POS) }
     val lowStockCount by inventoryViewModel.lowStockCount.collectAsState()
     val posUiState by posViewModel.uiState.collectAsState()
+    val strings = LocalAppStrings.current
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -72,7 +92,7 @@ fun MainAppScreen(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = selectedTab.title,
+                                text = selectedTab.localizedTitle(strings),
                                 fontSize = 26.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -86,7 +106,7 @@ fun MainAppScreen(
                                     }
                                 ) {
                                     Text(
-                                        text = "⚠️ $lowStockCount Low",
+                                        text = "⚠️ $lowStockCount ${strings.lowLabel}",
                                         color = OneUiAmber,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
@@ -96,7 +116,7 @@ fun MainAppScreen(
                             }
                         }
                         Text(
-                            text = selectedTab.subtitle,
+                            text = selectedTab.localizedSubtitle(strings),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
@@ -117,13 +137,39 @@ fun MainAppScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Text(
-                                    text = "Cart",
+                                    text = strings.cartLabel,
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                                 Text(
                                     text = formatCurrency(posUiState.grandTotal),
                                     fontSize = 12.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = OneUiBlue
+                                )
+                            }
+                        }
+
+                        // Quick EN / ID Language Toggle Pill
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = CircleShape,
+                            modifier = Modifier
+                                .height(38.dp)
+                                .clip(CircleShape)
+                                .clickable {
+                                    onSelectLanguage(
+                                        if (appLanguage == AppLanguage.EN) AppLanguage.ID else AppLanguage.EN
+                                    )
+                                }
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.padding(horizontal = 10.dp)
+                            ) {
+                                Text(
+                                    text = if (appLanguage == AppLanguage.ID) "🇮🇩 ID" else "🇬🇧 EN",
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = OneUiBlue
                                 )
@@ -187,12 +233,12 @@ fun MainAppScreen(
                                             }
                                         }
                                     ) {
-                                        Icon(tab.icon, contentDescription = tab.title)
+                                        Icon(tab.icon, contentDescription = tab.localizedTitle(strings))
                                     }
                                 },
                                 label = {
                                     Text(
-                                        text = tab.title,
+                                        text = tab.localizedTitle(strings),
                                         fontSize = 11.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                     )
@@ -246,6 +292,8 @@ fun MainAppScreen(
                     onNavigateToInventory = { selectedTab = MainNavigationTab.INVENTORY },
                     isDarkTheme = isDarkTheme,
                     onToggleTheme = onToggleTheme,
+                    appLanguage = appLanguage,
+                    onSelectLanguage = onSelectLanguage,
                     qrisMdrRate = posUiState.qrisMdrRate,
                     onSelectMdrRate = { posViewModel.setQrisMdrRate(it) },
                     modifier = Modifier.padding(innerPadding)

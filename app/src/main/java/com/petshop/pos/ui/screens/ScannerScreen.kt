@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.petshop.pos.ui.theme.LocalAppStrings
 import com.petshop.pos.ui.viewmodel.PosViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,6 +29,7 @@ fun ScannerScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     var manualBarcode by remember { mutableStateOf("") }
     var scanSuccessMessage by remember { mutableStateOf<String?>(null) }
 
@@ -46,7 +48,7 @@ fun ScannerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Barcode Scanner", fontWeight = FontWeight.Bold) },
+                title = { Text(strings.scannerTitle, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -69,7 +71,7 @@ fun ScannerScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Point camera at pet product barcode or enter barcode manually",
+                text = strings.scannerInstruction,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
@@ -105,7 +107,7 @@ fun ScannerScreen(
                 )
 
                 Text(
-                    text = "ALIGN BARCODE HERE",
+                    text = strings.alignBarcode,
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -123,7 +125,7 @@ fun ScannerScreen(
                 OutlinedTextField(
                     value = manualBarcode,
                     onValueChange = { manualBarcode = it },
-                    label = { Text("Enter Barcode Number") },
+                    label = { Text(strings.enterBarcodeHint) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
@@ -140,7 +142,7 @@ fun ScannerScreen(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.height(56.dp)
                 ) {
-                    Text("Add")
+                    Text(strings.addBtn)
                 }
             }
 

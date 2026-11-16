@@ -32,11 +32,25 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToLong
 
-enum class RecapTimeframe(val label: String, val subtitle: String, val icon: String) {
-    DAY("Day", "Daily Shift Closing & Cash Till Audit", "📅"),
-    WEEK("Week", "7-Day Sales & Tender Run-Rate", "🗓️"),
-    MONTH("Month", "Month-To-Date (MTD) Financial Audit", "📈"),
-    YEAR("Year", "Year-To-Date (YTD) Revenue & Tax Recap", "🏛️")
+enum class RecapTimeframe(val icon: String) {
+    DAY("📅"),
+    WEEK("🗓️"),
+    MONTH("📈"),
+    YEAR("🏛️");
+
+    fun localizedLabel(strings: AppStrings): String = when (this) {
+        DAY -> strings.tfDay
+        WEEK -> strings.tfWeek
+        MONTH -> strings.tfMonth
+        YEAR -> strings.tfYear
+    }
+
+    fun localizedSubtitle(strings: AppStrings): String = when (this) {
+        DAY -> strings.tfSubDay
+        WEEK -> strings.tfSubWeek
+        MONTH -> strings.tfSubMonth
+        YEAR -> strings.tfSubYear
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,6 +64,7 @@ fun AnalyticsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val transactions by viewModel.transactions.collectAsState()
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
 
     var selectedTimeframe by remember { mutableStateOf(RecapTimeframe.DAY) }
     var dateOffset by remember { mutableIntStateOf(0) }
@@ -139,12 +154,12 @@ fun AnalyticsScreen(
                 title = {
                     Column {
                         Text(
-                            text = "Sales Recap & Financial Audit",
+                            text = strings.recapTopTitle,
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 18.sp
                         )
                         Text(
-                            text = selectedTimeframe.subtitle,
+                            text = selectedTimeframe.localizedSubtitle(strings),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -198,7 +213,7 @@ fun AnalyticsScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = timeframe.label,
+                                    text = timeframe.localizedLabel(strings),
                                     fontSize = 13.sp,
                                     fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
                                     color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
@@ -758,7 +773,7 @@ fun AnalyticsScreen(
                 Button(
                     onClick = {
                         val reportText = buildString {
-                            appendLine("🐾 *PAWPLACE POS — ${selectedTimeframe.label.uppercase()} FINANCIAL RECAP*")
+                            appendLine("🐾 *PAWPLACE POS — ${selectedTimeframe.localizedLabel(strings).uppercase()} FINANCIAL RECAP*")
                             appendLine("Period: $dateIntervalText")
                             appendLine("--------------------------------")
                             appendLine("Gross Turnover: *${formatCurrency(displayRevenue)}*")
@@ -963,7 +978,7 @@ fun AnalyticsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "📜 Recent Sales Transactions (${selectedTimeframe.label})",
+                        text = "📜 Recent Sales Transactions (${selectedTimeframe.localizedLabel(strings)})",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

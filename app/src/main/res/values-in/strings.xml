@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">PawPOS Pet Shop</string>
+    <string name="pos_title">Kasir &amp; POS</string>
+    <string name="inventory_title">Kelola Stok</string>
+    <string name="analytics_title">Rekap &amp; Analitik</string>
+    <string name="scanner_title">Pemindai Barcode</string>
+</resources>

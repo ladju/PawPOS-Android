@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.petshop.pos.ui.theme.AppLanguage
+import com.petshop.pos.ui.theme.LocalAppStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,10 +23,13 @@ fun SettingsScreen(
     onNavigateToInventory: () -> Unit = {},
     isDarkTheme: Boolean = true,
     onToggleTheme: (Boolean) -> Unit = {},
+    appLanguage: AppLanguage = AppLanguage.EN,
+    onSelectLanguage: (AppLanguage) -> Unit = {},
     qrisMdrRate: Double = 0.003,
     onSelectMdrRate: (Double) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     var storeName by remember { mutableStateOf("PawPlace Pet Shop & Grooming Care") }
     var storePhone by remember { mutableStateOf("+62 812-3456-7890") }
     var storeAddress by remember { mutableStateOf("Jl. Sunset Road No. 88, Kuta, Bali") }
@@ -38,7 +43,7 @@ fun SettingsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Settings, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Store Settings & Configuration", fontWeight = FontWeight.Bold)
+                        Text(strings.settingsHeader, fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -52,6 +57,82 @@ fun SettingsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // App Language / Bahasa Selector Card
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Default.Language, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = strings.languageTitle,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = strings.languageSubtitle,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                }
+                            }
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    text = appLanguage.badge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            FilterChip(
+                                selected = appLanguage == AppLanguage.EN,
+                                onClick = {
+                                    onSelectLanguage(AppLanguage.EN)
+                                    feedbackMessage = "Language switched to English"
+                                },
+                                label = { Text("🇬🇧 English") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = appLanguage == AppLanguage.ID,
+                                onClick = {
+                                    onSelectLanguage(AppLanguage.ID)
+                                    feedbackMessage = "Bahasa diubah ke Bahasa Indonesia"
+                                },
+                                label = { Text("🇮🇩 Bahasa Indonesia") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+
             // Active Store Currency Card (IDR)
             item {
                 Card(
@@ -68,12 +149,12 @@ fun SettingsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "Store Active Currency",
+                                text = strings.storeActiveCurrency,
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = "🇮🇩 Indonesian Rupiah (IDR - Rp)",
+                                text = strings.currencyName,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -84,7 +165,7 @@ fun SettingsScreen(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Text(
-                                text = "IDR ACTIVE",
+                                text = strings.idrActive,
                                 color = Color.White,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -117,12 +198,12 @@ fun SettingsScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(
-                                        text = "Appearance & Theme Mode",
+                                        text = strings.appearanceTitle,
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "Switch between Light Mode and OLED Dark Mode",
+                                        text = strings.appearanceSubtitle,
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                     )
@@ -133,7 +214,7 @@ fun SettingsScreen(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = if (isDarkTheme) "DARK ACTIVE" else "LIGHT ACTIVE",
+                                    text = if (isDarkTheme) strings.darkActive else strings.lightActive,
                                     color = if (isDarkTheme) Color.White else Color(0xFF92400E),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
@@ -151,13 +232,13 @@ fun SettingsScreen(
                             FilterChip(
                                 selected = !isDarkTheme,
                                 onClick = { onToggleTheme(false) },
-                                label = { Text("☀️ Light Mode") },
+                                label = { Text(strings.lightModeLabel) },
                                 modifier = Modifier.weight(1f)
                             )
                             FilterChip(
                                 selected = isDarkTheme,
                                 onClick = { onToggleTheme(true) },
-                                label = { Text("🌙 Dark Mode") },
+                                label = { Text(strings.darkModeLabel) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -205,7 +286,7 @@ fun SettingsScreen(
                             Icon(Icons.Default.Inventory2, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Product & Stock Management",
+                                text = strings.productMgmtTitle,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -213,7 +294,7 @@ fun SettingsScreen(
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Adding new products, setting IDR selling prices, and editing stock quantities are managed directly inside the Inventory Tab.",
+                            text = strings.productMgmtDesc,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                         )
@@ -224,7 +305,7 @@ fun SettingsScreen(
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Go to Inventory & Product Manager ➔", fontWeight = FontWeight.Bold)
+                            Text(strings.goToInventoryBtn, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

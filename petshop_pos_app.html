@@ -606,6 +606,9 @@
       <button id="btnThemeToggle" data-action="toggleTheme" class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shrink-0" style="background: var(--oneui-surface-2); color: var(--oneui-amber);">
         <span id="themeIcon">☀️</span> <span id="themeLabel">Light Mode</span>
       </button>
+      <button id="btnLangToggle" data-action="toggleLanguage" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap shrink-0" style="background: var(--oneui-surface-2); color: var(--oneui-blue);" title="Switch English / Bahasa Indonesia">
+        <span id="langFlag">🇬🇧</span> <span id="langLabel">EN</span>
+      </button>
       <button data-action="resetDemoData" class="px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap shrink-0" style="background: var(--oneui-surface-2); color: var(--oneui-text-muted);" title="Reset demo inventory and cart">
         🔄 Reset
       </button>
@@ -1275,8 +1278,19 @@
 
         <!-- System & Theme Preferences -->
         <div class="oneui-focus-block p-4 sm:p-5 space-y-3">
-          <h2 class="text-base font-extrabold">Preferences & Data Control</h2>
+          <h2 class="text-base font-extrabold" id="settingsPrefsTitle">Preferences & Data Control</h2>
           <div class="space-y-2 text-xs">
+            <div class="p-3 rounded-2xl flex items-center justify-between" style="background-color: var(--oneui-surface-2);">
+              <div>
+                <div class="font-bold text-sm" id="settingsLangTitle">App Language / Bahasa</div>
+                <div class="text-xs" style="color: var(--oneui-text-muted);" id="settingsLangSub">Switch between English and Bahasa Indonesia</div>
+              </div>
+              <button data-action="toggleLanguage" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm" style="background-color: var(--oneui-surface); color: var(--oneui-blue);">
+                <span id="settingsLangFlag">🇬🇧</span>
+                <span id="settingsLangBtnLabel">English</span>
+              </button>
+            </div>
+
             <div class="p-3 rounded-2xl flex items-center justify-between" style="background-color: var(--oneui-surface-2);">
               <div>
                 <div class="font-bold text-sm">Theme Appearance</div>
@@ -1365,7 +1379,7 @@
             <rect x="3" y="4" width="18" height="16" rx="3"></rect>
             <path d="M7 8h10M7 12h4m3 0h3M7 16h2"></path>
           </svg>
-          <span class="truncate">Cashier</span>
+          <span id="navLabelCashier" class="truncate">Cashier</span>
         </button>
 
         <button id="navBtnInventory" data-action="switchTab" data-arg="inventory" class="flex-1 py-2 px-1 sm:px-2 rounded-full text-[11px] font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1 relative" style="color: var(--oneui-text-secondary);">
@@ -1373,7 +1387,7 @@
             <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
             <path d="m3.3 7 8.7 5 8.7-5M12 22V12"></path>
           </svg>
-          <span class="truncate">Stock</span>
+          <span id="navLabelStock" class="truncate">Stock</span>
           <span id="navLowBadge" class="absolute -top-1 -right-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold" style="background: var(--oneui-amber-tint); color: var(--oneui-amber);">1</span>
         </button>
 
@@ -1381,14 +1395,14 @@
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/>
           </svg>
-          <span class="truncate">Recap</span>
+          <span id="navLabelRecap" class="truncate">Recap</span>
         </button>
 
         <button id="navBtnHistory" data-action="switchTab" data-arg="history" class="flex-1 py-2 px-1 sm:px-2 rounded-full text-[11px] font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1" style="color: var(--oneui-text-secondary);">
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
           </svg>
-          <span class="truncate">History</span>
+          <span id="navLabelHistory" class="truncate">History</span>
         </button>
 
         <button id="navBtnSettings" data-action="switchTab" data-arg="settings" class="flex-1 py-2 px-1 sm:px-2 rounded-full text-[11px] font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1" style="color: var(--oneui-text-secondary);">
@@ -1396,7 +1410,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281Z"/>
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
           </svg>
-          <span class="truncate">Settings</span>
+          <span id="navLabelSettings" class="truncate">Settings</span>
         </button>
       </div>
     </div>
@@ -4021,6 +4035,45 @@ Minimum version required to store current data is: `+i+`.
       showToast(isDarkTheme ? "🌙 One UI True OLED Dark Mode (#010101)" : "☀️ One UI Soft Light Mode (#F2F2F7)");
     }
 
+    let appLang = localStorage.getItem("pawpos_lang") || "en";
+
+    function applyLanguage() {
+      const isId = appLang === "id";
+      const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
+
+      setTxt("langFlag", isId ? "🇮🇩" : "🇬🇧");
+      setTxt("langLabel", isId ? "ID" : "EN");
+      setTxt("settingsLangFlag", isId ? "🇮🇩" : "🇬🇧");
+      setTxt("settingsLangBtnLabel", isId ? "Bahasa Indonesia" : "English");
+      setTxt("settingsPrefsTitle", isId ? "Preferensi & Kontrol Data" : "Preferences & Data Control");
+      setTxt("settingsLangTitle", isId ? "Bahasa Aplikasi / Language" : "App Language / Bahasa");
+      setTxt("settingsLangSub", isId ? "Ubah antara Bahasa Indonesia dan English" : "Switch between English and Bahasa Indonesia");
+
+      // Bottom Nav Labels
+      setTxt("navLabelCashier", isId ? "Kasir" : "Cashier");
+      setTxt("navLabelStock", isId ? "Stok" : "Stock");
+      setTxt("navLabelRecap", isId ? "Rekap" : "Recap");
+      setTxt("navLabelHistory", isId ? "Riwayat" : "History");
+      setTxt("navLabelSettings", isId ? "Setelan" : "Settings");
+
+      // Recap Timeframe Pills
+      setTxt("recapTfDay", isId ? "Hari" : "Day");
+      setTxt("recapTfWeek", isId ? "Minggu" : "Week");
+      setTxt("recapTfMonth", isId ? "Bulan" : "Month");
+      setTxt("recapTfYear", isId ? "Tahun" : "Year");
+      setTxt("recapDownloadPdfText", isId ? "Unduh PDF Fiskal & Ekspor Pajak (PPN 11%)" : "Download Fiscal PDF & Tax Export (PPN 11%)");
+      setTxt("recapShareWaText", isId
+        ? (recapTimeframe === "month" ? "Bagikan Laba Rugi Bulanan ke WhatsApp Owner" : "Bagikan Laporan Penjualan ke WhatsApp")
+        : (recapTimeframe === "month" ? "Share Monthly P&L to Owner WhatsApp" : "Share Sales Report via WhatsApp"));
+    }
+
+    function toggleLanguage() {
+      appLang = appLang === "en" ? "id" : "en";
+      localStorage.setItem("pawpos_lang", appLang);
+      applyLanguage();
+      showToast(appLang === "id" ? "🇮🇩 Bahasa diubah ke Bahasa Indonesia" : "🇬🇧 Language switched to English");
+    }
+
     function toggleReachability() {
       isReachabilityExpanded = !isReachabilityExpanded;
       const header = document.getElementById("oneUiViewingArea");
@@ -4148,6 +4201,7 @@ Minimum version required to store current data is: `+i+`.
         case "downloadFinancialSummary": downloadFinancialSummary(); break;
         case "setFormFactor": setFormFactor(arg); break;
         case "toggleTheme": toggleTheme(); break;
+        case "toggleLanguage": toggleLanguage(); break;
         case "toggleReachability": toggleReachability(); break;
         case "resetDemoData":
           products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
