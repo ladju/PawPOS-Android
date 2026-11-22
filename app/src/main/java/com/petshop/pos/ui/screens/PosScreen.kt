@@ -3,6 +3,7 @@ package com.petshop.pos.ui.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +32,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
+import com.petshop.pos.domain.Money
+import kotlinx.coroutines.delay
 import coil.compose.AsyncImage
 import com.petshop.pos.data.local.entity.PaymentMethod
 import com.petshop.pos.data.local.entity.PetCategory
@@ -38,6 +45,9 @@ import com.petshop.pos.data.local.entity.ProductEntity
 import com.petshop.pos.data.local.entity.ProductType
 import com.petshop.pos.ui.components.*
 import com.petshop.pos.ui.theme.CoralAccent
+import com.petshop.pos.ui.theme.LocalAppStrings
+import com.petshop.pos.ui.theme.OneUiBlue
+import com.petshop.pos.ui.theme.OneUiGreen
 import com.petshop.pos.ui.theme.Teal40
 import com.petshop.pos.ui.theme.TealLight
 import com.petshop.pos.ui.viewmodel.PosUiState
@@ -50,6 +60,7 @@ fun PosScreen(
     onNavigateToScanner: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val uiState by viewModel.uiState.collectAsState()
     val products by viewModel.products.collectAsState()
     var isCartSheetOpen by remember { mutableStateOf(false) }
@@ -71,7 +82,7 @@ fun PosScreen(
                     OutlinedTextField(
                         value = uiState.searchQuery,
                         onValueChange = { viewModel.onSearchQueryChanged(it) },
-                        placeholder = { Text("Search product name or barcode...") },
+                        placeholder = { Text(strings.posSearchHint) },
                         leadingIcon = {
                             Icon(Icons.Default.Search, contentDescription = "Search")
                         },
@@ -83,7 +94,7 @@ fun PosScreen(
                             }
                         },
                         singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -92,7 +103,7 @@ fun PosScreen(
                         colors = IconButtonDefaults.filledIconButtonColors(
                             containerColor = MaterialTheme.colorScheme.primary
                         ),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.size(52.dp)
                     ) {
                         Icon(
@@ -128,14 +139,15 @@ fun PosScreen(
                         Row(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(14.dp))
+                                .testTag("cart_pill")
                                 .clickable { isCartSheetOpen = true }
                                 .padding(vertical = 4.dp, horizontal = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Surface(
                                 color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(14.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
@@ -159,7 +171,7 @@ fun PosScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
-                                    text = "${uiState.totalItemsCount} items • Tap to Review",
+                                    text = strings.posItemsTapReview.format(uiState.totalItemsCount),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                 )
@@ -167,7 +179,9 @@ fun PosScreen(
                                     text = formatCurrency(uiState.grandTotal),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -183,9 +197,10 @@ fun PosScreen(
                             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 13.dp)
                         ) {
                             Text(
-                                text = "Charge ${formatCurrency(uiState.grandTotal)}",
+                                text = strings.posCharge,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontSize = 14.sp,
+                                maxLines = 1
                             )
                         }
                     }
@@ -211,12 +226,12 @@ fun PosScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "No products found",
+                            text = strings.posNoProducts,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "Try another category or search keyword",
+                            text = strings.posNoProductsHint,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -228,7 +243,7 @@ fun PosScreen(
                 }
 
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 160.dp),
+                    columns = GridCells.Adaptive(minSize = 150.dp),
                     contentPadding = PaddingValues(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -291,9 +306,19 @@ fun PosScreen(
             },
             onPaymentMethodChanged = { viewModel.setPaymentMethod(it) },
             onCashTenderedChanged = { viewModel.setCashTendered(it) },
+            onQrisReferenceChanged = { viewModel.setQrisReference(it) },
             onCustomerDetailsChanged = { name, phone -> viewModel.setCustomerDetails(name, phone) },
+            onDismissError = { viewModel.dismissError() },
             onComplete = { viewModel.completeCheckout() }
         )
+    }
+
+    // Chime only once the sale is really saved, and only for QRIS (cashier's audible cue).
+    val savedTransaction = uiState.lastTransaction
+    LaunchedEffect(savedTransaction?.id, uiState.isReceiptDialogOpen) {
+        if (uiState.isReceiptDialogOpen && savedTransaction?.paymentMethod == PaymentMethod.QRIS) {
+            playPosVerificationChime()
+        }
     }
 
     // Receipt Dialog
@@ -314,6 +339,7 @@ fun ProductCard(
     onIncrease: () -> Unit = onAddToCart,
     onDecrease: () -> Unit = {}
 ) {
+    val strings = LocalAppStrings.current
     val isInCart = inCartQuantity > 0
     Card(
         colors = CardDefaults.cardColors(
@@ -321,9 +347,10 @@ fun ProductCard(
         ),
         border = if (isInCart) BorderStroke(2.dp, Teal40) else null,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .testTag("product_${product.id}")
             .clickable(enabled = product.currentStock > 0 || product.productType.isService || product.category == PetCategory.SERVICES) {
                 onAddToCart()
             }
@@ -345,7 +372,7 @@ fun ProductCard(
                         shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
-                            text = "🛒 $inCartQuantity in cart",
+                            text = "🛒 " + strings.posInCart.format(inCartQuantity),
                             color = Color.White,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -370,7 +397,7 @@ fun ProductCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(80.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(14.dp))
                 )
                 Spacer(modifier = Modifier.height(6.dp))
             } else {
@@ -414,7 +441,7 @@ fun ProductCard(
                         modifier = Modifier
                             .background(
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                RoundedCornerShape(10.dp)
+                                RoundedCornerShape(14.dp)
                             )
                             .padding(horizontal = 2.dp, vertical = 2.dp)
                     ) {
@@ -423,7 +450,7 @@ fun ProductCard(
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.size(34.dp)
                         ) {
                             Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(16.dp))
@@ -441,7 +468,7 @@ fun ProductCard(
                                 containerColor = Teal40,
                                 contentColor = Color.White
                             ),
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.size(34.dp)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Increase", modifier = Modifier.size(16.dp))
@@ -455,7 +482,7 @@ fun ProductCard(
                             containerColor = Teal40,
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.size(44.dp)
                     ) {
                         Icon(
@@ -481,6 +508,7 @@ fun CartModalSheet(
     onToggleTax: (Boolean) -> Unit = {},
     onOpenCheckout: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -496,12 +524,12 @@ fun CartModalSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Review Order & Items (${uiState.totalItemsCount})",
+                    text = strings.posReviewOrder.format(uiState.totalItemsCount),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 TextButton(onClick = onClearCart) {
-                    Text("Clear All", color = MaterialTheme.colorScheme.error)
+                    Text(strings.posClearAll, color = MaterialTheme.colorScheme.error)
                 }
             }
 
@@ -519,7 +547,7 @@ fun CartModalSheet(
                             .fillMaxWidth()
                             .background(
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                                RoundedCornerShape(12.dp)
+                                RoundedCornerShape(14.dp)
                             )
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -533,7 +561,7 @@ fun CartModalSheet(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "${formatCurrency(item.product.sellingPrice)} each",
+                                text = strings.posEach.format(formatCurrency(item.product.sellingPrice)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -546,7 +574,7 @@ fun CartModalSheet(
                                 colors = IconButtonDefaults.filledIconButtonColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                                 ),
-                                shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 modifier = Modifier.size(38.dp)
                             ) {
                                 Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(20.dp))
@@ -563,7 +591,7 @@ fun CartModalSheet(
                                     containerColor = Teal40,
                                     contentColor = Color.White
                                 ),
-                                shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 modifier = Modifier.size(38.dp)
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = "Increase", modifier = Modifier.size(20.dp))
@@ -600,16 +628,16 @@ fun CartModalSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Subtotal", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                Text(strings.posSubtotal, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 Text(formatCurrency(uiState.subtotal), fontWeight = FontWeight.SemiBold)
             }
-            if (uiState.discountAmount > 0) {
+            if (uiState.appliedDiscount > 0) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Discount", color = MaterialTheme.colorScheme.error)
-                    Text("-${formatCurrency(uiState.discountAmount)}", color = MaterialTheme.colorScheme.error)
+                    Text(strings.posDiscount, color = MaterialTheme.colorScheme.error)
+                    Text("-${formatCurrency(uiState.appliedDiscount)}", color = MaterialTheme.colorScheme.error)
                 }
             }
             Row(
@@ -625,13 +653,13 @@ fun CartModalSheet(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (uiState.taxRate > 0) "Tax (${(uiState.taxRate * 100).toInt()}%)" else "Apply Tax (Optional)",
+                        text = if (uiState.taxRate > 0) strings.taxPercentLabel.format(uiState.taxPercent) else strings.taxApply,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                     )
                 }
                 Text(
-                    text = if (uiState.taxRate > 0) formatCurrency(uiState.taxAmount) else "Rp 0 (Not included)",
+                    text = if (uiState.taxRate > 0) formatCurrency(uiState.taxAmount) else strings.taxNotIncluded,
                     fontWeight = FontWeight.SemiBold,
                     color = if (uiState.taxRate > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
@@ -645,7 +673,7 @@ fun CartModalSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Grand Total",
+                    text = strings.posGrandTotal,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -663,12 +691,13 @@ fun CartModalSheet(
                 onClick = onOpenCheckout,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(52.dp)
+                    .testTag("proceed_to_payment"),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text(
-                    text = "Proceed to Payment",
+                    text = strings.posProceed,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -684,539 +713,278 @@ fun CheckoutDialog(
     onDismiss: () -> Unit,
     onBackToCart: () -> Unit = onDismiss,
     onPaymentMethodChanged: (PaymentMethod) -> Unit,
-    onCashTenderedChanged: (Double) -> Unit,
+    onCashTenderedChanged: (Long) -> Unit,
+    onQrisReferenceChanged: (String) -> Unit,
     onCustomerDetailsChanged: (String, String) -> Unit,
+    onDismissError: () -> Unit,
     onComplete: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
+    val busy = uiState.isProcessing
     var custName by remember { mutableStateOf(uiState.customerName) }
     var custPhone by remember { mutableStateOf(uiState.customerPhone) }
-    var tenderInput by remember(uiState.grandTotal) {
-        mutableStateOf(if (uiState.cashTendered > 0) formatCurrency(uiState.cashTendered) else formatCurrency(uiState.grandTotal))
-    }
+    // QRIS cannot be confirmed by the app, so the cashier must explicitly attest they saw the payment.
+    var paymentSeen by remember(uiState.paymentMethod) { mutableStateOf(false) }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = { if (!busy) onDismiss() },
+        properties = DialogProperties(
+            dismissOnBackPress = !busy,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false
+        )
+    ) {
         Card(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .padding(horizontal = 12.dp, vertical = 24.dp)
+                .heightIn(max = 760.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // ---- header (fixed) ----
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, end = 8.dp, top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onBackToCart) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        IconButton(onClick = onBackToCart, enabled = !busy) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Back to Review Cart")
                         }
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Checkout Payment",
+                            text = strings.coTitle,
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
                         )
                     }
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = onDismiss, enabled = !busy) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Tappable Order items summary strip to return to cart details
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(10.dp),
+                // ---- scrollable body ----
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onBackToCart() }
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "🛍️ ${uiState.totalItemsCount} items in cart",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = "Review Items ✎",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Total display
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Amount Due",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = formatCurrency(uiState.grandTotal),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (uiState.taxRate > 0 && uiState.taxAmount > 0) {
-                                "Subtotal ${formatCurrency(uiState.discountedSubtotal)} + Tax (${(uiState.taxRate * 100).toInt()}%) ${formatCurrency(uiState.taxAmount)}"
-                            } else {
-                                "Subtotal ${formatCurrency(uiState.discountedSubtotal)} • Tax Not Included (Small Business 0%)"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Payment Method Selector
-                Text(
-                    text = "Select Payment Method",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PaymentMethod.entries.forEach { method ->
-                        val isSelected = method == uiState.paymentMethod
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { onPaymentMethodChanged(method) },
-                            label = { Text(method.displayName) },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                    }
-                }
-
-                // If Cash, show tender and change calculation
-                if (uiState.paymentMethod == PaymentMethod.CASH) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Cash Received",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    OutlinedTextField(
-                        value = tenderInput,
-                        onValueChange = { input ->
-                            val digits = input.filter { it.isDigit() }
-                            if (digits.isBlank()) {
-                                tenderInput = ""
-                                onCashTenderedChanged(0.0)
-                            } else {
-                                val parsed = digits.toDoubleOrNull() ?: 0.0
-                                tenderInput = formatCurrency(parsed)
-                                onCashTenderedChanged(parsed)
-                            }
-                        },
-                        label = { Text("Cash Received (IDR)") },
-                        placeholder = { Text("Rp 0") },
-                        trailingIcon = {
-                            if (tenderInput.isNotBlank()) {
-                                IconButton(onClick = {
-                                    tenderInput = ""
-                                    onCashTenderedChanged(0.0)
-                                }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Clear cash input")
+                    uiState.errorMessage?.let { message ->
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(start = 12.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = CoralAccent)
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = message,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(onClick = onDismissError) {
+                                    Icon(Icons.Default.Close, contentDescription = "Dismiss message", tint = MaterialTheme.colorScheme.onTertiaryContainer)
                                 }
                             }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(
-                        text = "Quick Tender Suggestions (Currency Rounding):",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    val predictions = remember(uiState.grandTotal) {
-                        calculateCashPredictions(uiState.grandTotal)
+                        }
+                        Spacer(Modifier.height(10.dp))
                     }
 
-                    // Dynamic Cash Prediction Pills (IDR Banknotes & Currency Rounding)
-                    Row(
+                    // Tappable order summary to go back and edit the cart
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        predictions.forEach { pred ->
-                            val isSelected = kotlin.math.abs(uiState.cashTendered - pred.amount) < 0.5
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = {
-                                    tenderInput = formatCurrency(pred.amount)
-                                    onCashTenderedChanged(pred.amount)
-                                },
-                                label = {
-                                    Text(
-                                        text = pred.label,
-                                        fontWeight = if (isSelected || pred.isExact) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 12.sp
-                                    )
-                                },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Teal40,
-                                    selectedLabelColor = Color.White
-                                )
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Change calculation box
-                    Surface(
-                        color = if (uiState.cashTendered >= uiState.grandTotal) Color(0xFFD1FAE5) else Color(0xFFFFE4E6),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
+                            .clickable(enabled = !busy) { onBackToCart() }
                     ) {
                         Row(
-                            modifier = Modifier.padding(14.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
-                                Text(
-                                    text = if (uiState.cashTendered >= uiState.grandTotal) "Change to Return:" else "Short by:",
-                                    fontWeight = FontWeight.SemiBold,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (uiState.cashTendered >= uiState.grandTotal) Color(0xFF047857) else CoralAccent
-                                )
-                                if (uiState.cashTendered >= uiState.grandTotal) {
-                                    Text(
-                                        text = "Kembalian Uang",
-                                        fontSize = 11.sp,
-                                        color = Color(0xFF047857).copy(alpha = 0.7f)
-                                    )
-                                }
-                            }
                             Text(
-                                text = formatCurrency(Math.abs(uiState.cashTendered - uiState.grandTotal)),
-                                fontWeight = FontWeight.Black,
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = if (uiState.cashTendered >= uiState.grandTotal) Color(0xFF047857) else CoralAccent
+                                text = strings.coItemsInCart.format(uiState.totalItemsCount),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = strings.coReviewItems,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
-                } else if (uiState.paymentMethod == PaymentMethod.QRIS) {
-                    // Dynamic QRIS Counter Scanning & 1-Tap Customer Fullscreen Flip
-                    var countdownSeconds by remember { mutableStateOf(180) }
-                    var isCustomerFullscreenOpen by remember { mutableStateOf(false) }
-                    val rrnCode = uiState.currentQrisRrn.ifBlank { "261112502600" }
 
-                    LaunchedEffect(uiState.paymentMethod) {
-                        countdownSeconds = 180
-                        while (countdownSeconds > 0) {
-                            kotlinx.coroutines.delay(1000L)
-                            countdownSeconds--
-                        }
-                    }
+                    Spacer(Modifier.height(10.dp))
 
-                    val minStr = String.format("%02d", countdownSeconds / 60)
-                    val secStr = String.format("%02d", countdownSeconds % 60)
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
+                    // Amount due
                     Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                        color = MaterialTheme.colorScheme.primaryContainer,
                         shape = RoundedCornerShape(22.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Header: QRIS Standar Nasional + Timer + Customer View Flip
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Surface(
-                                        color = Color(0xFFDC2626),
-                                        shape = RoundedCornerShape(4.dp)
-                                    ) {
-                                        Text(
-                                            text = "QRIS",
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Black,
-                                            fontSize = 11.sp,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                    Text(
-                                        text = "Standar Nasional",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                    )
-                                }
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.primaryContainer,
-                                        shape = CircleShape
-                                    ) {
-                                        Text(
-                                            text = "⏳ $minStr:$secStr",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                        )
-                                    }
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        shape = CircleShape,
-                                        modifier = Modifier.clickable { isCustomerFullscreenOpen = true }
-                                    ) {
-                                        Text(
-                                            text = "🔲 Customer View",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White,
-                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                        )
-                                    }
-                                }
-                            }
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
-                            )
-
                             Text(
-                                text = "PawPlace Pet Shop & Grooming",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 14.sp
+                                text = strings.coAmountDue,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = "NMID: ID1020038192019 • RRN: $rrnCode",
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Scannable White QR Card (Tap to Enlarge)
-                            Surface(
-                                color = Color.White,
-                                shape = RoundedCornerShape(18.dp),
-                                shadowElevation = 4.dp,
-                                border = BorderStroke(2.dp, Color(0xFFE5E7EB)),
-                                modifier = Modifier.clickable { isCustomerFullscreenOpen = true }
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(14.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    DynamicQrisCodeBox(
-                                        amount = uiState.grandTotal,
-                                        sizeDp = 168
-                                    )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = "🔍 TAP TO ENLARGE FOR CUSTOMER",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Color(0xFF4B5563)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Exact QRIS Total Strip
-                            Surface(
-                                color = MaterialTheme.colorScheme.surface,
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Exact QRIS Total",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                    )
-                                    Text(
-                                        text = formatCurrency(uiState.grandTotal),
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = if (uiState.qrisMdrRate == 0.0) {
-                                    "No customer surcharge • 0.0% UMI Subsidized MDR"
-                                } else {
-                                    "No customer surcharge • Store absorbs 0.3% MDR"
-                                },
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-
-                            Spacer(modifier = Modifier.height(6.dp))
-
-                            Text(
-                                text = "GoPay • OVO • DANA • ShopeePay • BCA • Mandiri • BRI",
-                                fontSize = 10.sp,
+                                text = formatCurrency(uiState.grandTotal),
+                                style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                maxLines = 1
                             )
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            OutlinedButton(
-                                onClick = {
-                                    playPosVerificationChime()
-                                    onComplete()
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = buildString {
+                                    append("Subtotal ").append(formatCurrency(uiState.discountedSubtotal))
+                                    if (uiState.taxPercent > 0 && uiState.taxAmount > 0) {
+                                        append(" + Tax (").append(uiState.taxPercent).append("%) ")
+                                        append(formatCurrency(uiState.taxAmount))
+                                    } else {
+                                        append(" • No tax")
+                                    }
                                 },
-                                shape = CircleShape,
-                                border = BorderStroke(1.dp, Color(0xFF10B981)),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFF10B981)
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = "⚡ Simulate Customer Scanned & Paid",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
 
-                    if (isCustomerFullscreenOpen) {
-                        CustomerFullscreenQrisDialog(
-                            amount = uiState.grandTotal,
-                            timerText = "⏳ $minStr:$secStr",
-                            onDismiss = { isCustomerFullscreenOpen = false },
-                            onCompleteSale = {
-                                isCustomerFullscreenOpen = false
-                                playPosVerificationChime()
-                                onComplete()
-                            }
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        text = strings.coPaymentMethod,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PaymentMethod.entries.forEach { method ->
+                            FilterChip(
+                                selected = method == uiState.paymentMethod,
+                                onClick = { onPaymentMethodChanged(method) },
+                                enabled = !busy,
+                                label = {
+                                    Text(
+                                        text = method.displayName,
+                                        maxLines = 1,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Center
+                                    )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 48.dp),
+                                shape = RoundedCornerShape(14.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    if (uiState.paymentMethod == PaymentMethod.CASH) {
+                        CashTenderSection(
+                            uiState = uiState,
+                            enabled = !busy,
+                            onCashTenderedChanged = onCashTenderedChanged
+                        )
+                    } else {
+                        QrisManualSection(
+                            uiState = uiState,
+                            enabled = !busy,
+                            paymentSeen = paymentSeen,
+                            onPaymentSeenChanged = { paymentSeen = it },
+                            onReferenceChanged = onQrisReferenceChanged
                         )
                     }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = custName,
+                        onValueChange = {
+                            custName = it.take(60)
+                            onCustomerDetailsChanged(custName, custPhone)
+                        },
+                        enabled = !busy,
+                        label = { Text(strings.coCustomerName) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                    Spacer(Modifier.height(12.dp))
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Optional Customer Details
-                OutlinedTextField(
-                    value = custName,
-                    onValueChange = {
-                        custName = it
-                        onCustomerDetailsChanged(custName, custPhone)
-                    },
-                    label = { Text("Customer Name (Optional)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                val isCashShort = uiState.paymentMethod == PaymentMethod.CASH && uiState.cashTendered < uiState.grandTotal
+                // ---- pinned footer: the action is always reachable, even on a 360x640 phone ----
+                val isQris = uiState.paymentMethod == PaymentMethod.QRIS
+                val cashShort = !isQris && !uiState.isTenderSufficient
+                val canSubmit = uiState.canCompleteCheckout && (!isQris || paymentSeen)
                 Button(
-                    onClick = {
-                        if (uiState.paymentMethod == PaymentMethod.QRIS) {
-                            playPosVerificationChime()
-                        }
-                        onComplete()
-                    },
-                    enabled = !isCashShort,
+                    onClick = onComplete,
+                    enabled = canSubmit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp, top = 4.dp)
+                        .height(52.dp)
+                        .testTag("complete_sale"),
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 ) {
-                    if (isCashShort) {
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = CoralAccent)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Enter Full Cash (Short ${formatCurrency(uiState.grandTotal - uiState.cashTendered)})",
-                            fontWeight = FontWeight.Bold,
-                            color = CoralAccent,
-                            fontSize = 13.sp
-                        )
-                    } else {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (uiState.paymentMethod == PaymentMethod.QRIS) {
-                                "✓ Customer Has Paid • Complete Sale"
-                            } else {
-                                "✓ Complete Cash Sale"
-                            },
-                            fontWeight = FontWeight.Bold
-                        )
+                    when {
+                        busy -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(strings.coProcessing, fontWeight = FontWeight.Bold)
+                        }
+                        cashShort -> {
+                            Text(
+                                text = strings.coShortBy.format(formatCurrency(uiState.grandTotal - uiState.cashTendered)),
+                                fontWeight = FontWeight.Bold,
+                                color = CoralAccent,
+                                maxLines = 1
+                            )
+                        }
+                        isQris && !paymentSeen -> {
+                            Text(strings.coConfirmFirst, fontWeight = FontWeight.Bold, maxLines = 1)
+                        }
+                        else -> {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = if (isQris) strings.coCompleteQris else strings.coCompleteCash,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
@@ -1224,294 +992,214 @@ fun CheckoutDialog(
     }
 }
 
-private fun playPosVerificationChime() {
-    try {
-        val toneGen = android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 90)
-        toneGen.startTone(android.media.ToneGenerator.TONE_PROP_ACK, 350)
-    } catch (_: Exception) {
-    }
-}
-
+/** Cash received field + quick-tender chips + change box. The ViewModel's cashTendered is the only stored value. */
 @Composable
-fun DynamicQrisCodeBox(
-    amount: Double,
-    sizeDp: Int = 168
+private fun CashTenderSection(
+    uiState: PosUiState,
+    enabled: Boolean,
+    onCashTenderedChanged: (Long) -> Unit
 ) {
-    val seed = kotlin.math.abs(amount.toLong()).coerceAtLeast(12345L)
-    Box(
-        modifier = Modifier
-            .size(sizeDp.dp)
-            .background(Color.White),
-        contentAlignment = Alignment.Center
-    ) {
-        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-            val w = size.width
-            val scale = w / 200f
+    val strings = LocalAppStrings.current
+    fun display(amount: Long) = if (amount > 0) formatCurrency(amount) else ""
 
-            fun drawFinder(x: Float, y: Float) {
-                drawRoundRect(
-                    color = Color(0xFF1C1C1E),
-                    topLeft = androidx.compose.ui.geometry.Offset(x * scale, y * scale),
-                    size = androidx.compose.ui.geometry.Size(46f * scale, 46f * scale),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f * scale, 8f * scale)
-                )
-                drawRoundRect(
-                    color = Color.White,
-                    topLeft = androidx.compose.ui.geometry.Offset((x + 8f) * scale, (y + 8f) * scale),
-                    size = androidx.compose.ui.geometry.Size(30f * scale, 30f * scale),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f * scale, 4f * scale)
-                )
-                drawRoundRect(
-                    color = Color(0xFF1C1C1E),
-                    topLeft = androidx.compose.ui.geometry.Offset((x + 14f) * scale, (y + 14f) * scale),
-                    size = androidx.compose.ui.geometry.Size(18f * scale, 18f * scale),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(3f * scale, 3f * scale)
-                )
-            }
+    // Text + cursor live here only so the caret stays at the end while "Rp 1.250.000" is being reformatted.
+    var field by remember { mutableStateOf(TextFieldValue(display(uiState.cashTendered), TextRange(display(uiState.cashTendered).length))) }
+    LaunchedEffect(uiState.cashTendered) {
+        val shown = display(uiState.cashTendered)
+        if (field.text != shown) field = TextFieldValue(shown, TextRange(shown.length))
+    }
 
-            drawFinder(10f, 10f)
-            drawFinder(144f, 10f)
-            drawFinder(10f, 144f)
-
-            for (r in 0 until 14) {
-                for (c in 0 until 14) {
-                    val x = 20f + c * 11.5f
-                    val y = 20f + r * 11.5f
-                    val inTL = x < 65f && y < 65f
-                    val inTR = x > 135f && y < 65f
-                    val inBL = x < 65f && y > 135f
-                    val inCenter = x > 80f && x < 120f && y > 80f && y < 120f
-                    if (!inTL && !inTR && !inBL && !inCenter) {
-                        val v = kotlin.math.sin(seed * 0.001 + r * 7.3 + c * 13.7 + (r * c)) * 10000.0
-                        if (kotlin.math.abs(v - kotlin.math.floor(v)) > 0.45) {
-                            drawRoundRect(
-                                color = Color(0xFF1C1C1E),
-                                topLeft = androidx.compose.ui.geometry.Offset(x * scale, y * scale),
-                                size = androidx.compose.ui.geometry.Size(7f * scale, 7f * scale),
-                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(1.5f * scale, 1.5f * scale)
-                            )
-                        }
-                    }
+    Text(
+        text = strings.coCashReceived,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold
+    )
+    Spacer(Modifier.height(6.dp))
+    OutlinedTextField(
+        value = field,
+        onValueChange = { input ->
+            val amount = Money.parseDigits(input.text)
+            val shown = display(amount)
+            field = TextFieldValue(shown, TextRange(shown.length))
+            onCashTenderedChanged(amount)
+        },
+        enabled = enabled,
+        label = { Text(strings.coCashReceivedField) },
+        placeholder = { Text("Rp 0") },
+        trailingIcon = {
+            if (field.text.isNotEmpty()) {
+                IconButton(onClick = { onCashTenderedChanged(0L) }, enabled = enabled) {
+                    Icon(Icons.Default.Clear, contentDescription = "Clear cash input")
                 }
             }
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("cash_input"),
+        shape = RoundedCornerShape(14.dp)
+    )
 
-            drawCircle(
-                color = Color(0xFF0381FE),
-                radius = 18f * scale,
-                center = androidx.compose.ui.geometry.Offset(100f * scale, 100f * scale)
+    Spacer(Modifier.height(10.dp))
+    Text(
+        text = strings.coQuickAmounts,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Spacer(Modifier.height(6.dp))
+
+    val predictions = remember(uiState.grandTotal) { calculateCashPredictions(uiState.grandTotal) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        predictions.forEach { pred ->
+            val isSelected = uiState.cashTendered == pred.amount
+            FilterChip(
+                selected = isSelected,
+                onClick = { onCashTenderedChanged(pred.amount) },
+                enabled = enabled,
+                label = {
+                    Text(
+                        text = pred.label,
+                        fontWeight = if (isSelected || pred.isExact) FontWeight.Bold else FontWeight.Medium,
+                        fontSize = 12.sp,
+                        maxLines = 1
+                    )
+                },
+                shape = RoundedCornerShape(14.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = OneUiBlue,
+                    selectedLabelColor = Color.White
+                )
             )
         }
-        Text(text = "🐾", fontSize = (sizeDp / 10).sp)
+    }
+
+    Spacer(Modifier.height(12.dp))
+
+    val enough = uiState.isTenderSufficient
+    val accent = if (enough) OneUiGreen else CoralAccent
+    Surface(
+        color = accent.copy(alpha = 0.16f),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (enough) strings.coChangeToReturn else strings.coShortByLabel,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = accent
+                )
+                if (enough) {
+                    Text(text = "Kembalian", fontSize = 11.sp, color = accent.copy(alpha = 0.8f))
+                }
+            }
+            Text(
+                text = formatCurrency(if (enough) uiState.changeDue else uiState.grandTotal - uiState.cashTendered),
+                fontWeight = FontWeight.Black,
+                style = MaterialTheme.typography.headlineSmall,
+                color = accent,
+                maxLines = 1
+            )
+        }
     }
 }
 
+/**
+ * QRIS without a merchant-issued payload: the app cannot show a scannable code or verify payment. The cashier
+ * shows the shop's own QRIS sticker, watches their bank / e-wallet merchant app, and confirms explicitly.
+ * The optional reference is whatever the cashier types; the app never invents one.
+ */
 @Composable
-fun CustomerFullscreenQrisDialog(
-    amount: Double,
-    timerText: String,
-    onDismiss: () -> Unit,
-    onCompleteSale: () -> Unit
+private fun QrisManualSection(
+    uiState: PosUiState,
+    enabled: Boolean,
+    paymentSeen: Boolean,
+    onPaymentSeenChanged: (Boolean) -> Unit,
+    onReferenceChanged: (String) -> Unit
 ) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    val strings = LocalAppStrings.current
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(22.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.95f))
-                .padding(20.dp)
-        ) {
-            // Top Bar
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = strings.qrisTitle,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = strings.qrisSteps.format(formatCurrency(uiState.grandTotal)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+            )
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = uiState.qrisReference,
+                onValueChange = onReferenceChanged,
+                enabled = enabled,
+                label = { Text(strings.qrisReference) },
+                placeholder = { Text(strings.qrisReferenceHint) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
+            )
+            Spacer(Modifier.height(8.dp))
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.TopCenter),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .heightIn(min = 48.dp)
+                    .clickable(enabled = enabled) { onPaymentSeenChanged(!paymentSeen) }
             ) {
-                Surface(
-                    color = Color.White.copy(alpha = 0.15f),
-                    shape = CircleShape,
-                    modifier = Modifier.clickable { onDismiss() }
-                ) {
-                    Text(
-                        text = "✕ Back to Cashier",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-                    )
-                }
-
-                Surface(
-                    color = Color(0xFF3B82F6).copy(alpha = 0.2f),
-                    shape = CircleShape,
-                    border = BorderStroke(1.dp, Color(0xFF3B82F6).copy(alpha = 0.4f))
-                ) {
-                    Text(
-                        text = timerText,
-                        color = Color(0xFF60A5FA),
-                        fontWeight = FontWeight.Black,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
-                }
+                Checkbox(checked = paymentSeen, onCheckedChange = null, enabled = enabled)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = strings.qrisSeen,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
-
-            // Center High-Contrast Customer Card
-            Surface(
-                color = Color.White,
-                shape = RoundedCornerShape(32.dp),
-                shadowElevation = 16.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Surface(
-                                color = Color(0xFFDC2626),
-                                shape = RoundedCornerShape(4.dp)
-                            ) {
-                                Text(
-                                    text = "QRIS",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                )
-                            }
-                            Text(
-                                text = "PEMBAYARAN NASIONAL",
-                                color = Color(0xFF4B5563),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp
-                            )
-                        }
-
-                        Surface(
-                            color = Color(0xFFD1FAE5),
-                            shape = CircleShape
-                        ) {
-                            Text(
-                                text = "GPN",
-                                color = Color(0xFF065F46),
-                                fontWeight = FontWeight.Black,
-                                fontSize = 10.sp,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        color = Color(0xFFE5E7EB)
-                    )
-
-                    Text(
-                        text = "PawPlace Pet Shop & Grooming",
-                        color = Color(0xFF111827),
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp
-                    )
-                    Text(
-                        text = "NMID: ID1020038192019 • Bali, Indonesia",
-                        color = Color(0xFF6B7280),
-                        fontSize = 11.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Surface(
-                        color = Color.White,
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(4.dp, Color(0xFF111827))
-                    ) {
-                        Box(modifier = Modifier.padding(12.dp)) {
-                            DynamicQrisCodeBox(amount = amount, sizeDp = 210)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Surface(
-                        color = Color(0xFFF3F4F6),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "TOTAL PEMBAYARAN",
-                                color = Color(0xFF6B7280),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp
-                            )
-                            Text(
-                                text = formatCurrency(amount),
-                                color = Color(0xFF0381FE),
-                                fontWeight = FontWeight.Black,
-                                fontSize = 26.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "BCA • Mandiri • BRI • BNI • GoPay • OVO • DANA • ShopeePay",
-                        color = Color(0xFF6B7280),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 10.sp
-                    )
-                }
-            }
-
-            // Bottom Cashier Quick Actions
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onCompleteSale,
-                    shape = CircleShape,
-                    border = BorderStroke(1.dp, Color(0xFF10B981)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF34D399)),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                ) {
-                    Text("⚡ Simulate Paid", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                }
-
-                Button(
-                    onClick = onCompleteSale,
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0381FE)),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                ) {
-                    Text("✓ Complete Sale", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
-                }
-            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = if (uiState.qrisMdrRate <= 0.0) strings.qrisNoFee
+                else strings.qrisFee.format("%.1f%%".format(uiState.qrisMdrRate * 100)),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
         }
+    }
+}
+
+/** Plays after a QRIS sale is saved (never before). The ToneGenerator is always released. */
+private suspend fun playPosVerificationChime() {
+    val toneGen = try {
+        android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 90)
+    } catch (_: RuntimeException) {
+        return
+    }
+    try {
+        try {
+            toneGen.startTone(android.media.ToneGenerator.TONE_PROP_ACK, 350)
+        } catch (_: RuntimeException) {
+        }
+        delay(450)
+    } finally {
+        toneGen.release()
     }
 }
 
@@ -1521,6 +1209,7 @@ fun ReceiptDialog(
     items: List<com.petshop.pos.data.local.entity.TransactionItemEntity>,
     onDismiss: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -1550,21 +1239,21 @@ fun ReceiptDialog(
                             android.widget.Toast.makeText(context, "WhatsApp not installed", android.widget.Toast.LENGTH_SHORT).show()
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+                    colors = ButtonDefaults.buttonColors(containerColor = OneUiGreen),
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text("💬 WhatsApp", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(strings.rcWhatsApp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
 
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(14.dp)
                 ) {
                     Icon(Icons.Default.Print, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Print")
+                    Text(strings.rcPrint)
                 }
             }
 
@@ -1572,11 +1261,13 @@ fun ReceiptDialog(
 
             Button(
                 onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("new_sale"),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("New Sale ➔", fontWeight = FontWeight.Bold)
+                Text(strings.rcNewSale, fontWeight = FontWeight.Bold)
             }
         }
     }

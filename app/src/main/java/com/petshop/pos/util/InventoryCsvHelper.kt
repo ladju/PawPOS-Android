@@ -1,5 +1,6 @@
 package com.petshop.pos.util
 
+import com.petshop.pos.domain.Money
 import com.petshop.pos.data.local.entity.PetCategory
 import com.petshop.pos.data.local.entity.ProductEntity
 import com.petshop.pos.data.local.entity.ProductType
@@ -109,8 +110,8 @@ object InventoryCsvHelper {
 
             val categoryStr = col("category", "kategori")
             val typeStr = col("producttype", "type", "jenis")
-            val costPrice = parsePrice(col("costprice", "cost", "hpp", "harga_beli")) ?: 0.0
-            val sellingPrice = parsePrice(col("sellingprice", "price", "harga_jual", "harga")) ?: 0.0
+            val costPrice = parsePrice(col("costprice", "cost", "hpp", "harga_beli")) ?: 0L
+            val sellingPrice = parsePrice(col("sellingprice", "price", "harga_jual", "harga")) ?: 0L
             val currentStock = col("currentstock", "stock", "qty", "stok").toIntOrNull()?.coerceAtLeast(0) ?: 0
             val minStockAlert = col("minstockalert", "minstock", "min_stok").toIntOrNull()?.coerceAtLeast(0) ?: 5
             val unit = col("unit", "satuan").ifBlank { "pcs" }
@@ -147,21 +148,30 @@ object InventoryCsvHelper {
         return map
     }
 
-    private fun parsePrice(raw: String): Double? {
+    /**
+     * Parses a rupiah amount into whole rupiah. Understands "12500", "Rp 12.500", "12,500", "IDR 1.250.000"
+     * (dot/comma used as thousands separator) and "12500.50" (decimals are rounded). Negative or garbage -> null/0.
+     */
+    private fun parsePrice(raw: String): Long? {
         if (raw.isBlank()) return null
         val cleaned = raw
             .replace("Rp", "", ignoreCase = true)
             .replace("IDR", "", ignoreCase = true)
             .replace(" ", "")
             .trim()
-        cleaned.toDoubleOrNull()?.let { return it }
-        // Fallback if user used commas as thousands separators (e.g. "125,000")
-        return cleaned.replace(",", "").toDoubleOrNull()
+        if (cleaned.isEmpty() || cleaned.startsWith("-")) return null
+        val thousandsGrouped = Regex("^\\d{1,3}([.,]\\d{3})+$")
+        val value: Long? = when {
+            cleaned.all { it.isDigit() } -> Money.parseDigits(cleaned)
+            thousandsGrouped.matches(cleaned) -> Money.parseDigits(cleaned)
+            else -> cleaned.replace(",", "").toDoubleOrNull()
+                ?.takeIf { it >= 0 && it < Money.MAX_INPUT_AMOUNT }
+                ?.let { Math.round(it) }
+        }
+        return value
     }
 
-    private fun formatNumber(value: Double): String {
-        return if (value % 1.0 == 0.0) value.toLong().toString() else value.toString()
-    }
+    private fun formatNumber(value: Long): String = value.toString()
 
     private fun escapeCsv(value: String): String {
         val needsQuotes = value.contains(',') || value.contains('"') || value.contains('\n') || value.contains('\r')

@@ -32,6 +32,7 @@ import com.petshop.pos.data.local.entity.PetCategory
 import com.petshop.pos.data.local.entity.ProductEntity
 import com.petshop.pos.data.local.entity.ProductType
 import com.petshop.pos.data.local.entity.StockChangeReason
+import com.petshop.pos.domain.Money
 import com.petshop.pos.ui.components.*
 import com.petshop.pos.ui.theme.*
 import com.petshop.pos.ui.viewmodel.InventoryViewModel
@@ -130,7 +131,7 @@ fun InventoryScreen(
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -149,7 +150,7 @@ fun InventoryScreen(
                             arrayOf("text/csv", "text/comma-separated-values", "application/csv", "text/plain", "*/*")
                         )
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
@@ -167,7 +168,7 @@ fun InventoryScreen(
                         val stamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
                         exportCsvLauncher.launch("pawpos_inventory_$stamp.csv")
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
@@ -204,8 +205,8 @@ fun InventoryScreen(
                     onClick = { viewModel.selectStockFilter(StockFilter.LOW_STOCK) },
                     label = { Text("Low Stock (${lowStockCount})") },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFFFEF3C7),
-                        selectedLabelColor = Color(0xFFB45309)
+                        selectedContainerColor = OneUiAmber.copy(alpha = 0.16f),
+                        selectedLabelColor = OneUiAmber
                     )
                 )
                 FilterChip(
@@ -213,7 +214,7 @@ fun InventoryScreen(
                     onClick = { viewModel.selectStockFilter(StockFilter.OUT_OF_STOCK) },
                     label = { Text("Out of Stock") },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFFFFE4E6),
+                        selectedContainerColor = CoralAccent.copy(alpha = 0.16f),
                         selectedLabelColor = CoralAccent
                     )
                 )
@@ -222,8 +223,8 @@ fun InventoryScreen(
             // Low Stock Warning Banner
             if (lowStockCount > 0 && uiState.stockFilter == StockFilter.ALL) {
                 Surface(
-                    color = Color(0xFFFEF3C7),
-                    shape = RoundedCornerShape(12.dp),
+                    color = OneUiAmber.copy(alpha = 0.16f),
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp)
@@ -235,13 +236,13 @@ fun InventoryScreen(
                         Icon(
                             imageVector = Icons.Default.Warning,
                             contentDescription = null,
-                            tint = Color(0xFFB45309),
+                            tint = OneUiAmber,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "$lowStockCount items are running low on stock! Tap 'Low Stock' to review.",
-                            color = Color(0xFFB45309),
+                            color = OneUiAmber,
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium
                         )
@@ -305,7 +306,7 @@ fun InventoryScreen(
                         val isCurrent = type == product.productType
                         Surface(
                             color = if (isCurrent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
@@ -374,7 +375,7 @@ fun InventoryScreen(
                         val isCurrent = category == product.category
                         Surface(
                             color = if (isCurrent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
@@ -488,7 +489,7 @@ fun InventoryItemCard(
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(42.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(14.dp))
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                     } else {
@@ -534,7 +535,7 @@ fun InventoryItemCard(
                         Text(
                             text = "Exp: ${product.expiryDate}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFB45309)
+                            color = OneUiAmber
                         )
                     }
                 }
@@ -547,7 +548,7 @@ fun InventoryItemCard(
                     // Category Badge (Editable)
                     Surface(
                         color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.clickable { onEditCategory() }
                     ) {
                         Row(
@@ -573,7 +574,7 @@ fun InventoryItemCard(
                     // Product Type Badge (Editable)
                     Surface(
                         color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.clickable { onEditType() }
                     ) {
                         Row(
@@ -606,7 +607,7 @@ fun InventoryItemCard(
                     .fillMaxWidth()
                     .background(
                         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                        RoundedCornerShape(8.dp)
+                        RoundedCornerShape(14.dp)
                     )
                     .padding(horizontal = 10.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -631,7 +632,7 @@ fun InventoryItemCard(
                         text = "Margin: %.1f%%".format(product.profitMargin),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (product.profitMargin > 30) Color(0xFF047857) else Color(0xFFB45309)
+                        color = if (product.profitMargin > 30) OneUiGreen else OneUiAmber
                     )
                     Text(
                         text = "${product.currentStock} ${product.unit}",
@@ -656,7 +657,7 @@ fun InventoryItemCard(
                         modifier = Modifier
                             .background(
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                RoundedCornerShape(10.dp)
+                                RoundedCornerShape(14.dp)
                             )
                             .padding(horizontal = 2.dp, vertical = 2.dp)
                     ) {
@@ -665,7 +666,7 @@ fun InventoryItemCard(
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.size(36.dp),
                             enabled = product.currentStock > 0
                         ) {
@@ -697,7 +698,7 @@ fun InventoryItemCard(
                                 containerColor = Teal40,
                                 contentColor = Color.White
                             ),
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Increase Stock", modifier = Modifier.size(18.dp))
@@ -724,7 +725,7 @@ fun InventoryItemCard(
                 ) {
                     OutlinedButton(
                         onClick = onAdjustStock,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(14.dp),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         modifier = Modifier.height(36.dp)
                     ) {
@@ -735,7 +736,7 @@ fun InventoryItemCard(
 
                     FilledTonalIconButton(
                         onClick = onEdit,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
@@ -756,7 +757,7 @@ fun InventoryItemCard(
 fun AddEditProductSheet(
     product: ProductEntity?,
     onDismiss: () -> Unit,
-    onSave: (Long, String, String, PetCategory, ProductType, Double, Double, Int, Int, String, String?, String, String?) -> Unit,
+    onSave: (Long, String, String, PetCategory, ProductType, Long, Long, Int, Int, String, String?, String, String?) -> Unit,
     onDelete: (() -> Unit)? = null
 ) {
     var name by remember(product) { mutableStateOf(product?.name ?: "") }
@@ -873,7 +874,7 @@ fun AddEditProductSheet(
                     value = costPriceInput,
                     onValueChange = { input ->
                         val digits = input.filter { it.isDigit() }
-                        costPriceInput = if (digits.isBlank()) "" else formatCurrency(digits.toDoubleOrNull() ?: 0.0)
+                        costPriceInput = if (digits.isBlank()) "" else formatCurrency(Money.parseDigits(digits))
                     },
                     label = { Text("Cost Price (Rp)") },
                     placeholder = { Text("Rp 0") },
@@ -885,7 +886,7 @@ fun AddEditProductSheet(
                     value = sellingPriceInput,
                     onValueChange = { input ->
                         val digits = input.filter { it.isDigit() }
-                        sellingPriceInput = if (digits.isBlank()) "" else formatCurrency(digits.toDoubleOrNull() ?: 0.0)
+                        sellingPriceInput = if (digits.isBlank()) "" else formatCurrency(Money.parseDigits(digits))
                     },
                     label = { Text("Selling Price (Rp) *") },
                     placeholder = { Text("Rp 0") },
@@ -949,8 +950,8 @@ fun AddEditProductSheet(
 
             Button(
                 onClick = {
-                    val cost = costPriceInput.filter { it.isDigit() }.toDoubleOrNull() ?: 0.0
-                    val sell = sellingPriceInput.filter { it.isDigit() }.toDoubleOrNull() ?: 0.0
+                    val cost = Money.parseDigits(costPriceInput)
+                    val sell = Money.parseDigits(sellingPriceInput)
                     val stock = currentStock.toIntOrNull() ?: 0
                     val alert = minStockAlert.toIntOrNull() ?: 5
                     onSave(
@@ -972,7 +973,7 @@ fun AddEditProductSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp)
             ) {
                 Text("Save Product", fontWeight = FontWeight.Bold)
             }
@@ -985,7 +986,7 @@ fun AddEditProductSheet(
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)

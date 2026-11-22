@@ -49,8 +49,9 @@ interface ProductDao {
     @Update
     suspend fun updateProduct(product: ProductEntity)
 
-    @Delete
-    suspend fun deleteProduct(product: ProductEntity)
+    /** Soft delete: sales history and stock ledger keep referencing the product. */
+    @Query("UPDATE products SET isActive = 0 WHERE id = :productId")
+    suspend fun deactivate(productId: Long)
 
     @Query("UPDATE products SET currentStock = :newStock WHERE id = :productId")
     suspend fun updateStock(productId: Long, newStock: Int)

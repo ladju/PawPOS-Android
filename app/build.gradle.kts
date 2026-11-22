@@ -56,6 +56,11 @@ android {
     }
 }
 
+// Room exports the schema JSON on every build; commit app/schemas so migrations can be tested against it.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.05.00")
     implementation(composeBom)
@@ -83,8 +88,25 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
+    // Barcode scanning: CameraX preview/analysis + ZXing decoder
+    val cameraxVersion = "1.3.3"
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+    implementation("com.google.zxing:core:3.5.3")
+
     // Coil Image Loading (Camera & Gallery support)
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Unit tests (pure JVM: money math, cash suggestions, CSV/period logic)
+    testImplementation("junit:junit:4.13.2")
+
+    // Instrumented tests (emulator/device): Room in-memory checkout tests + Compose cashier flow
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.room:room-testing:$roomVersion")
 
     // Debugging
     debugImplementation("androidx.compose.ui:ui-tooling")

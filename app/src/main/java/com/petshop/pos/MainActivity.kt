@@ -1,6 +1,5 @@
 package com.petshop.pos
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,10 +8,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -28,12 +25,13 @@ import com.petshop.pos.ui.viewmodel.PosViewModel
 class MainActivity : ComponentActivity() {
 
     private val repository by lazy { (application as PetShopApp).repository }
+    private val settings by lazy { (application as PetShopApp).settings }
 
     private val posViewModel: PosViewModel by viewModels {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return PosViewModel(repository) as T
+                return PosViewModel(repository, settings) as T
             }
         }
     }
@@ -60,13 +58,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val prefs = getSharedPreferences("pawpos_prefs", Context.MODE_PRIVATE)
-        val savedLangCode = prefs.getString("app_language", AppLanguage.EN.code) ?: AppLanguage.EN.code
-        val initialLanguage = AppLanguage.entries.firstOrNull { it.code == savedLangCode } ?: AppLanguage.EN
-
         setContent {
-            var isDarkTheme by remember { mutableStateOf(true) }
-            var appLanguage by remember { mutableStateOf(initialLanguage) }
+            // Theme and language come from the persisted SettingsStore, so they survive rotation and restarts.
+            val isDarkTheme by settings.darkTheme.collectAsState()
+            val languageCode by settings.languageCode.collectAsState()
+            val appLanguage = AppLanguage.entries.firstOrNull { it.code == languageCode } ?: AppLanguage.EN
 
             CompositionLocalProvider(LocalAppStrings provides stringsFor(appLanguage)) {
                 PetShopPOSTheme(darkTheme = isDarkTheme) {
@@ -76,12 +72,9 @@ class MainActivity : ComponentActivity() {
                             inventoryViewModel = inventoryViewModel,
                             analyticsViewModel = analyticsViewModel,
                             isDarkTheme = isDarkTheme,
-                            onToggleTheme = { isDarkTheme = it },
+                            onToggleTheme = { settings.setDarkTheme(it) },
                             appLanguage = appLanguage,
-                            onSelectLanguage = { newLang ->
-                                appLanguage = newLang
-                                prefs.edit().putString("app_language", newLang.code).apply()
-                            }
+                            onSelectLanguage = { newLang -> settings.setLanguageCode(newLang.code) }
                         )
                     }
                 }

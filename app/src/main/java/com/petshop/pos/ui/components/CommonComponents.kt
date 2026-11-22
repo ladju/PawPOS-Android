@@ -41,113 +41,31 @@ import com.petshop.pos.data.local.entity.PetCategory
 import com.petshop.pos.data.local.entity.ProductType
 import com.petshop.pos.data.local.entity.TransactionEntity
 import com.petshop.pos.data.local.entity.TransactionItemEntity
+import com.petshop.pos.domain.Money
+import com.petshop.pos.domain.suggestCashAmounts
 import com.petshop.pos.ui.theme.*
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-fun formatCurrency(amount: Double): String {
-    val localeID = Locale("in", "ID")
-    val format = NumberFormat.getNumberInstance(localeID)
-    format.maximumFractionDigits = 0
-    return "Rp ${format.format(amount)}"
-}
+fun formatCurrency(amount: Long): String = Money.format(amount)
 
 data class CashPrediction(
     val label: String,
-    val amount: Double,
+    val amount: Long,
     val isExact: Boolean = false
 )
 
-/**
- * Smart cash tender predictions based on Indonesian Rupiah currency rounding (banknotes: 1k, 2k, 5k, 10k, 20k, 50k, 100k).
- * For example: if amount due is 771.750, suggests:
- * - Uang Pas (Rp 771.750)
- * - Rp 780.000 (nearest 10k)
- * - Rp 800.000 (nearest 50k)
- * - Rp 1.000.000 (major banknote milestone)
- */
-fun calculateCashPredictions(total: Double): List<CashPrediction> {
-    if (total <= 0.0) return emptyList()
-    val roundedTotal = kotlin.math.round(total).toLong()
-    val amounts = linkedSetOf<Long>()
-
-    // 1. Exact amount ("Uang Pas")
-    amounts.add(roundedTotal)
-
-    val step1: Long
-    val step2: Long
-    val step3: Long
-    val milestone: Long
-
-    when {
-        roundedTotal < 20_000L -> {
-            step1 = 1_000L
-            step2 = 5_000L
-            step3 = 10_000L
-            milestone = if (roundedTotal > 10_000L) 50_000L else 20_000L
-        }
-        roundedTotal < 100_000L -> {
-            step1 = 5_000L
-            step2 = 10_000L
-            step3 = 50_000L
-            milestone = 100_000L
-        }
-        roundedTotal < 500_000L -> {
-            step1 = 10_000L
-            step2 = 50_000L
-            step3 = 100_000L
-            milestone = 500_000L
-        }
-        roundedTotal < 1_000_000L -> {
-            // e.g. 771.750 -> 780.000, 800.000, 1.000.000
-            step1 = 10_000L
-            step2 = 50_000L
-            step3 = 100_000L
-            milestone = 1_000_000L
-        }
-        else -> {
-            step1 = 50_000L
-            step2 = 100_000L
-            step3 = 500_000L
-            val remainder = roundedTotal % 1_000_000L
-            milestone = if (remainder == 0L) roundedTotal else ((roundedTotal / 1_000_000L) + 1) * 1_000_000L
-        }
-    }
-
-    fun ceilTo(num: Long, step: Long): Long {
-        return if (num % step == 0L) num else ((num / step) + 1) * step
-    }
-
-    val r1 = ceilTo(roundedTotal, step1)
-    if (r1 > roundedTotal) amounts.add(r1)
-
-    val r2 = ceilTo(roundedTotal, step2)
-    if (r2 > roundedTotal) amounts.add(r2)
-
-    val r3 = ceilTo(roundedTotal, step3)
-    if (r3 > roundedTotal) amounts.add(r3)
-
-    if (milestone > roundedTotal) amounts.add(milestone)
-
-    // Ensure at least 4 options if feasible
-    var nextStep = ceilTo(roundedTotal, step3)
-    while (amounts.size < 4 && nextStep < roundedTotal + (step3 * 10)) {
-        nextStep += step3
-        if (nextStep > roundedTotal) amounts.add(nextStep)
-    }
-
-    val sortedAmounts = amounts.sorted().take(5)
-    return sortedAmounts.map { amt ->
-        val isExact = amt == roundedTotal
-        val label = if (isExact) "Uang Pas (${formatCurrency(amt.toDouble())})" else formatCurrency(amt.toDouble())
+/** Quick-tender buttons ("Uang Pas" first, then round banknote amounts). Logic lives in the domain layer. */
+fun calculateCashPredictions(total: Long): List<CashPrediction> =
+    suggestCashAmounts(total).map { amt ->
+        val isExact = amt == total
         CashPrediction(
-            label = label,
-            amount = amt.toDouble(),
+            label = if (isExact) "Uang Pas (${formatCurrency(amt)})" else formatCurrency(amt),
+            amount = amt,
             isExact = isExact
         )
     }
-}
 
 fun formatDate(timestamp: Long): String {
     val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
@@ -183,7 +101,7 @@ fun PetCategoryPills(
                     containerColor = MaterialTheme.colorScheme.surface,
                     labelColor = MaterialTheme.colorScheme.onSurface
                 ),
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(22.dp)
             )
         }
     }
@@ -218,7 +136,7 @@ fun ProductTypePills(
                     containerColor = MaterialTheme.colorScheme.surface,
                     labelColor = MaterialTheme.colorScheme.onSurface
                 ),
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(22.dp)
             )
         }
     }
@@ -235,7 +153,7 @@ fun StockBadge(
     if (isService) {
         Surface(
             color = TealLight,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(14.dp),
             modifier = modifier
         ) {
             Text(
@@ -250,14 +168,14 @@ fun StockBadge(
     }
 
     val (bgColor, textColor, label) = when {
-        currentStock <= 0 -> Triple(Color(0xFFFFE4E6), CoralAccent, "Out of Stock")
-        currentStock <= minAlert -> Triple(Color(0xFFFEF3C7), Color(0xFFB45309), "Low: $currentStock")
-        else -> Triple(Color(0xFFD1FAE5), Color(0xFF047857), "Stock: $currentStock")
+        currentStock <= 0 -> Triple(CoralAccent.copy(alpha = 0.16f), CoralAccent, "Out of Stock")
+        currentStock <= minAlert -> Triple(OneUiAmber.copy(alpha = 0.16f), OneUiAmber, "Low: $currentStock")
+        else -> Triple(OneUiGreen.copy(alpha = 0.16f), OneUiGreen, "Stock: $currentStock")
     }
 
     Surface(
         color = bgColor,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         modifier = modifier
     ) {
         Row(
@@ -312,7 +230,7 @@ fun KpiCard(
                 Box(
                     modifier = Modifier
                         .size(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(iconTint.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -350,10 +268,10 @@ fun ThermalReceiptView(
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(14.dp),
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(14.dp))
     ) {
         Column(
             modifier = Modifier
@@ -494,7 +412,7 @@ fun ThermalReceiptView(
                 ReceiptLine(label = "Discount:", value = "-${formatCurrency(transaction.discountAmount)}")
             }
             if (transaction.taxAmount > 0) {
-                ReceiptLine(label = "Tax (${(transaction.taxRate * 100).toInt()}%):", value = formatCurrency(transaction.taxAmount))
+                ReceiptLine(label = "Tax (${Math.round(transaction.taxRate * 100)}%):", value = formatCurrency(transaction.taxAmount))
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -524,31 +442,25 @@ fun ThermalReceiptView(
                 ReceiptLine(label = "Cash Tendered:", value = formatCurrency(transaction.cashTendered))
                 ReceiptLine(label = "Change Returned:", value = formatCurrency(transaction.changeGiven))
             } else if (transaction.paymentMethod == PaymentMethod.QRIS) {
+                // Only what the cashier actually recorded. Nothing is generated or assumed (no bank, NMID or RRN).
                 val rrn = transaction.notes
                     .split("|")
                     .firstOrNull { it.startsWith("RRN:") }
                     ?.removePrefix("RRN:")
                     ?.takeIf { it.isNotBlank() }
-                    ?: "310415289012"
-                val nmid = transaction.notes
-                    .split("|")
-                    .firstOrNull { it.startsWith("NMID:") }
-                    ?.removePrefix("NMID:")
-                    ?.takeIf { it.isNotBlank() }
-                    ?: "ID1020038192019"
 
                 Spacer(modifier = Modifier.height(6.dp))
                 Surface(
-                    color = Color(0xFFECFDF5),
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, Color(0xFF6EE7B7)),
+                    color = Color(0xFFF3F4F6),
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, Color(0xFFD1D5DB)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        ReceiptLine(label = "Settlement:", value = "✓ BCA Direct Paid")
-                        ReceiptLine(label = "NMID:", value = nmid)
-                        ReceiptLine(label = "Bank RRN:", value = rrn)
-                        ReceiptLine(label = "Issuer:", value = "BCA QRIS / GPN")
+                        ReceiptLine(label = "QRIS:", value = "Confirmed by cashier")
+                        if (rrn != null) {
+                            ReceiptLine(label = "Reference:", value = rrn)
+                        }
                     }
                 }
             }
@@ -560,7 +472,7 @@ fun ThermalReceiptView(
             // Dynamic "Scan for WhatsApp Receipt" Section (Option 1)
             Surface(
                 color = Color(0xFFF0FDF4),
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(1.dp, Color(0xFF10B981)),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -590,7 +502,7 @@ fun ThermalReceiptView(
                     
                     Surface(
                         color = Color.White,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(14.dp),
                         border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
                         modifier = Modifier.size(130.dp)
                     ) {
@@ -706,9 +618,9 @@ fun ProductImagePicker(
                 Box(
                     modifier = Modifier
                         .size(72.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     if (!selectedImageUri.isNullOrBlank()) {
@@ -723,7 +635,7 @@ fun ProductImagePicker(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .size(24.dp)
-                                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(14.dp))
                         ) {
                             Icon(
                                 Icons.Default.Close,
@@ -765,7 +677,7 @@ fun ProductImagePicker(
                             cameraLauncher.launch(uri)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(14.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         modifier = Modifier.fillMaxWidth().height(36.dp)
                     ) {
@@ -778,7 +690,7 @@ fun ProductImagePicker(
                         onClick = {
                             galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         },
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(14.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         modifier = Modifier.fillMaxWidth().height(36.dp)
                     ) {

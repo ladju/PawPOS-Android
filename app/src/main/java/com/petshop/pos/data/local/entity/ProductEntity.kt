@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "products",
     indices = [
-        Index(value = ["barcode"], unique = false),
+        Index(value = ["barcode"]),
         Index(value = ["category"])
     ]
 )
@@ -18,8 +18,8 @@ data class ProductEntity(
     val name: String,
     val category: PetCategory,
     val productType: ProductType,
-    val costPrice: Double,
-    val sellingPrice: Double,
+    val costPrice: Long,
+    val sellingPrice: Long,
     val currentStock: Int,
     val minStockAlert: Int = 5,
     val unit: String = "pcs",
@@ -34,6 +34,10 @@ data class ProductEntity(
     val isOutOfStock: Boolean
         get() = currentStock <= 0
 
+    /** True for non-stocked items (grooming, vet service, ...). Single definition used by cart AND checkout. */
+    val isService: Boolean
+        get() = productType.isService || category == PetCategory.SERVICES
+
     val profitMargin: Double
-        get() = if (sellingPrice > 0) ((sellingPrice - costPrice) / sellingPrice) * 100.0 else 0.0
+        get() = if (sellingPrice > 0) ((sellingPrice - costPrice).toDouble() / sellingPrice.toDouble()) * 100.0 else 0.0
 }

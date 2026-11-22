@@ -1,42 +1,76 @@
 package com.petshop.pos.ui.screens
 
 import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.petshop.pos.data.local.entity.PaymentMethod
-import com.petshop.pos.ui.components.*
-import com.petshop.pos.ui.theme.*
+import com.petshop.pos.domain.PeriodBounds
+import com.petshop.pos.domain.PeriodMath
+import com.petshop.pos.domain.PeriodUnit
+import com.petshop.pos.domain.TrendBucket
+import com.petshop.pos.ui.components.formatCurrency
+import com.petshop.pos.ui.components.formatDate
+import com.petshop.pos.ui.theme.AppStrings
+import com.petshop.pos.ui.theme.CoralAccent
+import com.petshop.pos.ui.theme.LocalAppStrings
+import com.petshop.pos.ui.theme.OneUiAmber
+import com.petshop.pos.ui.theme.OneUiGreen
 import com.petshop.pos.ui.viewmodel.AnalyticsViewModel
 import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.math.roundToLong
+import java.util.Date
+import java.util.Locale
 
-enum class RecapTimeframe(val icon: String) {
-    DAY("📅"),
-    WEEK("🗓️"),
-    MONTH("📈"),
-    YEAR("🏛️");
+enum class RecapTimeframe(val icon: String, val unit: PeriodUnit) {
+    DAY("📅", PeriodUnit.DAY),
+    WEEK("🗓️", PeriodUnit.WEEK),
+    MONTH("📈", PeriodUnit.MONTH),
+    YEAR("🏛️", PeriodUnit.YEAR);
 
     fun localizedLabel(strings: AppStrings): String = when (this) {
         DAY -> strings.tfDay
@@ -53,7 +87,10 @@ enum class RecapTimeframe(val icon: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Sales recap. Every number on this screen is computed from saved transactions for the selected calendar
+ * period. An empty period shows zeros; nothing is estimated, sample-filled or hardcoded.
+ */
 @Composable
 fun AnalyticsScreen(
     viewModel: AnalyticsViewModel,
@@ -62,807 +99,243 @@ fun AnalyticsScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val transactions by viewModel.transactions.collectAsState()
+    val stats by viewModel.periodStats.collectAsState()
+    val previousStats by viewModel.previousStats.collectAsState()
+    val transactions by viewModel.periodTransactions.collectAsState()
+    val soldProducts by viewModel.soldProducts.collectAsState()
     val context = LocalContext.current
     val strings = LocalAppStrings.current
 
-    var selectedTimeframe by remember { mutableStateOf(RecapTimeframe.DAY) }
-    var dateOffset by remember { mutableIntStateOf(0) }
+    var timeframeIndex by rememberSaveable { mutableStateOf(0) }
+    var offsetBack by rememberSaveable { mutableStateOf(0) }
+    val timeframe = RecapTimeframe.entries[timeframeIndex]
 
-    val openingFloat = 200000.0
+    val now = remember(timeframeIndex, offsetBack) { System.currentTimeMillis() }
+    val bounds = remember(timeframeIndex, offsetBack, now) { PeriodMath.bounds(timeframe.unit, offsetBack, now) }
+    val previousBounds = remember(timeframeIndex, offsetBack, now) { PeriodMath.bounds(timeframe.unit, offsetBack + 1, now) }
+    LaunchedEffect(bounds, previousBounds) { viewModel.setPeriod(bounds, previousBounds) }
 
-    // Timeframe aggregation calculations
-    val periodStartMillis = remember(selectedTimeframe) {
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        when (selectedTimeframe) {
-            RecapTimeframe.DAY -> { /* start of today */ }
-            RecapTimeframe.WEEK -> {
-                cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
-            }
-            RecapTimeframe.MONTH -> {
-                cal.set(Calendar.DAY_OF_MONTH, 1)
-            }
-            RecapTimeframe.YEAR -> {
-                cal.set(Calendar.DAY_OF_YEAR, 1)
-            }
-        }
-        cal.timeInMillis
+    val cashTx = remember(transactions) { transactions.filter { it.paymentMethod == PaymentMethod.CASH } }
+    val qrisTx = remember(transactions) { transactions.filter { it.paymentMethod == PaymentMethod.QRIS } }
+    val cashTotal = cashTx.sumOf { it.grandTotal }
+    val qrisTotal = qrisTx.sumOf { it.grandTotal }
+    val qrisFeeEstimate = Math.round(qrisTotal * qrisMdrRate)
+    val averageOrder = if (stats.transactionCount > 0) stats.revenue / stats.transactionCount else 0L
+    val marginPercent: Double? = if (stats.revenue > 0) stats.grossProfit * 100.0 / stats.revenue else null
+    val revenueChange = PeriodMath.percentChange(stats.revenue, previousStats.revenue)
+
+    val trend = remember(timeframe, bounds, transactions) {
+        PeriodMath.buckets(timeframe.unit, bounds, transactions.map { it.timestamp to it.grandTotal })
     }
-
-    val periodTransactions = remember(transactions, periodStartMillis) {
-        val filtered = transactions.filter { it.timestamp >= periodStartMillis }
-        if (filtered.isEmpty() && transactions.isNotEmpty()) transactions else filtered
+    val categoryRevenue = remember(soldProducts) {
+        soldProducts.groupBy { it.category }
+            .map { (category, rows) -> category to rows.sumOf { it.totalRevenue } }
+            .sortedByDescending { it.second }
     }
+    val topSellers = remember(soldProducts) { soldProducts.sortedByDescending { it.totalQuantity }.take(5) }
+    val recentTransactions = remember(transactions) { transactions.sortedByDescending { it.timestamp }.take(50) }
 
-    val liveRevenue = periodTransactions.sumOf { it.grandTotal }
-    val displayRevenue = if (liveRevenue > 0) liveRevenue else when (selectedTimeframe) {
-        RecapTimeframe.DAY -> 5420000.0
-        RecapTimeframe.WEEK -> 34850000.0
-        RecapTimeframe.MONTH -> 184500000.0
-        RecapTimeframe.YEAR -> 1420000000.0
-    }
-
-    val periodOrdersCount = if (periodTransactions.isNotEmpty()) periodTransactions.size else when (selectedTimeframe) {
-        RecapTimeframe.DAY -> 48
-        RecapTimeframe.WEEK -> 284
-        RecapTimeframe.MONTH -> 1420
-        RecapTimeframe.YEAR -> 12850
-    }
-
-    val periodCashTx = remember(periodTransactions) { periodTransactions.filter { it.paymentMethod == PaymentMethod.CASH } }
-    val periodQrisTx = remember(periodTransactions) { periodTransactions.filter { it.paymentMethod == PaymentMethod.QRIS } }
-    val liveCashTotal = periodCashTx.sumOf { it.grandTotal }
-    val liveQrisTotal = periodQrisTx.sumOf { it.grandTotal }
-
-    val periodCashTotal = if (liveCashTotal > 0) liveCashTotal else (displayRevenue * 0.42).roundToLong().toDouble()
-    val periodQrisTotal = if (liveQrisTotal > 0) liveQrisTotal else (displayRevenue * 0.58).roundToLong().toDouble()
-    val periodCashCount = if (periodCashTx.isNotEmpty()) periodCashTx.size else (periodOrdersCount * 0.45).toInt()
-    val periodQrisCount = if (periodQrisTx.isNotEmpty()) periodQrisTx.size else (periodOrdersCount - periodCashCount)
-
-    val periodQrisMdrFee = (periodQrisTotal * qrisMdrRate).roundToLong().toDouble()
-    val periodQrisNet = periodQrisTotal - periodQrisMdrFee
-    val periodAvgOrderValue = if (periodOrdersCount > 0) (displayRevenue / periodOrdersCount).roundToLong().toDouble() else 0.0
-    val periodProfit = (displayRevenue * 0.349).roundToLong().toDouble()
-    val periodCogs = (displayRevenue - periodProfit).roundToLong().toDouble()
-    val umkmTaxEstimate = (displayRevenue * 0.005).roundToLong().toDouble() // 0.5% Indonesian UMKM turnover tax
-    val mdrPercentText = if (qrisMdrRate == 0.0) "0.0% UMI" else "0.3% Regular"
-
-    val dateIntervalText = remember(selectedTimeframe, dateOffset) {
-        when (selectedTimeframe) {
-            RecapTimeframe.DAY -> if (dateOffset == 0) "‹ Today, 24 May 2025 Live Shift ›" else "‹ Shift -$dateOffset · Past Daily Close ›"
-            RecapTimeframe.WEEK -> if (dateOffset == 0) "‹ 18 - 24 May 2025 (Rolling 7 Days) ›" else "‹ Week -$dateOffset Run-Rate ›"
-            RecapTimeframe.MONTH -> if (dateOffset == 0) "‹ May 2025 (1 - 24 May MTD) · 24 Days ›" else "‹ Month -$dateOffset MTD Audit ›"
-            RecapTimeframe.YEAR -> if (dateOffset == 0) "‹ FY 2025 (1 Jan - 24 May YTD) ›" else "‹ FY 2024 Past Annual ›"
-        }
-    }
-
-    val revenueDeltaBadge = when (selectedTimeframe) {
-        RecapTimeframe.DAY -> "+14.2% vs yesterday"
-        RecapTimeframe.WEEK -> "+12.6% vs last week"
-        RecapTimeframe.MONTH -> "+18.4% vs Apr MTD"
-        RecapTimeframe.YEAR -> "+24.1% YoY"
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = strings.recapTopTitle,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 18.sp
-                        )
-                        Text(
-                            text = selectedTimeframe.localizedSubtitle(strings),
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.refreshAnalytics() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                }
-            )
-        },
-        modifier = modifier
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            // 1. Segmented Timeframe Selector Pill Row: [ Day | Week | Month | Year ]
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                shape = RoundedCornerShape(50),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    RecapTimeframe.entries.forEach { timeframe ->
-                        val isSelected = selectedTimeframe == timeframe
-                        Surface(
-                            color = if (isSelected) OneUiBlue else Color.Transparent,
-                            shape = RoundedCornerShape(50),
-                            shadowElevation = if (isSelected) 3.dp else 0.dp,
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // ---- period selector ----
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    RecapTimeframe.entries.forEachIndexed { index, tf ->
+                        FilterChip(
+                            selected = index == timeframeIndex,
+                            onClick = {
+                                timeframeIndex = index
+                                offsetBack = 0
+                            },
+                            label = {
+                                Text(
+                                    text = tf.localizedLabel(strings),
+                                    maxLines = 1,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
+                            },
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable {
-                                    selectedTimeframe = timeframe
-                                    dateOffset = 0
-                                }
-                        ) {
-                            Box(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = timeframe.localizedLabel(strings),
-                                    fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
-                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 2. Date Interval Stepper Header
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = { dateOffset++ },
-                        modifier = Modifier.size(34.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.ChevronLeft,
-                            contentDescription = "Previous Period",
-                            tint = MaterialTheme.colorScheme.primary
+                                .heightIn(min = 48.dp),
+                            shape = RoundedCornerShape(14.dp)
                         )
                     }
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = { offsetBack += 1 }) {
+                        Icon(Icons.Default.ChevronLeft, contentDescription = "Previous period")
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                         Text(
-                            text = dateIntervalText,
+                            text = periodLabel(timeframe.unit, bounds),
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface
+                            fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = if (dateOffset == 0) "● Live Counter Shift" else "Historical Period View",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (dateOffset == 0) OneUiCalcGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                            text = if (offsetBack == 0) "Current period" else "Tap › to move forward",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                     }
-
-                    IconButton(
-                        onClick = { if (dateOffset > 0) dateOffset-- },
-                        enabled = dateOffset > 0,
-                        modifier = Modifier.size(34.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.ChevronRight,
-                            contentDescription = "Next Period",
-                            tint = if (dateOffset > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                        )
+                    IconButton(onClick = { offsetBack -= 1 }, enabled = offsetBack > 0) {
+                        Icon(Icons.Default.ChevronRight, contentDescription = "Next period")
                     }
                 }
             }
+        }
 
-            // 3. Macro Financial KPI Cards
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // Gross Revenue Card with Positive Delta Badge
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(18.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Gross Revenue",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Icon(
-                                Icons.Default.AttachMoney,
-                                contentDescription = null,
-                                tint = OneUiBlue,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-
-                        Text(
-                            text = formatCurrency(displayRevenue),
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Surface(
-                            color = OneUiCalcGreen.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(50)
-                        ) {
-                            Text(
-                                text = revenueDeltaBadge,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = OneUiCalcGreen,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-                }
-
-                // Gross Profit Card with Margin Badge and COGS Readout
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(18.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Gross Profit",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Surface(
-                                color = OneUiCalcGreen.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(50)
-                            ) {
-                                Text(
-                                    text = "Margin 34.9%",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = OneUiCalcGreen,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-
-                        Text(
-                            text = formatCurrency(periodProfit),
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 16.sp,
-                            color = OneUiCalcGreen
-                        )
-
-                        Text(
-                            text = "COGS: ${formatCurrency(periodCogs)}",
-                            fontSize = 10.sp,
-                            fontFamily = FontFamily.Monospace,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            // Volume Pill: Completed Orders, Average Basket Size, Sales Velocity
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("📦", fontSize = 11.sp)
-                        Text("$periodOrdersCount Orders", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Text("•", color = MaterialTheme.colorScheme.outlineVariant)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("🛒", fontSize = 11.sp)
-                        Text("AOV ${formatCurrency(periodAvgOrderValue)}", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Text("•", color = MaterialTheme.colorScheme.outlineVariant)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("⚡", fontSize = 11.sp)
-                        val velocityPerDay = (displayRevenue / (if (selectedTimeframe == RecapTimeframe.MONTH) 24 else 1)).roundToLong().toDouble()
-                        Text("${formatCurrency(velocityPerDay)}/day", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = OneUiBlue)
-                    }
-                }
-            }
-
-            // 4. Sales Breakdown Visual Charts
-            if (selectedTimeframe == RecapTimeframe.DAY) {
-                // Hourly Distribution Curve for Day View
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(18.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "📈 Hourly Sales Distribution",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Surface(
-                                color = OneUiBlue.copy(alpha = 0.12f),
-                                shape = RoundedCornerShape(50)
-                            ) {
-                                Text(
-                                    text = "Peak Hour: 15:00 WIB",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = OneUiBlue,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                )
-                            }
-                        }
-
-                        // Hourly Bar Visualizer
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(72.dp)
-                                .padding(top = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            val hours = listOf("09h" to 0.35f, "11h" to 0.55f, "13h" to 0.70f, "15h" to 1.0f, "17h" to 0.80f, "19h" to 0.60f, "21h" to 0.30f)
-                            hours.forEach { (hour, fraction) ->
-                                val isPeak = fraction == 1.0f
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Bottom,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(18.dp)
-                                            .height((50 * fraction).dp)
-                                            .background(
-                                                color = if (isPeak) OneUiBlue else OneUiBlue.copy(alpha = 0.35f),
-                                                shape = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp)
-                                            )
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = hour,
-                                        fontSize = 10.sp,
-                                        fontWeight = if (isPeak) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isPeak) OneUiBlue else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                // Weekly Revenue Trajectory Bar Chart for Week/Month/Year
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(18.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "📊 Weekly Revenue Trajectory",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Surface(
-                                color = OneUiAmber.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(50)
-                            ) {
-                                Text(
-                                    text = "W3 Peak Payday Weekend",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = OneUiAmber,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                )
-                            }
-                        }
-
-                        // Trajectory Bars (W1 to W4)
-                        val weeks = listOf(
-                            Triple("W1 (1-7 May)", 82400000.0, 0.73f),
-                            Triple("W2 (8-14 May)", 79100000.0, 0.70f),
-                            Triple("W3 (15-21 May)", 112500000.0, 1.0f),
-                            Triple("W4 (22-24 May)", 70400000.0, 0.62f)
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            weeks.forEach { (wLabel, amount, fraction) ->
-                                val isPeak = fraction == 1.0f
-                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(wLabel, fontSize = 11.sp, fontWeight = if (isPeak) FontWeight.Bold else FontWeight.Medium)
-                                        Text(formatCurrency(amount), fontSize = 11.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, color = if (isPeak) OneUiBlue else MaterialTheme.colorScheme.onSurface)
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(8.dp)
-                                            .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(50))
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth(fraction)
-                                                .fillMaxHeight()
-                                                .background(if (isPeak) OneUiBlue else OneUiBlue.copy(alpha = 0.45f), shape = RoundedCornerShape(50))
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Multi-Department Sales Contribution Share Bar
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = "🐾 Department Sales Contribution",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
+        // ---- KPI grid ----
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    KpiCard(
+                        label = "Revenue",
+                        value = formatCurrency(stats.revenue),
+                        sub = revenueChange?.let { (if (it >= 0) "▲ " else "▼ ") + Math.abs(it) + "% vs previous" }
+                            ?: "No previous data",
+                        modifier = Modifier.weight(1f)
                     )
-
-                    // Tri-color Segmented Progress Bar
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp)
-                            .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(50))
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(0.58f)
-                                .fillMaxHeight()
-                                .background(OneUiBlue, shape = RoundedCornerShape(topStart = 50.dp, bottomStart = 50.dp))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .weight(0.27f)
-                                .fillMaxHeight()
-                                .background(OneUiCalcGreen)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .weight(0.15f)
-                                .fillMaxHeight()
-                                .background(OneUiAmber, shape = RoundedCornerShape(topEnd = 50.dp, bottomEnd = 50.dp))
-                        )
-                    }
-
-                    // Department Legend
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Box(modifier = Modifier.size(8.dp).background(OneUiBlue, shape = RoundedCornerShape(50)))
-                                Text("Retail (58%)", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            }
-                            Text(formatCurrency(displayRevenue * 0.58), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Box(modifier = Modifier.size(8.dp).background(OneUiCalcGreen, shape = RoundedCornerShape(50)))
-                                Text("Grooming (27%)", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            }
-                            Text(formatCurrency(displayRevenue * 0.27), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Box(modifier = Modifier.size(8.dp).background(OneUiAmber, shape = RoundedCornerShape(50)))
-                                Text("Health/Rx (15%)", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            }
-                            Text(formatCurrency(displayRevenue * 0.15), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
-
-            // 5. Dual Tender & Audit Settlement Cards
-            // Card A: Cash Till Reconciliation
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("💵 Cash Till Reconciliation", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
-                        }
-                        Surface(
-                            color = OneUiCalcGreen.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(50)
-                        ) {
-                            Text(
-                                text = "✓ Rp 0 Float Discrepancy (100% Match)",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = OneUiCalcGreen,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
-                    }
-
-                    Surface(
-                        color = OneUiCalcGreen.copy(alpha = 0.08f),
-                        shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.dp, OneUiCalcGreen.copy(alpha = 0.25f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Opening Drawer Float:", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(formatCurrency(openingFloat), fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-                            }
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Cash Sales ($periodCashCount orders):", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(formatCurrency(periodCashTotal), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = OneUiCalcGreen)
-                            }
-                            HorizontalDivider(color = OneUiCalcGreen.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 2.dp))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Expected Cash in Till:", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                Text(formatCurrency(openingFloat + periodCashTotal), fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = OneUiCalcGreen)
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Card B: BCA QRIS Net Settlement
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("📲 BCA QRIS Net Settlement", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
-                        Surface(
-                            color = OneUiBlue.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(50)
-                        ) {
-                            Text(
-                                text = "NMID: ID1020038192019",
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                color = OneUiBlue,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
-                    }
-
-                    Surface(
-                        color = OneUiBlue.copy(alpha = 0.08f),
-                        shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.dp, OneUiBlue.copy(alpha = 0.25f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Gross QRIS ($periodQrisCount orders):", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(formatCurrency(periodQrisTotal), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = OneUiBlue)
-                            }
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Bank Indonesia MDR ($mdrPercentText):", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("-${formatCurrency(periodQrisMdrFee)}", fontSize = 11.sp, fontFamily = FontFamily.Monospace, color = OneUiCoral)
-                            }
-                            HorizontalDivider(color = OneUiBlue.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 2.dp))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Net BCA Bank Settlement:", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                Text(formatCurrency(periodQrisNet), fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = OneUiCalcGreen)
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 6. Action CTAs
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // CTA 1: WhatsApp Export
-                Button(
-                    onClick = {
-                        val reportText = buildString {
-                            appendLine("🐾 *PAWPLACE POS — ${selectedTimeframe.localizedLabel(strings).uppercase()} FINANCIAL RECAP*")
-                            appendLine("Period: $dateIntervalText")
-                            appendLine("--------------------------------")
-                            appendLine("Gross Turnover: *${formatCurrency(displayRevenue)}*")
-                            appendLine("Total Orders: ${periodOrdersCount}x • AOV: ${formatCurrency(periodAvgOrderValue)}")
-                            appendLine("Gross Profit: *${formatCurrency(periodProfit)}* (Margin 34.9%)")
-                            appendLine("COGS: ${formatCurrency(periodCogs)}")
-                            appendLine("--------------------------------")
-                            appendLine("💵 Cash in Till: *${formatCurrency(openingFloat + periodCashTotal)}* (Float Rp 200k + Sales ${formatCurrency(periodCashTotal)})")
-                            appendLine("📲 Net BCA QRIS: *${formatCurrency(periodQrisNet)}* (Gross ${formatCurrency(periodQrisTotal)} - MDR ${formatCurrency(periodQrisMdrFee)})")
-                            appendLine("🏛️ Est. UMKM Tax (0.5% PP 55): *${formatCurrency(umkmTaxEstimate)}*")
-                            appendLine("Status: ✓ 100% Reconciled")
-                        }
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse("https://wa.me/?text=${Uri.encode(reportText)}")
-                        }
-                        runCatching { context.startActivity(intent) }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = WhatsAppGreen),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (selectedTimeframe == RecapTimeframe.MONTH) "📲 Share Monthly P&L to Owner WhatsApp" else "📲 Share Sales Report via WhatsApp",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
+                    KpiCard(
+                        label = "Orders",
+                        value = stats.transactionCount.toString(),
+                        sub = "${stats.itemsSold} items sold",
+                        modifier = Modifier.weight(1f)
                     )
                 }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    KpiCard(
+                        label = "Gross profit",
+                        value = formatCurrency(stats.grossProfit),
+                        sub = marginPercent?.let { "Margin " + "%.1f".format(it) + "%" } ?: "No sales yet",
+                        valueColor = if (stats.grossProfit < 0) CoralAccent else MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    KpiCard(
+                        label = "Avg. order",
+                        value = formatCurrency(averageOrder),
+                        sub = if (stats.discountTotal > 0) "Discounts ${formatCurrency(stats.discountTotal)}" else "No discounts",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
 
-                // CTA 2: Download / Print Fiscal Summary
-                OutlinedButton(
-                    onClick = {
-                        android.widget.Toast.makeText(
-                            context,
-                            "Exporting Fiscal Summary (PPN 11% & MTD Audit) to Downloads...",
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                    },
-                    shape = RoundedCornerShape(14.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(8.dp))
+        // ---- trend ----
+        item {
+            SectionCard(title = "Sales trend") {
+                if (stats.transactionCount == 0) {
+                    EmptyHint("No sales in this period yet.")
+                } else {
+                    TrendBars(trend)
+                }
+            }
+        }
+
+        // ---- payment split ----
+        item {
+            SectionCard(title = "Payments") {
+                PaymentRow("💵 Cash", cashTx.size, cashTotal)
+                Spacer(Modifier.height(8.dp))
+                PaymentRow("📲 QRIS", qrisTx.size, qrisTotal)
+                if (qrisTotal > 0) {
+                    Spacer(Modifier.height(10.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Spacer(Modifier.height(10.dp))
                     Text(
-                        text = if (selectedTimeframe == RecapTimeframe.MONTH) "📄 Download Fiscal PDF & Tax Export (PPN 11%)" else "📄 Download / Print Financial Summary",
-                        fontWeight = FontWeight.SemiBold,
+                        text = "Estimated QRIS fee (${"%.1f".format(qrisMdrRate * 100)}% MDR): ${formatCurrency(qrisFeeEstimate)}",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = "Estimated net to your account: ${formatCurrency(qrisTotal - qrisFeeEstimate)}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Estimate only. Check your bank or e-wallet statement for the real settlement.",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
                 }
             }
+        }
 
-            // Low Stock Alert Card
-            if (uiState.lowStockItems.isNotEmpty()) {
+        // ---- category split ----
+        item {
+            SectionCard(title = "Sales by category") {
+                if (categoryRevenue.isEmpty()) {
+                    EmptyHint("No sales in this period yet.")
+                } else {
+                    val total = categoryRevenue.sumOf { it.second }.coerceAtLeast(1L)
+                    categoryRevenue.forEach { (category, amount) ->
+                        val share = (amount.toFloat() / total).coerceIn(0f, 1f)
+                        Column(modifier = Modifier.padding(bottom = 10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "${category.icon} ${category.displayName}",
+                                    fontSize = 13.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = "${formatCurrency(amount)} · ${Math.round(share * 100)}%",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1
+                                )
+                            }
+                            Spacer(Modifier.height(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(3.dp))
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(share.coerceAtLeast(0.02f))
+                                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(3.dp))
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---- low stock ----
+        if (uiState.lowStockItems.isNotEmpty()) {
+            item {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(22.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.Warning,
-                                    contentDescription = null,
-                                    tint = OneUiAmber,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Restock Needed (${uiState.lowStockItems.size} Items)",
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                            TextButton(onClick = onRestockClick) {
-                                Text("Go to Inventory", color = OneUiAmber, fontWeight = FontWeight.Bold)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        uiState.lowStockItems.take(4).forEach { item ->
+                        Text(
+                            text = "Restock needed (${uiState.lowStockItems.size})",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        uiState.lowStockItems.take(5).forEach { item ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -872,171 +345,157 @@ fun AnalyticsScreen(
                                 Text(
                                     text = "${item.category.icon} ${item.name}",
                                     fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f),
-                                    modifier = Modifier.weight(1f)
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
+                                Spacer(Modifier.width(8.dp))
                                 Text(
-                                    text = "Stock: ${item.currentStock} / ${item.minStockAlert}",
+                                    text = if (item.currentStock <= 0) "Out of stock" else "${item.currentStock} / ${item.minStockAlert}",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = OneUiAmber
+                                    color = if (item.currentStock <= 0) CoralAccent else OneUiAmber
+                                )
+                            }
+                        }
+                        if (uiState.lowStockItems.size > 5) {
+                            Text(
+                                text = "+${uiState.lowStockItems.size - 5} more",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        OutlinedButton(
+                            onClick = onRestockClick,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                        ) {
+                            Text("Open inventory", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---- top sellers ----
+        item {
+            SectionCard(title = "Top selling products") {
+                if (topSellers.isEmpty()) {
+                    EmptyHint("No sales in this period yet.")
+                } else {
+                    topSellers.forEachIndexed { index, seller ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("${index + 1}", fontWeight = FontWeight.Bold, modifier = Modifier.width(22.dp))
+                            Text(
+                                text = "${seller.category.icon} ${seller.productName}",
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("${seller.totalQuantity} sold", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    text = formatCurrency(seller.totalRevenue),
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                             }
                         }
                     }
                 }
             }
+        }
 
-            // Top Sellers Section
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "🏆 Top Selling Products",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    if (uiState.topSellers.isEmpty()) {
-                        Text(
-                            text = "No sales data recorded yet. Checkout orders in POS to view best sellers.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        uiState.topSellers.forEachIndexed { index, seller ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.primaryContainer,
-                                        shape = RoundedCornerShape(6.dp),
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Text(
-                                                text = "${index + 1}",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 12.sp,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Text(
-                                        text = "${seller.category.icon} ${seller.productName}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text(
-                                        text = "${seller.totalQuantity} sold",
-                                        fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                    Text(
-                                        text = formatCurrency(seller.totalRevenue),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                            if (index < uiState.topSellers.size - 1) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 4.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant
-                                )
-                            }
-                        }
+        // ---- share ----
+        item {
+            Button(
+                onClick = {
+                    val report = buildReport(timeframe, bounds, stats.revenue, stats.transactionCount, stats.grossProfit, cashTotal, qrisTotal)
+                    val send = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, report)
                     }
-                }
-            }
-
-            // Recent Transactions History
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                modifier = Modifier.fillMaxWidth()
+                    context.startActivity(Intent.createChooser(send, "Share sales report"))
+                },
+                enabled = stats.transactionCount > 0,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "📜 Recent Sales Transactions (${selectedTimeframe.localizedLabel(strings)})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Share sales report", fontWeight = FontWeight.Bold)
+            }
+        }
 
-                    if (periodTransactions.isEmpty()) {
-                        Text(
-                            text = "No transactions recorded yet in this timeframe.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        periodTransactions.take(10).forEach { tx ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { viewModel.viewTransactionDetails(tx) }
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = tx.invoiceNumber,
-                                        fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.titleSmall
-                                    )
-                                    Text(
-                                        text = "${formatDate(tx.timestamp)} • ${tx.paymentMethod.displayName}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = formatCurrency(tx.grandTotal),
-                                        fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(
-                                        Icons.Default.ChevronRight,
-                                        contentDescription = "Details",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        // ---- transactions ----
+        item {
+            Text(
+                text = "Sales in this period (${transactions.size})",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+        if (recentTransactions.isEmpty()) {
+            item { EmptyHint("No transactions in this period yet.") }
+        } else {
+            items(recentTransactions, key = { it.id }) { tx ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.viewTransactionDetails(tx) }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = tx.invoiceNumber,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "${formatDate(tx.timestamp)} • ${tx.paymentMethod.displayName}",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = formatCurrency(tx.grandTotal),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1
+                        )
                     }
                 }
             }
         }
     }
 
-    // Receipt Detail Dialog
     if (uiState.isReceiptDetailOpen && uiState.selectedTransaction != null) {
         ReceiptDialog(
             transaction = uiState.selectedTransaction!!,
@@ -1044,4 +503,169 @@ fun AnalyticsScreen(
             onDismiss = { viewModel.closeReceiptDetail() }
         )
     }
+}
+
+@Composable
+private fun KpiCard(
+    label: String,
+    value: String,
+    sub: String,
+    modifier: Modifier = Modifier,
+    valueColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(22.dp),
+        modifier = modifier
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                maxLines = 1
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = value,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = valueColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = sub,
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionCard(title: String, content: @Composable () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(22.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Spacer(Modifier.height(12.dp))
+            content()
+        }
+    }
+}
+
+@Composable
+private fun EmptyHint(text: String) {
+    Text(
+        text = text,
+        fontSize = 13.sp,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        modifier = Modifier.padding(vertical = 4.dp)
+    )
+}
+
+@Composable
+private fun PaymentRow(label: String, count: Int, total: Long) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text(
+                text = "$count transaction${if (count == 1) "" else "s"}",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+        Text(formatCurrency(total), fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
+    }
+}
+
+@Composable
+private fun TrendBars(buckets: List<TrendBucket>) {
+    val max = (buckets.maxOfOrNull { it.amount } ?: 0L).coerceAtLeast(1L)
+    val barColor = MaterialTheme.colorScheme.primary
+    val labelEvery = if (buckets.size > 12) 6 else 1
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            buckets.forEach { bucket ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    val fraction = if (bucket.amount <= 0L) 0.02f else (bucket.amount.toFloat() / max).coerceIn(0.04f, 1f)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(fraction)
+                            .background(
+                                if (bucket.amount <= 0L) barColor.copy(alpha = 0.2f) else barColor,
+                                RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
+                            )
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+            buckets.forEachIndexed { index, bucket ->
+                Text(
+                    text = if (index % labelEvery == 0) bucket.label else "",
+                    fontSize = 9.sp,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+private fun periodLabel(unit: PeriodUnit, bounds: PeriodBounds): String {
+    val locale = Locale.getDefault()
+    val start = Date(bounds.start)
+    val lastDay = Date(bounds.end - 1)
+    return when (unit) {
+        PeriodUnit.DAY -> SimpleDateFormat("EEE, d MMM yyyy", locale).format(start)
+        PeriodUnit.WEEK -> SimpleDateFormat("d MMM", locale).format(start) + " – " +
+            SimpleDateFormat("d MMM yyyy", locale).format(lastDay)
+        PeriodUnit.MONTH -> SimpleDateFormat("MMMM yyyy", locale).format(start)
+        PeriodUnit.YEAR -> SimpleDateFormat("yyyy", locale).format(start)
+    }
+}
+
+private fun buildReport(
+    timeframe: RecapTimeframe,
+    bounds: PeriodBounds,
+    revenue: Long,
+    orders: Int,
+    profit: Long,
+    cash: Long,
+    qris: Long
+): String = buildString {
+    appendLine("PawPOS sales report")
+    appendLine(periodLabel(timeframe.unit, bounds))
+    appendLine()
+    appendLine("Revenue: ${formatCurrency(revenue)}")
+    appendLine("Orders: $orders")
+    appendLine("Gross profit: ${formatCurrency(profit)}")
+    appendLine("Cash: ${formatCurrency(cash)}")
+    append("QRIS: ${formatCurrency(qris)}")
 }

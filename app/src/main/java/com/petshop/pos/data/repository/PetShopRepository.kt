@@ -4,23 +4,41 @@ import androidx.room.withTransaction
 import com.petshop.pos.data.local.PetShopDatabase
 import com.petshop.pos.data.local.dao.TopSellerSummary
 import com.petshop.pos.data.local.entity.*
+import com.petshop.pos.domain.CartCalculator
+import com.petshop.pos.domain.PricedLine
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import java.text.SimpleDateFormat
 import java.util.*
 
+/** A cart line resolved against the *live* product row. Never persisted. */
 data class CartItem(
     val product: ProductEntity,
     val quantity: Int = 1
 ) {
-    val subtotal: Double
+    val subtotal: Long
         get() = product.sellingPrice * quantity
 }
 
-data class DailySummary(
-    val totalRevenue: Double,
-    val totalProfit: Double,
-    val transactionCount: Int,
-    val itemsSold: Int
+/** What the cashier is selling: ids and quantities only. Prices/stock are always re-read inside the transaction. */
+data class CheckoutLine(val productId: Long, val quantity: Int)
+
+data class CheckoutReceipt(
+    val transaction: TransactionEntity,
+    val items: List<TransactionItemEntity>
+)
+
+/** A problem the cashier can understand and fix (stock, tender, missing product). Message is user-facing. */
+class CheckoutException(message: String) : Exception(message)
+
+/** Live numbers for one reporting period. Money is whole rupiah. */
+data class PeriodStats(
+    val revenue: Long = 0,
+    val grossProfit: Long = 0,
+    val discountTotal: Long = 0,
+    val transactionCount: Int = 0,
+    val itemsSold: Int = 0
 )
 
 class PetShopRepository(
@@ -64,38 +82,72 @@ class PetShopRepository(
         return productDao.getProductById(id)
     }
 
+    /**
+     * Creates or updates a product. Throws [IllegalArgumentException] (user-facing message) on invalid data
+     * or a barcode that already belongs to another active product.
+     */
     suspend fun saveProduct(product: ProductEntity): Long {
-        return if (product.id == 0L) {
-            val id = productDao.insertProduct(product)
-            // Log initial stock movement
-            if (product.currentStock > 0) {
-                stockMovementDao.insertMovement(
-                    StockMovementEntity(
-                        productId = id,
-                        productName = product.name,
-                        quantityChange = product.currentStock,
-                        previousStock = 0,
-                        resultingStock = product.currentStock,
-                        reason = StockChangeReason.RESTOCK,
-                        note = "Initial product catalog setup"
-                    )
-                )
+        require(product.name.isNotBlank()) { "Product name is required." }
+        require(product.barcode.isNotBlank()) { "Barcode is required." }
+        require(product.costPrice >= 0 && product.sellingPrice >= 0) { "Prices cannot be negative." }
+        require(product.currentStock >= 0 && product.minStockAlert >= 0) { "Stock values cannot be negative." }
+
+        return database.withTransaction {
+            val clash = productDao.getProductByBarcode(product.barcode)
+            require(clash == null || clash.id == product.id) {
+                "Barcode ${product.barcode} already belongs to '${clash?.name}'."
             }
-            id
-        } else {
-            productDao.updateProduct(product)
-            product.id
+            if (product.id == 0L) {
+                val id = productDao.insertProduct(product)
+                if (product.currentStock > 0) {
+                    stockMovementDao.insertMovement(
+                        StockMovementEntity(
+                            productId = id,
+                            productName = product.name,
+                            quantityChange = product.currentStock,
+                            previousStock = 0,
+                            resultingStock = product.currentStock,
+                            reason = StockChangeReason.RESTOCK,
+                            note = "Initial product catalog setup"
+                        )
+                    )
+                }
+                id
+            } else {
+                val before = productDao.getProductById(product.id)
+                productDao.updateProduct(product)
+                // A stock edited through the product form must still leave an audit trail.
+                if (before != null && before.currentStock != product.currentStock) {
+                    stockMovementDao.insertMovement(
+                        StockMovementEntity(
+                            productId = product.id,
+                            productName = product.name,
+                            quantityChange = product.currentStock - before.currentStock,
+                            previousStock = before.currentStock,
+                            resultingStock = product.currentStock,
+                            reason = StockChangeReason.AUDIT,
+                            note = "Edited in product form"
+                        )
+                    )
+                }
+                product.id
+            }
         }
     }
 
+    /**
+     * Atomically changes stock. Returns false (and changes nothing) if the product is missing or the
+     * adjustment would take stock below zero, so the ledger always equals the real stock.
+     */
     suspend fun adjustStock(
         productId: Long,
         delta: Int,
         reason: StockChangeReason,
         note: String
-    ): Boolean {
-        val product = productDao.getProductById(productId) ?: return false
-        val newStock = (product.currentStock + delta).coerceAtLeast(0)
+    ): Boolean = database.withTransaction {
+        val product = productDao.getProductById(productId) ?: return@withTransaction false
+        val newStock = product.currentStock + delta
+        if (newStock < 0) return@withTransaction false
 
         productDao.updateStock(productId, newStock)
         stockMovementDao.insertMovement(
@@ -109,153 +161,178 @@ class PetShopRepository(
                 note = note
             )
         )
-        return true
+        true
     }
 
+    /** Soft delete: sales history and the stock ledger stay intact. */
     suspend fun deleteProduct(product: ProductEntity) {
-        productDao.deleteProduct(product)
+        productDao.deactivate(product.id)
     }
 
     /**
-     * Executes atomic POS checkout:
-     * 1. Inserts the main sale transaction
-     * 2. Inserts all individual sale line items
-     * 3. Automatically decrements inventory stocks
-     * 4. Logs stock movements
+     * Atomic POS checkout. Everything below happens in ONE database transaction; if anything fails
+     * nothing is saved:
+     *  1. every product is re-read from the database (live price + live stock, never a stale cart snapshot)
+     *  2. stock and tender are validated
+     *  3. totals come from [CartCalculator], the same code the cart UI uses
+     *  4. sale + line items + stock deduction + stock ledger are written together
      */
     suspend fun processCheckout(
-        cartItems: List<CartItem>,
+        lines: List<CheckoutLine>,
         paymentMethod: PaymentMethod,
-        discountAmount: Double = 0.0,
-        taxRate: Double = 0.0,
-        cashTendered: Double = 0.0,
+        discountAmount: Long = 0,
+        taxPercent: Int = 0,
+        cashTendered: Long = 0,
         customerName: String? = null,
         customerPhone: String? = null,
         cashierName: String = "Staff",
         notes: String = ""
-    ): Result<TransactionEntity> {
-        if (cartItems.isEmpty()) {
-            return Result.failure(IllegalArgumentException("Cart is empty"))
-        }
-
-        val subtotal = cartItems.sumOf { it.subtotal }
-        val discountedSubtotal = (subtotal - discountAmount).coerceAtLeast(0.0)
-        val taxAmount = discountedSubtotal * taxRate
-        val grandTotal = discountedSubtotal + taxAmount
-        val changeGiven = if (paymentMethod == PaymentMethod.CASH) {
-            (cashTendered - grandTotal).coerceAtLeast(0.0)
-        } else 0.0
-
-        val dateFormat = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault())
-        val invoiceNumber = "INV-${dateFormat.format(Date())}"
-
-        val transaction = TransactionEntity(
-            invoiceNumber = invoiceNumber,
-            timestamp = System.currentTimeMillis(),
-            subtotal = subtotal,
-            taxRate = taxRate,
-            taxAmount = taxAmount,
-            discountAmount = discountAmount,
-            grandTotal = grandTotal,
-            paymentMethod = paymentMethod,
-            cashTendered = cashTendered,
-            changeGiven = changeGiven,
-            customerName = customerName,
-            customerPhone = customerPhone,
-            cashierName = cashierName,
-            notes = notes
-        )
+    ): Result<CheckoutReceipt> {
+        if (lines.isEmpty()) return Result.failure(CheckoutException("Cart is empty."))
 
         return try {
-            var savedTransaction = transaction
-            database.withTransaction {
-                val transactionId = transactionDao.insertTransaction(transaction)
-                savedTransaction = transaction.copy(id = transactionId)
+            val receipt = database.withTransaction {
+                val wanted = lines.groupBy { it.productId }.mapValues { (_, l) -> l.sumOf { it.quantity } }
 
-                val lineItems = cartItems.map { item ->
-                    TransactionItemEntity(
-                        transactionId = transactionId,
-                        productId = item.product.id,
-                        productName = item.product.name,
-                        productBarcode = item.product.barcode,
-                        category = item.product.category,
-                        unitPrice = item.product.sellingPrice,
-                        costPrice = item.product.costPrice,
-                        quantity = item.quantity,
-                        subtotal = item.subtotal
+                val resolved = wanted.map { (id, qty) ->
+                    if (qty <= 0) throw CheckoutException("Invalid quantity in cart.")
+                    val product = productDao.getProductById(id)?.takeIf { it.isActive }
+                        ?: throw CheckoutException("A product in the cart is no longer available.")
+                    if (!product.isService && product.currentStock < qty) {
+                        throw CheckoutException(
+                            "Not enough stock for ${product.name}: ${product.currentStock} left, $qty in cart."
+                        )
+                    }
+                    product to qty
+                }
+
+                val isCash = paymentMethod == PaymentMethod.CASH
+                val totals = CartCalculator.totals(
+                    resolved.map { (p, q) -> PricedLine(p.sellingPrice, q) },
+                    discountAmount,
+                    taxPercent
+                )
+                if (!CartCalculator.isTenderSufficient(isCash, totals.grandTotal, cashTendered)) {
+                    throw CheckoutException("Cash received is less than the total.")
+                }
+
+                val now = System.currentTimeMillis()
+                val invoiceNumber = nextInvoiceNumber(now)
+
+                val transaction = TransactionEntity(
+                    invoiceNumber = invoiceNumber,
+                    timestamp = now,
+                    subtotal = totals.subtotal,
+                    taxRate = totals.taxPercent / 100.0,
+                    taxAmount = totals.taxAmount,
+                    discountAmount = totals.discount,
+                    grandTotal = totals.grandTotal,
+                    paymentMethod = paymentMethod,
+                    cashTendered = if (isCash) cashTendered else 0L,
+                    changeGiven = CartCalculator.changeDue(isCash, totals.grandTotal, cashTendered),
+                    customerName = customerName,
+                    customerPhone = customerPhone,
+                    cashierName = cashierName,
+                    notes = notes
+                )
+                val transactionId = transactionDao.insertTransaction(transaction)
+
+                transactionDao.insertTransactionItems(
+                    resolved.map { (p, q) ->
+                        TransactionItemEntity(
+                            transactionId = transactionId,
+                            productId = p.id,
+                            productName = p.name,
+                            productBarcode = p.barcode,
+                            category = p.category,
+                            unitPrice = p.sellingPrice,
+                            costPrice = p.costPrice,
+                            quantity = q,
+                            subtotal = p.sellingPrice * q
+                        )
+                    }
+                )
+
+                for ((p, q) in resolved) {
+                    if (p.isService) continue
+                    val newStock = p.currentStock - q
+                    productDao.updateStock(p.id, newStock)
+                    stockMovementDao.insertMovement(
+                        StockMovementEntity(
+                            productId = p.id,
+                            productName = p.name,
+                            quantityChange = -q,
+                            previousStock = p.currentStock,
+                            resultingStock = newStock,
+                            reason = StockChangeReason.SALE,
+                            referenceInvoice = invoiceNumber,
+                            note = "POS Checkout #$invoiceNumber"
+                        )
                     )
                 }
-                transactionDao.insertTransactionItems(lineItems)
 
-                // Deduct stock for inventory items (services with unlimited stock like 999 are not depleted)
-                for (item in cartItems) {
-                    if (!item.product.productType.isService) {
-                        val currentProd = productDao.getProductById(item.product.id)
-                        if (currentProd != null) {
-                            val newStock = (currentProd.currentStock - item.quantity).coerceAtLeast(0)
-                            productDao.updateStock(item.product.id, newStock)
-                            stockMovementDao.insertMovement(
-                                StockMovementEntity(
-                                    productId = item.product.id,
-                                    productName = item.product.name,
-                                    quantityChange = -item.quantity,
-                                    previousStock = currentProd.currentStock,
-                                    resultingStock = newStock,
-                                    reason = StockChangeReason.SALE,
-                                    referenceInvoice = invoiceNumber,
-                                    note = "POS Checkout #$invoiceNumber"
-                                )
-                            )
-                        }
-                    }
-                }
+                CheckoutReceipt(
+                    transaction = transaction.copy(id = transactionId),
+                    items = transactionDao.getItemsForTransaction(transactionId)
+                )
             }
-            Result.success(savedTransaction)
-        } catch (e: Exception) {
+            Result.success(receipt)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: CheckoutException) {
             Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(CheckoutException("Checkout failed and nothing was saved. Please try again."))
         }
+    }
+
+    /** INV-yyyyMMdd-0001, 0002, ... per calendar day; guaranteed unique (also enforced by a unique index). */
+    private suspend fun nextInvoiceNumber(now: Long): String {
+        val dayStart = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        val start = dayStart.timeInMillis
+        dayStart.add(Calendar.DAY_OF_YEAR, 1)
+        val end = dayStart.timeInMillis
+
+        val day = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date(now))
+        var seq = transactionDao.countBetween(start, end) + 1
+        var candidate: String
+        do {
+            candidate = "INV-$day-${seq.toString().padStart(4, '0')}"
+            seq++
+        } while (transactionDao.countByInvoice(candidate) > 0)
+        return candidate
     }
 
     suspend fun getTransactionItems(transactionId: Long): List<TransactionItemEntity> {
         return transactionDao.getItemsForTransaction(transactionId)
     }
 
-    suspend fun getTopSellers(limit: Int = 5): List<TopSellerSummary> {
-        return transactionDao.getTopSellers(limit)
-    }
-
-    suspend fun getTodayAnalytics(): DailySummary {
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val startOfDay = calendar.timeInMillis
-        val transactions = transactionDao.getTransactionsSince(startOfDay)
-
-        var totalRevenue = 0.0
-        var totalProfit = 0.0
-        var totalItems = 0
-
-        for (tx in transactions) {
-            totalRevenue += tx.grandTotal
-            val items = transactionDao.getItemsForTransaction(tx.id)
-            for (item in items) {
-                totalItems += item.quantity
-                val itemCost = item.costPrice * item.quantity
-                val itemRev = item.subtotal
-                totalProfit += (itemRev - itemCost)
-            }
-        }
-
-        return DailySummary(
-            totalRevenue = totalRevenue,
-            totalProfit = totalProfit.coerceAtLeast(0.0),
+    /** Live stats for [since, until). Re-emits whenever a sale is recorded. */
+    fun observePeriodStats(since: Long, until: Long): Flow<PeriodStats> = combine(
+        transactionDao.observeBetween(since, until),
+        transactionDao.observeItemProfitBetween(since, until),
+        transactionDao.observeItemsSoldBetween(since, until)
+    ) { transactions, itemProfit, itemsSold ->
+        val discounts = transactions.sumOf { it.discountAmount }
+        PeriodStats(
+            revenue = transactions.sumOf { it.grandTotal },
+            // Profit is what the shop actually keeps: item margin minus discounts given. It can be negative.
+            grossProfit = itemProfit - discounts,
+            discountTotal = discounts,
             transactionCount = transactions.size,
-            itemsSold = totalItems
+            itemsSold = itemsSold
         )
     }
+
+    fun observeTransactions(since: Long, until: Long): Flow<List<TransactionEntity>> =
+        transactionDao.observeBetween(since, until)
+
+    fun observeTopSellers(since: Long, until: Long, limit: Int = 5): Flow<List<TopSellerSummary>> =
+        transactionDao.observeTopSellersBetween(since, until, limit)
 
     data class CsvImportSummary(
         val addedCount: Int,

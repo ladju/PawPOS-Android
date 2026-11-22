@@ -25,8 +25,8 @@ data class TransactionItemEntity(
     val productName: String,
     val productBarcode: String,
     val category: PetCategory,
-    val unitPrice: Double,
-    val costPrice: Double,
+    val unitPrice: Long,
+    val costPrice: Long,
     val quantity: Int,
-    val subtotal: Double
+    val subtotal: Long
 )

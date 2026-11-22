@@ -43,7 +43,7 @@ enum class ProductType(
 
 enum class PaymentMethod(val displayName: String) {
     CASH("💵 Cash"),
-    QRIS("📲 QRIS Instant")
+    QRIS("📲 QRIS")
 }
 
 enum class StockChangeReason(val displayName: String) {

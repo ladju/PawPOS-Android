@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.petshop.pos.ui.theme.AppLanguage
 import com.petshop.pos.ui.theme.LocalAppStrings
+import com.petshop.pos.ui.theme.OneUiAmber
+import com.petshop.pos.ui.theme.OneUiGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,13 +29,14 @@ fun SettingsScreen(
     onSelectLanguage: (AppLanguage) -> Unit = {},
     qrisMdrRate: Double = 0.003,
     onSelectMdrRate: (Double) -> Unit = {},
+    taxPercent: Int = 0,
+    onSelectTaxPercent: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val strings = LocalAppStrings.current
     var storeName by remember { mutableStateOf("PawPlace Pet Shop & Grooming Care") }
     var storePhone by remember { mutableStateOf("+62 812-3456-7890") }
     var storeAddress by remember { mutableStateOf("Jl. Sunset Road No. 88, Kuta, Bali") }
-    var selectedTaxRate by remember { mutableStateOf(0) } // 0% (No Tax default for small business), 5, or 11%
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -92,7 +95,7 @@ fun SettingsScreen(
                             }
                             Surface(
                                 color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(14.dp)
                             ) {
                                 Text(
                                     text = appLanguage.badge,
@@ -162,7 +165,7 @@ fun SettingsScreen(
                         }
                         Surface(
                             color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(14.dp)
                         ) {
                             Text(
                                 text = strings.idrActive,
@@ -210,12 +213,12 @@ fun SettingsScreen(
                                 }
                             }
                             Surface(
-                                color = if (isDarkTheme) Color(0xFF334155) else Color(0xFFFEF3C7),
-                                shape = RoundedCornerShape(8.dp)
+                                color = OneUiAmber.copy(alpha = 0.16f),
+                                shape = RoundedCornerShape(14.dp)
                             ) {
                                 Text(
                                     text = if (isDarkTheme) strings.darkActive else strings.lightActive,
-                                    color = if (isDarkTheme) Color.White else Color(0xFF92400E),
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -250,8 +253,8 @@ fun SettingsScreen(
             feedbackMessage?.let { msg ->
                 item {
                     Surface(
-                        color = Color(0xFFD1FAE5),
-                        shape = RoundedCornerShape(12.dp),
+                        color = OneUiGreen.copy(alpha = 0.16f),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -261,13 +264,13 @@ fun SettingsScreen(
                         ) {
                             Text(
                                 text = msg,
-                                color = Color(0xFF047857),
+                                color = OneUiGreen,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 modifier = Modifier.weight(1f)
                             )
                             IconButton(onClick = { feedbackMessage = null }, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color(0xFF047857))
+                                Icon(Icons.Default.Close, contentDescription = "Close", tint = OneUiGreen)
                             }
                         }
                     }
@@ -302,7 +305,7 @@ fun SettingsScreen(
                         Button(
                             onClick = onNavigateToInventory,
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(strings.goToInventoryBtn, fontWeight = FontWeight.Bold)
@@ -363,9 +366,9 @@ fun SettingsScreen(
                         ) {
                             listOf(0 to "0% (No Tax / UMKM)", 5 to "5% Service Tax", 11 to "11% PPN").forEach { (rate, label) ->
                                 FilterChip(
-                                    selected = selectedTaxRate == rate,
-                                    onClick = { selectedTaxRate = rate },
-                                    label = { Text(label, fontSize = 11.sp, fontWeight = if (selectedTaxRate == rate) FontWeight.Bold else FontWeight.Normal) },
+                                    selected = taxPercent == rate,
+                                    onClick = { onSelectTaxPercent(rate) },
+                                    label = { Text(label, fontSize = 11.sp, fontWeight = if (taxPercent == rate) FontWeight.Bold else FontWeight.Normal) },
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -420,7 +423,7 @@ fun SettingsScreen(
 
                         Button(
                             onClick = { feedbackMessage = "✓ Store Profile settings saved successfully!" },
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("Save Profile Changes", fontWeight = FontWeight.Bold)
@@ -451,7 +454,7 @@ fun SettingsScreen(
 
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -466,12 +469,12 @@ fun SettingsScreen(
                                     Text("ESC/POS 58mm / 80mm wireless printing", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                                 }
                                 Surface(
-                                    color = Color(0xFFD1FAE5),
+                                    color = OneUiGreen.copy(alpha = 0.16f),
                                     shape = RoundedCornerShape(6.dp)
                                 ) {
                                     Text(
                                         text = "Connected ✓",
-                                        color = Color(0xFF047857),
+                                        color = OneUiGreen,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -484,7 +487,7 @@ fun SettingsScreen(
 
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -499,12 +502,12 @@ fun SettingsScreen(
                                     Text("Send paperless receipt directly to customer chat", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                                 }
                                 Surface(
-                                    color = Color(0xFFD1FAE5),
+                                    color = OneUiGreen.copy(alpha = 0.16f),
                                     shape = RoundedCornerShape(6.dp)
                                 ) {
                                     Text(
                                         text = "Active ✓",
-                                        color = Color(0xFF047857),
+                                        color = OneUiGreen,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -543,7 +546,7 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                         OutlinedButton(
                             onClick = { feedbackMessage = "🔒 Security PIN is currently set and active." },
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Default.Password, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -585,7 +588,7 @@ fun SettingsScreen(
                         ) {
                             OutlinedButton(
                                 onClick = { feedbackMessage = "📥 Offline database JSON backup exported to device storage." },
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -595,7 +598,7 @@ fun SettingsScreen(
 
                             Button(
                                 onClick = { feedbackMessage = "🔄 Database verified and synchronized." },
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))

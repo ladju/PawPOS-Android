@@ -1,27 +1,83 @@
 package com.petshop.pos.ui.screens
 
-import androidx.compose.animation.core.*
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FlashlightOff
+import androidx.compose.material.icons.filled.FlashlightOn
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.petshop.pos.ui.theme.CoralAccent
 import com.petshop.pos.ui.theme.LocalAppStrings
+import com.petshop.pos.ui.theme.OneUiGreen
 import com.petshop.pos.ui.viewmodel.PosViewModel
+import com.petshop.pos.ui.viewmodel.ScanEvent
+import com.petshop.pos.util.BarcodeAnalyzer
+import java.util.concurrent.Executors
 
+/**
+ * Real camera barcode scanner (CameraX + ZXing) with a manual-entry fallback. USB/Bluetooth HID scanners type
+ * into the manual field and submit with Enter. Every scan reports a real result; nothing is simulated.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScannerScreen(
@@ -30,20 +86,34 @@ fun ScannerScreen(
     modifier: Modifier = Modifier
 ) {
     val strings = LocalAppStrings.current
-    var manualBarcode by remember { mutableStateOf("") }
-    var scanSuccessMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
 
-    // Laser scan animation
-    val infiniteTransition = rememberInfiniteTransition(label = "laser")
-    val laserOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 200f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "laser_y"
-    )
+    var manualBarcode by remember { mutableStateOf("") }
+    var lastEvent by remember { mutableStateOf<ScanEvent?>(null) }
+    var torchOn by remember { mutableStateOf(false) }
+    var hasTorch by remember { mutableStateOf(false) }
+    var hasCameraPermission by remember {
+        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        hasCameraPermission = granted
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+    LaunchedEffect(Unit) {
+        posViewModel.scanEvents.collect { event ->
+            lastEvent = event
+            if (!event.isError) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
+    fun submit(code: String) {
+        val trimmed = code.trim()
+        if (trimmed.isNotEmpty()) posViewModel.scanBarcode(trimmed)
+    }
 
     Scaffold(
         topBar = {
@@ -55,8 +125,13 @@ fun ScannerScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Toggle flashlight */ }) {
-                        Icon(Icons.Default.FlashlightOn, contentDescription = "Flashlight")
+                    if (hasCameraPermission && hasTorch) {
+                        IconButton(onClick = { torchOn = !torchOn }) {
+                            Icon(
+                                if (torchOn) Icons.Default.FlashlightOn else Icons.Default.FlashlightOff,
+                                contentDescription = if (torchOn) "Turn flashlight off" else "Turn flashlight on"
+                            )
+                        }
                     }
                 }
             )
@@ -67,6 +142,7 @@ fun ScannerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -75,135 +151,102 @@ fun ScannerScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                modifier = Modifier.padding(horizontal = 20.dp)
+                modifier = Modifier.padding(horizontal = 12.dp)
             )
+            Spacer(Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Scanner Viewport Box
             Box(
                 modifier = Modifier
-                    .size(260.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color.Black)
-                    .border(3.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(24.dp)),
+                    .fillMaxWidth()
+                    .height(260.dp)
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(26.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                // Animated laser line
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .height(2.dp)
-                        .offset(y = (laserOffset - 100).dp)
-                        .background(Color.Red)
-                )
-
-                // Corner Reticle markers
-                Icon(
-                    imageVector = Icons.Default.QrCodeScanner,
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.25f),
-                    modifier = Modifier.size(160.dp)
-                )
-
-                Text(
-                    text = strings.alignBarcode,
-                    color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Manual Barcode Entry
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = manualBarcode,
-                    onValueChange = { manualBarcode = it },
-                    label = { Text(strings.enterBarcodeHint) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(
-                    onClick = {
-                        if (manualBarcode.isNotBlank()) {
-                            posViewModel.scanBarcode(manualBarcode)
-                            scanSuccessMessage = "Scanned: $manualBarcode"
-                            manualBarcode = ""
-                        }
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.height(56.dp)
-                ) {
-                    Text(strings.addBtn)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Quick Demo Barcode Buttons
-            Text(
-                text = "⚡ Quick Test Pet Barcodes:",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val sampleBarcodes = listOf(
-                Triple("8991001", "🐶 Royal Canin Dog", "Food"),
-                Triple("8991003", "🐶 Frontline Flea", "Health"),
-                Triple("8992001", "🐱 Whiskas Cat", "Food"),
-                Triple("8992003", "🐱 Tidy Cats Litter", "Grooming"),
-                Triple("8993001", "🦜 Kaytee Bird Seed", "Food"),
-                Triple("8994001", "🐠 TetraMin Fish Flakes", "Food")
-            )
-
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(sampleBarcodes) { (code, title, _) ->
-                    FilledTonalButton(
-                        onClick = {
-                            posViewModel.scanBarcode(code)
-                            scanSuccessMessage = "Added: $title ($code)"
-                        },
-                        shape = RoundedCornerShape(10.dp)
+                if (hasCameraPermission) {
+                    CameraPreview(
+                        torchOn = torchOn,
+                        onTorchAvailable = { hasTorch = it },
+                        onBarcode = { submit(it) },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Text(
+                        text = strings.alignBarcode,
+                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 14.dp)
+                    )
+                } else {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(20.dp)
                     ) {
-                        Text(text = title, fontSize = 12.sp)
+                        Text(
+                            text = "Camera permission is needed to scan barcodes. You can still type the barcode below.",
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                            shape = RoundedCornerShape(22.dp),
+                            modifier = Modifier.heightIn(min = 48.dp)
+                        ) { Text("Allow camera") }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(Modifier.height(16.dp))
 
-            scanSuccessMessage?.let { msg ->
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = manualBarcode,
+                    onValueChange = { manualBarcode = it.filter { c -> !c.isWhitespace() }.take(64) },
+                    label = { Text(strings.enterBarcodeHint) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        submit(manualBarcode)
+                        manualBarcode = ""
+                    }),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        submit(manualBarcode)
+                        manualBarcode = ""
+                    },
+                    enabled = manualBarcode.isNotBlank(),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.height(56.dp)
+                ) { Text(strings.addBtn) }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            lastEvent?.let { event ->
+                val accent = if (event.isError) CoralAccent else OneUiGreen
                 Surface(
-                    color = Color(0xFFD1FAE5),
-                    shape = RoundedCornerShape(12.dp),
+                    color = accent.copy(alpha = 0.16f),
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            Icons.Default.CheckCircle,
+                            if (event.isError) Icons.Default.Warning else Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = Color(0xFF047857)
+                            tint = accent
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(Modifier.width(8.dp))
                         Text(
-                            text = msg,
-                            color = Color(0xFF047857),
+                            text = event.message,
+                            color = accent,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
                         )
@@ -212,4 +255,79 @@ fun ScannerScreen(
             }
         }
     }
+}
+
+/** Camera preview + ZXing analysis. Same barcode within 1.5 s is ignored so a held code adds one item. */
+@Composable
+private fun CameraPreview(
+    torchOn: Boolean,
+    onTorchAvailable: (Boolean) -> Unit,
+    onBarcode: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val mainExecutor = remember { ContextCompat.getMainExecutor(context) }
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+    var camera by remember { mutableStateOf<Camera?>(null) }
+    val latestOnBarcode by androidx.compose.runtime.rememberUpdatedState(onBarcode)
+    val latestOnTorch by androidx.compose.runtime.rememberUpdatedState(onTorchAvailable)
+
+    // The camera is bound to the Activity lifecycle, so it must be released explicitly when this tab is left.
+    val providerHolder = remember { arrayOfNulls<ProcessCameraProvider>(1) }
+    DisposableEffect(Unit) {
+        onDispose {
+            providerHolder[0]?.unbindAll()
+            analysisExecutor.shutdown()
+        }
+    }
+
+    LaunchedEffect(torchOn, camera) {
+        camera?.cameraControl?.enableTorch(torchOn)
+    }
+
+    AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            val previewView = PreviewView(ctx).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
+            val providerFuture = ProcessCameraProvider.getInstance(ctx)
+            providerFuture.addListener({
+                try {
+                    val provider = providerFuture.get()
+                    providerHolder[0] = provider
+                    val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
+
+                    var lastCode: String? = null
+                    var lastTime = 0L
+                    val analysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                        .also { useCase ->
+                            useCase.setAnalyzer(analysisExecutor, BarcodeAnalyzer { code ->
+                                val now = System.currentTimeMillis()
+                                if (code != lastCode || now - lastTime > 1_500L) {
+                                    lastCode = code
+                                    lastTime = now
+                                    mainExecutor.execute { latestOnBarcode(code) }
+                                }
+                            })
+                        }
+
+                    provider.unbindAll()
+                    val bound = provider.bindToLifecycle(
+                        lifecycleOwner,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview,
+                        analysis
+                    )
+                    camera = bound
+                    latestOnTorch(bound.cameraInfo.hasFlashUnit())
+                } catch (_: Exception) {
+                    // No camera / camera in use: the manual field below still works.
+                    latestOnTorch(false)
+                }
+            }, mainExecutor)
+            previewView
+        }
+    )
 }

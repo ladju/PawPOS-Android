@@ -5,6 +5,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Shapes
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
@@ -65,6 +68,15 @@ private val LightColorScheme = lightColorScheme(
     surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFFF7F7FA)
 )
 
+/** One UI squircle scale from DESIGN.md: 14 chips/fields, 16 list items, 22 cards, 26 sheets/dialogs. */
+val AppShapes = Shapes(
+    extraSmall = RoundedCornerShape(14.dp),
+    small = RoundedCornerShape(14.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(22.dp),
+    extraLarge = RoundedCornerShape(26.dp)
+)
+
 @Composable
 fun PetShopPOSTheme(
     darkTheme: Boolean = true, // Default to Samsung One UI OLED Dark Mode
@@ -83,6 +95,7 @@ fun PetShopPOSTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = AppShapes,
         content = content
     )
 }

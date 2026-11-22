@@ -2,6 +2,7 @@ package com.petshop.pos.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.petshop.pos.domain.Money
 import com.petshop.pos.data.local.entity.PetCategory
 import com.petshop.pos.data.local.entity.ProductEntity
 import com.petshop.pos.data.local.entity.ProductType
@@ -121,8 +122,8 @@ class InventoryViewModel(
         name: String,
         category: PetCategory,
         productType: ProductType,
-        costPrice: Double,
-        sellingPrice: Double,
+        costPrice: Long,
+        sellingPrice: Long,
         currentStock: Int,
         minStockAlert: Int,
         unit: String,
@@ -142,22 +143,27 @@ class InventoryViewModel(
                 name = name.trim(),
                 category = category,
                 productType = productType,
-                costPrice = costPrice,
-                sellingPrice = sellingPrice,
-                currentStock = currentStock,
-                minStockAlert = minStockAlert,
+                costPrice = costPrice.coerceIn(0L, Money.MAX_INPUT_AMOUNT),
+                sellingPrice = sellingPrice.coerceIn(0L, Money.MAX_INPUT_AMOUNT),
+                currentStock = currentStock.coerceAtLeast(0),
+                minStockAlert = minStockAlert.coerceAtLeast(0),
                 unit = unit.ifBlank { "pcs" },
                 expiryDate = expiryDate?.ifBlank { null },
                 description = description.trim(),
                 imageUri = imageUri
             )
-            repository.saveProduct(product)
-            _uiState.update {
-                it.copy(
-                    isAddEditSheetOpen = false,
-                    selectedProductForEdit = null,
-                    infoMessage = if (id == 0L) "Product created successfully!" else "Product updated successfully!"
-                )
+            try {
+                repository.saveProduct(product)
+                _uiState.update {
+                    it.copy(
+                        isAddEditSheetOpen = false,
+                        selectedProductForEdit = null,
+                        infoMessage = if (id == 0L) "Product created successfully!" else "Product updated successfully!"
+                    )
+                }
+            } catch (e: IllegalArgumentException) {
+                // Validation (duplicate barcode, negative values): keep the sheet open so nothing typed is lost.
+                _uiState.update { it.copy(errorMessage = e.message ?: "Could not save product.") }
             }
         }
     }
