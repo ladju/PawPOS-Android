@@ -2,10 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Paw POS — Samsung One UI 8 Edition (Rana Petshop)</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#010101" id="metaThemeColor">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Paw POS">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230066CC'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E%F0%9F%90%BE%3C/text%3E%3C/svg%3E">
-  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
 
     /* Zero-Dependency Embedded Tailwind Utility Engine (100% Offline & Sandbox Ready) */
@@ -273,34 +280,190 @@
     .focus\:outline-none:focus { outline: none; }
     .active\:scale-95:active { transform: scale(0.95); }
 
+    /* Additional Embedded Utilities (100% Zero-CDN Offline Parity) */
+    .inline-flex { display: inline-flex; }
+    .self-start { align-self: flex-start; }
+    .my-auto { margin-top: auto; margin-bottom: auto; }
+    .mt-auto { margin-top: auto; }
+    .mt-1\.5 { margin-top: 0.375rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mb-1\.5 { margin-bottom: 0.375rem; }
+    .ml-0\.5 { margin-left: 0.125rem; }
+    .ml-2 { margin-left: 0.5rem; }
+    .mx-3 { margin-left: 0.75rem; margin-right: 0.75rem; }
+    .space-y-3\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.875rem; }
+
+    .p-0\.5 { padding: 0.125rem; }
+    .p-8 { padding: 2rem; }
+    .pb-2 { padding-bottom: 0.5rem; }
+    .pb-2\.5 { padding-bottom: 0.625rem; }
+    .pb-6 { padding-bottom: 1.5rem; }
+    .pr-2 { padding-right: 0.5rem; }
+    .pt-1\.5 { padding-top: 0.375rem; }
+    .pt-4 { padding-top: 1rem; }
+
+    .-top-1 { top: -0.25rem; }
+    .-right-0\.5 { right: -0.125rem; }
+    .top-5 { top: 1.25rem; }
+
+    .w-2\.5 { width: 0.625rem; }
+    .h-2\.5 { height: 0.625rem; }
+    .h-1\.5 { height: 0.375rem; }
+    .h-3 { height: 0.75rem; }
+    .w-5 { width: 1.25rem; }
+    .h-5 { height: 1.25rem; }
+    .h-28 { height: 7rem; }
+    .w-36 { width: 9rem; }
+    .h-36 { height: 9rem; }
+    .h-\[46px\] { height: 46px; }
+    .h-\[48px\] { height: 48px; }
+    .h-\[50px\] { height: 50px; }
+
+    .min-h-\[36px\] { min-height: 36px; }
+    .min-h-\[44px\] { min-height: 44px; }
+    .min-h-\[46px\] { min-height: 46px; }
+    .min-h-\[48px\] { min-height: 48px; }
+    .min-h-\[56px\] { min-height: 56px; }
+    .min-h-\[160px\] { min-height: 160px; }
+    .min-w-\[36px\] { min-width: 36px; }
+    .min-w-\[44px\] { min-width: 44px; }
+    .min-w-\[70px\] { min-width: 70px; }
+    .min-w-\[125px\] { min-width: 125px; }
+
+    .max-w-full { max-width: 100%; }
+    .max-w-md { max-width: 28rem; }
+    .max-w-lg { max-width: 32rem; }
+    .max-w-\[36px\] { max-width: 36px; }
+    .max-w-\[480px\] { max-width: 480px; }
+    .max-w-\[500px\] { max-width: 500px; }
+    .max-h-\[200px\] { max-height: 200px; }
+    .max-h-\[38vh\] { max-height: 38vh; }
+    .max-h-\[500px\] { max-height: 500px; }
+    .max-h-\[72vh\] { max-height: 72vh; }
+    .max-h-\[94vh\] { max-height: 94vh; }
+
+    .object-cover { object-fit: cover; }
+    .rounded-md { border-radius: 0.375rem; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-\[32px\] { border-radius: 32px; }
+    .rounded-t-lg { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
+    .rounded-tl-xs { border-top-left-radius: 0.125rem; }
+    .rounded-tr-xs { border-top-right-radius: 0.125rem; }
+
+    .border-2 { border-width: 2px; }
+    .border-\[5px\] { border-width: 5px; }
+    .border-amber-500\/20 { border-color: rgba(245, 158, 11, 0.2); }
+    .border-blue-500\/20 { border-color: rgba(59, 130, 246, 0.2); }
+    .border-blue-500\/30 { border-color: rgba(59, 130, 246, 0.3); }
+    .border-emerald-500\/20 { border-color: rgba(16, 185, 129, 0.2); }
+    .border-neutral-200\/50 { border-color: rgba(229, 229, 229, 0.5); }
+    .border-purple-500\/20 { border-color: rgba(168, 85, 247, 0.2); }
+    .border-red-500\/20 { border-color: rgba(239, 68, 68, 0.2); }
+    .border-slate-500\/20 { border-color: rgba(100, 116, 139, 0.2); }
+    .accent-\[\#0066CC\] { accent-color: #0066CC; }
+    .divide-y-0 > :not([hidden]) ~ :not([hidden]) { border-top-width: 0; border-bottom-width: 0; }
+
+    .bg-black\/95 { background-color: rgba(0, 0, 0, 0.95); }
+    .bg-blue-500\/20 { background-color: rgba(59, 130, 246, 0.2); }
+    .bg-emerald-950\/70 { background-color: rgba(2, 44, 34, 0.7); }
+    .bg-neutral-100 { background-color: #f5f5f5; }
+    .bg-rose-600 { background-color: #e11d48; }
+
+    .text-blue-300 { color: #93c5fd; }
+    .text-emerald-300 { color: #6ee7b7; }
+    .text-neutral-300 { color: #d4d4d4; }
+    .text-neutral-700 { color: #404040; }
+    .text-purple-400 { color: #c084fc; }
+    .text-rose-600 { color: #e11d48; }
+    .text-rose-700 { color: #be123c; }
+
+    .text-\[9px\] { font-size: 9px; line-height: 1.2; }
+    .text-\[10px\] { font-size: 10px; line-height: 1.25; }
+    .text-\[11px\] { font-size: 11px; line-height: 1.3; }
+    .text-\[13px\] { font-size: 13px; line-height: 1.35; }
+    .text-\[24px\] { font-size: 24px; line-height: 1.2; }
+    .font-normal { font-weight: 400; }
+    .italic { font-style: italic; }
+    .tracking-normal { letter-spacing: 0; }
+    .tracking-wide { letter-spacing: 0.025em; }
+    .tracking-widest { letter-spacing: 0.1em; }
+
+    .opacity-30 { opacity: 0.3; }
+    .opacity-85 { opacity: 0.85; }
+    .shadow-inner { box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06); }
+    .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+    .duration-150 { transition-duration: 150ms; }
+    .duration-200 { transition-duration: 200ms; }
+    .duration-300 { transition-duration: 300ms; }
+
+    .hover\:bg-white\/10:hover { background-color: rgba(255, 255, 255, 0.1); }
+    .hover\:bg-white\/30:hover { background-color: rgba(255, 255, 255, 0.3); }
+    .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(255, 255, 255, 0.02); }
+    .hover\:opacity-75:hover { opacity: 0.75; }
+    .hover\:opacity-85:hover { opacity: 0.85; }
+    .hover\:opacity-95:hover { opacity: 0.95; }
+    .hover\:scale-\[1\.02\]:hover { transform: scale(1.02); }
+    .active\:scale-90:active { transform: scale(0.9); }
+    .active\:scale-98:active, .active\:scale-\[0\.98\]:active { transform: scale(0.98); }
+    .active\:scale-\[0\.99\]:active { transform: scale(0.99); }
+
     @media (min-width: 640px) {
       .sm\:p-4 { padding: 1rem; }
+      .sm\:p-5 { padding: 1.25rem; }
       .sm\:p-6 { padding: 1.5rem; }
+      .sm\:px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+      .sm\:px-4 { padding-left: 1rem; padding-right: 1rem; }
+      .sm\:px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
       .sm\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .sm\:py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+      .sm\:gap-3 { gap: 0.75rem; }
+      .sm\:w-14 { width: 3.5rem; }
+      .sm\:h-14 { height: 3.5rem; }
+      .sm\:inline { display: inline; }
+      .sm\:inline-block { display: inline-block; }
+      .sm\:inline-flex { display: inline-flex; }
       .sm\:flex-row { flex-direction: row; }
       .sm\:flex-nowrap { flex-wrap: nowrap; }
+      .sm\:items-center { align-items: center; }
       .sm\:items-end { align-items: flex-end; }
       .sm\:self-auto { align-self: auto; }
       .sm\:justify-end { justify-content: flex-end; }
       .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .sm\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .sm\:grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
       .sm\:text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+      .sm\:text-base { font-size: 1rem; line-height: 1.5rem; }
+      .sm\:text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+      .sm\:text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+      .sm\:text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+      .sm\:text-\[14px\] { font-size: 14px; }
       .sm\:text-\[15px\] { font-size: 15px; }
+      .sm\:text-\[26px\] { font-size: 26px; }
+      .sm\:text-\[28px\] { font-size: 28px; }
       .sm\:text-\[30px\] { font-size: 30px; }
       .sm\:text-\[32px\] { font-size: 32px; }
+    }
+
+    @media (min-width: 768px) {
+      .md\:flex-row { flex-direction: row; }
+      .md\:items-center { align-items: center; }
+      .md\:justify-end { justify-content: flex-end; }
+      .md\:text-right { text-align: right; }
+      .md\:border-t-0 { border-top-width: 0; }
+      .md\:pt-0 { padding-top: 0; }
     }
 
     @media (min-width: 1024px) {
       .lg\:flex-row { flex-direction: row; }
       .lg\:w-\[62\%\] { width: 62%; }
       .lg\:w-\[38\%\] { width: 38%; }
+      .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .lg\:grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
       .lg\:col-span-7 { grid-column: span 7 / span 7; }
       .lg\:col-span-5 { grid-column: span 5 / span 5; }
     }
-
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
     :root {
       /* Samsung One UI 8 Soft Light Mode Tokens — WCAG AA Contrast Hardened */
@@ -439,6 +602,24 @@
       #posProductGrid {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: 10px !important;
+      }
+    }
+    @media (display-mode: standalone) {
+      body {
+        padding: 0 !important;
+      }
+      .dev-toolbar {
+        display: none !important;
+      }
+      #deviceViewport {
+        border-width: 0 !important;
+        border-radius: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        min-height: 100vh !important;
+        height: 100dvh !important;
+        max-height: none !important;
+        margin: 0 !important;
       }
     }
 
@@ -632,10 +813,11 @@
         <span>🐾</span>
         <span class="text-xs opacity-75">One UI 8.0</span>
       </div>
-      <div class="flex items-center gap-2.5 tabular-nums">
-        <span>5G</span>
-        <span>📶</span>
-        <span>🔋 94%</span>
+      <div class="flex items-center gap-2 tabular-nums">
+        <span id="pwaNetworkPill" class="px-2 py-0.5 rounded-full text-[11px] font-bold inline-flex items-center gap-1" style="background: var(--oneui-green-tint); color: var(--oneui-green);">
+          <span id="pwaNetworkDot" class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: var(--oneui-green);"></span>
+          <span id="pwaNetworkText">Offline Ready</span>
+        </span>
       </div>
     </div>
 
@@ -903,6 +1085,25 @@
 
       <!-- ==================== TAB 3: SALES RECAP & CLOSING REPORT ==================== -->
       <div id="tab-recap" class="flex-1 flex flex-col gap-4 hidden overflow-y-auto hide-scrollbar pb-6">
+        <!-- Auto-Backup Reminder Banner (Appears gently after 5+ sales or >24h since last backup) -->
+        <div id="backupReminderRecap" class="hidden oneui-focus-block p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shrink-0" style="background: var(--oneui-amber-tint); border-color: var(--oneui-amber);">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="text-xl shrink-0">💾</span>
+            <div class="min-w-0">
+              <div id="backupReminderRecapTitle" class="text-xs sm:text-sm font-extrabold" style="color: var(--oneui-amber);">Backup Recommended</div>
+              <div id="backupReminderRecapSub" class="text-xs font-medium" style="color: var(--oneui-text-secondary);">You have unsaved sales since your last JSON backup.</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 self-stretch sm:self-auto justify-end shrink-0">
+            <button type="button" data-action="dismissBackupReminder" class="min-h-[44px] px-3.5 rounded-full text-xs font-bold cursor-pointer transition active:scale-95" style="background-color: var(--oneui-surface); color: var(--oneui-text-secondary);">
+              <span class="backup-later-label">Later</span>
+            </button>
+            <button type="button" data-action="exportFullBackup" class="min-h-[44px] px-4 rounded-full text-xs font-bold text-white cursor-pointer transition active:scale-95 shadow-sm" style="background-color: var(--oneui-blue);">
+              💾 <span class="backup-now-label">Backup Now</span>
+            </button>
+          </div>
+        </div>
+
         <!-- 1. Segmented Timeframe Selector Pill Row: [ Day | Week | Month | Year ] -->
         <div class="p-1 rounded-full flex items-center gap-1 shrink-0" style="background-color: var(--oneui-surface-2); border: 1px solid var(--oneui-divider);">
           <button data-action="setRecapTimeframe" data-arg="day" id="recapTfDay" class="flex-1 min-h-[44px] rounded-full text-xs font-bold text-center transition cursor-pointer shadow-sm active:scale-95" style="background-color: var(--oneui-blue); color: #FFFFFF;">
@@ -1272,7 +1473,7 @@
               <h2 id="settingsProfileTitle" class="text-base font-extrabold">Store Profile & Digital Identity</h2>
               <p id="settingsProfileSub" class="text-xs" style="color: var(--oneui-text-muted);">Used on digital WhatsApp QR receipts and customer invoices</p>
             </div>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold" style="background: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0" style="background: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
               One UI 8
             </span>
           </div>
@@ -1290,6 +1491,80 @@
               <label class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Store Address</label>
               <input id="settingStoreAddress" type="text" value="Rana Petshop • Solo Counter" class="oneui-input w-full px-3.5 py-2.5 font-semibold">
             </div>
+          </div>
+        </div>
+
+        <!-- Offline Mode, PWA & Shop Data Backup Focus Block -->
+        <div id="settingsBackupFocusBlock" class="oneui-focus-block p-4 sm:p-5 space-y-3.5">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h2 id="settingsOfflineTitle" class="text-base font-extrabold">Offline App &amp; Data Safety</h2>
+              <p id="settingsOfflineSub" class="text-xs" style="color: var(--oneui-text-muted);">Install full-screen for offline counter use &amp; keep 1-tap JSON backups</p>
+            </div>
+            <span id="settingsOfflineBadge" class="px-2.5 py-1 rounded-full text-xs font-bold shrink-0 inline-flex items-center gap-1" style="background: var(--oneui-green-tint); color: var(--oneui-green);">
+              ✓ Offline Ready
+            </span>
+          </div>
+
+          <!-- Auto-Backup Reminder inside Settings -->
+          <div id="backupReminderSettings" class="hidden p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5" style="background: var(--oneui-amber-tint); border: 1px solid var(--oneui-amber);">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-lg shrink-0">⚠️</span>
+              <div class="min-w-0">
+                <div id="backupReminderSettingsTitle" class="text-xs font-extrabold" style="color: var(--oneui-amber);">Backup Recommended</div>
+                <div id="backupReminderSettingsSub" class="text-xs" style="color: var(--oneui-text-secondary);">Export a JSON backup to protect recent sales.</div>
+              </div>
+            </div>
+            <button type="button" data-action="exportFullBackup" class="min-h-[44px] px-4 rounded-full text-xs font-bold text-white cursor-pointer transition active:scale-95 shrink-0 shadow-sm" style="background-color: var(--oneui-blue);">
+              💾 <span class="backup-now-label">Backup Now</span>
+            </button>
+          </div>
+
+          <!-- 3-Metric Readiness Strip -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <div class="p-3 rounded-2xl" style="background-color: var(--oneui-surface-2);">
+              <div id="pwaCacheStatusLabel" class="text-[11px] font-semibold" style="color: var(--oneui-text-muted);">Offline Cache</div>
+              <div id="pwaCacheStatusValue" class="font-extrabold text-sm mt-0.5 tabular-nums" style="color: var(--oneui-green);">Ready (Zero-CDN)</div>
+            </div>
+            <div class="p-3 rounded-2xl" style="background-color: var(--oneui-surface-2);">
+              <div id="pwaStorageUsedLabel" class="text-[11px] font-semibold" style="color: var(--oneui-text-muted);">Local Storage</div>
+              <div id="pwaStorageUsedValue" class="font-extrabold text-sm mt-0.5 tabular-nums" style="color: var(--oneui-text);">0.0 KB</div>
+            </div>
+            <div class="p-3 rounded-2xl" style="background-color: var(--oneui-surface-2);">
+              <div id="pwaLastBackupLabel" class="text-[11px] font-semibold" style="color: var(--oneui-text-muted);">Last JSON Backup</div>
+              <div id="pwaLastBackupValue" class="font-extrabold text-sm mt-0.5 truncate" style="color: var(--oneui-blue-text);">Never</div>
+            </div>
+          </div>
+
+          <!-- Install PWA Row -->
+          <div class="p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3" style="background-color: var(--oneui-surface-2);">
+            <div class="min-w-0">
+              <div id="settingsInstallTitle" class="font-bold text-sm">Install Paw POS to Home Screen</div>
+              <div id="settingsInstallSub" class="text-xs" style="color: var(--oneui-text-muted);">Runs full-screen without browser bars — even with zero internet</div>
+            </div>
+            <button type="button" id="btnPwaInstall" data-action="installPwaApp" class="min-h-[44px] px-4 py-2 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shrink-0 active:scale-95" style="background-color: var(--oneui-surface); color: var(--oneui-blue-text); border: 1px solid var(--oneui-hairline);">
+              <span>📲</span>
+              <span id="settingsInstallBtnLabel">Install App</span>
+            </button>
+          </div>
+
+          <!-- 1-Tap Full Shop Backup & Restore Actions -->
+          <div class="p-3.5 rounded-2xl space-y-2.5" style="background-color: var(--oneui-surface-2);">
+            <div>
+              <div id="settingsBackupRowTitle" class="font-bold text-sm">Full Shop Backup &amp; Restore (.json)</div>
+              <div id="settingsBackupRowSub" class="text-xs" style="color: var(--oneui-text-muted);">Saves products, stock, invoices, shifts, categories &amp; store profile in one portable file</div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button type="button" id="btnExportFullBackup" data-action="exportFullBackup" class="min-h-[44px] px-4 py-2.5 rounded-full text-xs font-bold text-white transition flex items-center justify-center gap-2 cursor-pointer shadow active:scale-95" style="background-color: var(--oneui-blue);">
+                <span>💾</span>
+                <span id="settingsExportBackupBtnLabel">Export Full Backup (.json)</span>
+              </button>
+              <button type="button" id="btnTriggerRestoreBackup" data-action="triggerRestoreBackup" class="min-h-[44px] px-4 py-2.5 rounded-full text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer active:scale-95" style="background-color: var(--oneui-surface); color: var(--oneui-text); border: 1px solid var(--oneui-hairline);">
+                <span>📥</span>
+                <span id="settingsRestoreBackupBtnLabel">Restore Backup (.json)</span>
+              </button>
+            </div>
+            <input id="restoreBackupFileInput" type="file" accept=".json,application/json" class="hidden">
           </div>
         </div>
 
@@ -1355,7 +1630,7 @@
                 <div id="settingsResetTitle" class="font-bold text-sm">Reset Demo Catalog & Data</div>
                 <div id="settingsResetSub" class="text-xs" style="color: var(--oneui-text-muted);">Restore original Rana Petshop catalog and clear saved local data</div>
               </div>
-              <button data-action="resetDemoData" class="min-h-[44px] px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer shrink-0" style="color: var(--oneui-coral); background-color: var(--oneui-coral-tint); border: 1px solid var(--oneui-coral);">
+              <button data-action="openResetConfirmModal" class="min-h-[44px] px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer shrink-0" style="color: var(--oneui-coral); background-color: var(--oneui-coral-tint); border: 1px solid var(--oneui-coral);">
                 🔄 <span id="settingsResetBtnLabel">Reset Data</span>
               </button>
             </div>
@@ -1424,12 +1699,13 @@
           <span id="navLabelHistory" class="truncate">History</span>
         </button>
 
-        <button id="navBtnSettings" data-action="switchTab" data-arg="settings" class="flex-1 min-h-[44px] py-2 px-1 sm:px-2 rounded-full text-xs font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1" style="color: var(--oneui-text-secondary);">
+        <button id="navBtnSettings" data-action="switchTab" data-arg="settings" class="flex-1 min-h-[44px] py-2 px-1 sm:px-2 rounded-full text-xs font-semibold transition flex flex-col sm:flex-row items-center justify-center gap-1 relative" style="color: var(--oneui-text-secondary);">
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281Z"/>
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
           </svg>
           <span id="navLabelSettings" class="truncate">Settings</span>
+          <span id="navSettingsBackupDot" class="hidden absolute -top-1 -right-0.5 w-2.5 h-2.5 rounded-full" style="background: var(--oneui-amber);" title="Backup recommended"></span>
         </button>
       </div>
     </div>
@@ -1919,6 +2195,20 @@
           <label class="text-[11px] font-semibold" style="color: var(--oneui-text-muted);">Closing & Handover Notes (Optional):</label>
           <input id="closeShiftNotesInput" type="text" placeholder="e.g., Petty cash balanced, handed over to evening cashier..." class="oneui-input w-full px-3.5 py-2.5 text-xs font-medium">
         </div>
+
+        <!-- Optional End-of-Shift JSON Backup Safety Toggle -->
+        <label for="closeShiftAutoBackupCb" class="p-3 rounded-2xl flex items-center justify-between gap-2.5 cursor-pointer" style="background-color: var(--oneui-surface-2);">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base shrink-0">💾</span>
+            <div class="min-w-0">
+              <div id="closeShiftBackupTitle" class="text-xs font-bold">Download Shift JSON Backup</div>
+              <div id="closeShiftBackupSub" class="text-[11px]" style="color: var(--oneui-text-muted);">Saves full shop ledger copy automatically when closing shift</div>
+            </div>
+          </div>
+          <span class="w-11 h-11 flex items-center justify-center shrink-0">
+            <input id="closeShiftAutoBackupCb" type="checkbox" checked class="w-5 h-5 accent-[#0066CC] rounded cursor-pointer">
+          </span>
+        </label>
       </div>
 
       <!-- Pinned Action Buttons (Always visible above fold) -->
@@ -2071,6 +2361,144 @@
             ✓ Save Changes
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================== -->
+  <!-- MODAL 9: RESTORE BACKUP CONFIRMATION SHEET (One UI 8 Safety Guard)          -->
+  <!-- =========================================================================== -->
+  <div id="restoreBackupModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-md rounded-[28px] p-5 sm:p-6 flex flex-col gap-3.5 shadow-2xl max-h-[92vh] overflow-hidden" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+      <div class="flex items-center justify-between gap-2 shrink-0">
+        <div>
+          <h3 id="restoreModalTitle" class="text-lg font-extrabold tracking-tight">Restore Shop Backup?</h3>
+          <p id="restoreModalSub" class="text-xs" style="color: var(--oneui-text-muted);">Verify backup details before replacing current device data</p>
+        </div>
+        <button type="button" data-action="closeRestoreBackupModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer" style="background: var(--oneui-surface-2);" aria-label="Close restore backup modal">✕</button>
+      </div>
+
+      <div class="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-3 text-xs">
+        <div class="p-3.5 rounded-2xl space-y-2" style="background-color: var(--oneui-surface-2);">
+          <div class="flex items-center justify-between">
+            <span style="color: var(--oneui-text-muted);" id="restoreMetaStoreLabel">Store</span>
+            <span id="restorePreviewStore" class="font-extrabold">Rana Petshop</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span style="color: var(--oneui-text-muted);" id="restoreMetaDateLabel">Exported At</span>
+            <span id="restorePreviewDate" class="font-bold tabular-nums">—</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-center">
+          <div class="p-3 rounded-2xl" style="background-color: var(--oneui-surface-2);">
+            <div class="text-lg font-black tabular-nums" id="restorePreviewProducts" style="color: var(--oneui-blue-text);">0</div>
+            <div class="text-[11px] font-semibold" id="restoreCountProductsLabel" style="color: var(--oneui-text-muted);">Products</div>
+          </div>
+          <div class="p-3 rounded-2xl" style="background-color: var(--oneui-surface-2);">
+            <div class="text-lg font-black tabular-nums" id="restorePreviewTx" style="color: var(--oneui-green);">0</div>
+            <div class="text-[11px] font-semibold" id="restoreCountTxLabel" style="color: var(--oneui-text-muted);">Invoices</div>
+          </div>
+          <div class="p-3 rounded-2xl" style="background-color: var(--oneui-surface-2);">
+            <div class="text-lg font-black tabular-nums" id="restorePreviewShifts" style="color: var(--oneui-text);">0</div>
+            <div class="text-[11px] font-semibold" id="restoreCountShiftsLabel" style="color: var(--oneui-text-muted);">Shift Z-Reports</div>
+          </div>
+          <div class="p-3 rounded-2xl" style="background-color: var(--oneui-surface-2);">
+            <div class="text-lg font-black tabular-nums" id="restorePreviewCats" style="color: var(--oneui-text);">0</div>
+            <div class="text-[11px] font-semibold" id="restoreCountCatsLabel" style="color: var(--oneui-text-muted);">Categories</div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-2xl flex flex-col gap-2" style="background: var(--oneui-amber-tint); border: 1px solid var(--oneui-amber);">
+          <div id="restoreWarningText" class="text-xs font-semibold" style="color: var(--oneui-amber);">
+            ⚠️ Restoring will replace current inventory, invoices, and settings on this browser.
+          </div>
+          <button type="button" data-action="exportFullBackup" class="min-h-[44px] px-3.5 rounded-full text-xs font-bold self-start cursor-pointer transition active:scale-95" style="background-color: var(--oneui-surface); color: var(--oneui-blue-text);">
+            💾 <span id="restoreDownloadSafetyBtn">Download Safety Copy First</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 shrink-0" style="border-top: 1px solid var(--oneui-divider);">
+        <button type="button" data-action="closeRestoreBackupModal" class="h-11 px-4 rounded-full text-xs font-bold transition active:scale-95 cursor-pointer" style="background-color: var(--oneui-surface-2); color: var(--oneui-text-secondary);">
+          <span class="modal-cancel-label">Cancel</span>
+        </button>
+        <button type="button" id="btnConfirmRestoreBackup" data-action="confirmRestoreBackup" class="h-11 px-5 rounded-full text-xs font-bold text-white transition active:scale-95 shadow cursor-pointer" style="background-color: var(--oneui-blue);">
+          ✓ <span id="restoreConfirmBtnLabel">Confirm Restore</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================== -->
+  <!-- MODAL 10: PWA INSTALL & OFFLINE GUIDE SHEET                                 -->
+  <!-- =========================================================================== -->
+  <div id="pwaInstallGuideModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-md rounded-[28px] p-5 sm:p-6 flex flex-col gap-3.5 shadow-2xl max-h-[92vh] overflow-hidden" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+      <div class="flex items-center justify-between gap-2 shrink-0">
+        <div>
+          <h3 id="pwaGuideTitle" class="text-lg font-extrabold tracking-tight">Install Paw POS (Offline App)</h3>
+          <p id="pwaGuideSub" class="text-xs" style="color: var(--oneui-text-muted);">Launch full-screen from your Home Screen with zero internet required</p>
+        </div>
+        <button type="button" data-action="closePwaGuideModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer" style="background: var(--oneui-surface-2);" aria-label="Close install guide">✕</button>
+      </div>
+
+      <div class="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-2.5 text-xs">
+        <div class="p-3.5 rounded-2xl space-y-1.5" style="background-color: var(--oneui-surface-2);">
+          <div class="font-extrabold text-sm flex items-center gap-2"><span>🤖</span> <span id="pwaGuideAndroidTitle">Android (Chrome / Samsung Internet)</span></div>
+          <p id="pwaGuideAndroidBody" style="color: var(--oneui-text-secondary);">
+            Tap the browser menu (⋮ or ≡) → <strong>Install app</strong> or <strong>Add to Home screen</strong> → Tap <strong>Install</strong>.
+          </p>
+        </div>
+        <div class="p-3.5 rounded-2xl space-y-1.5" style="background-color: var(--oneui-surface-2);">
+          <div class="font-extrabold text-sm flex items-center gap-2"><span>🍎</span> <span id="pwaGuideIosTitle">iPhone / iPad (Safari)</span></div>
+          <p id="pwaGuideIosBody" style="color: var(--oneui-text-secondary);">
+            Tap the <strong>Share</strong> icon (⬆️) → scroll down and tap <strong>Add to Home Screen</strong> → Tap <strong>Add</strong>.
+          </p>
+        </div>
+        <div class="p-3 rounded-2xl flex items-center gap-2.5" style="background: var(--oneui-green-tint); color: var(--oneui-green);">
+          <span class="text-base shrink-0">✓</span>
+          <span id="pwaGuideOfflineNote" class="font-bold">Zero external CDNs — once opened, Paw POS keeps running even in Airplane Mode.</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end pt-2 shrink-0" style="border-top: 1px solid var(--oneui-divider);">
+        <button type="button" data-action="closePwaGuideModal" class="h-11 px-6 rounded-full text-xs font-bold text-white transition active:scale-95 shadow cursor-pointer" style="background-color: var(--oneui-blue);">
+          <span id="pwaGuideDoneBtn">Got It</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================== -->
+  <!-- MODAL 11: GUARDED FACTORY RESET CONFIRMATION SHEET                          -->
+  <!-- =========================================================================== -->
+  <div id="confirmResetModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-md rounded-[28px] p-5 sm:p-6 flex flex-col gap-3.5 shadow-2xl max-h-[92vh] overflow-hidden" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+      <div class="flex items-center justify-between gap-2 shrink-0">
+        <div>
+          <h3 id="resetModalTitle" class="text-lg font-extrabold tracking-tight" style="color: var(--oneui-coral);">Reset All Local Shop Data?</h3>
+          <p id="resetModalSub" class="text-xs" style="color: var(--oneui-text-muted);">This restores the default Rana Petshop catalog and clears saved invoices &amp; shifts</p>
+        </div>
+        <button type="button" data-action="closeResetConfirmModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer" style="background: var(--oneui-surface-2);" aria-label="Close reset confirmation">✕</button>
+      </div>
+
+      <div class="p-3.5 rounded-2xl space-y-2.5 text-xs" style="background: var(--oneui-amber-tint); border: 1px solid var(--oneui-amber);">
+        <div id="resetModalWarn" class="font-bold" style="color: var(--oneui-amber);">
+          💡 Recommended: Export a JSON backup before resetting so you can restore anytime.
+        </div>
+        <button type="button" data-action="exportFullBackup" class="min-h-[44px] px-4 rounded-full text-xs font-bold cursor-pointer transition active:scale-95" style="background-color: var(--oneui-surface); color: var(--oneui-blue-text);">
+          💾 <span id="resetExportFirstBtn">Export Backup First</span>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 shrink-0" style="border-top: 1px solid var(--oneui-divider);">
+        <button type="button" data-action="closeResetConfirmModal" class="h-11 px-4 rounded-full text-xs font-bold transition active:scale-95 cursor-pointer" style="background-color: var(--oneui-surface-2); color: var(--oneui-text-secondary);">
+          <span class="modal-cancel-label">Cancel</span>
+        </button>
+        <button type="button" id="btnConfirmFactoryReset" data-action="confirmResetDemoData" class="h-11 px-5 rounded-full text-xs font-bold text-white transition active:scale-95 shadow cursor-pointer" style="background-color: var(--oneui-coral);">
+          🔄 <span id="resetConfirmBtn">Yes, Reset Data</span>
+        </button>
       </div>
     </div>
   </div>
@@ -2689,32 +3117,55 @@ Minimum version required to store current data is: `+i+`.
     let historySubTab = "invoices"; // "invoices" | "shifts"
     let shiftHistory = createDefaultShiftHistory();
 
+    // Offline PWA & Auto-Backup Metadata
+    let backupMeta = {
+      lastBackupAt: null,
+      salesSinceBackup: 0,
+      reminderDismissedAt: null
+    };
+    let pendingRestorePayload = null;
+    let deferredInstallPrompt = null;
+    const pwaRuntime = {
+      swReady: false,
+      swVersion: "v3",
+      cachedAssetsCount: 0,
+      storagePersisted: null,
+      isStandalone: false
+    };
+
+    function buildStatePayload() {
+      const nameEl = document.getElementById("settingStoreName");
+      const phoneEl = document.getElementById("settingStorePhone");
+      const addrEl = document.getElementById("settingStoreAddress");
+      if (nameEl && nameEl.value.trim()) storeProfile.name = nameEl.value.trim();
+      if (phoneEl && phoneEl.value.trim()) storeProfile.phone = phoneEl.value.trim();
+      if (addrEl && addrEl.value.trim()) storeProfile.address = addrEl.value.trim();
+
+      return {
+        version: 2,
+        appLang,
+        products,
+        cart,
+        transactions,
+        shiftHistory,
+        categories: CATEGORIES,
+        includeTax,
+        discountAmount,
+        isDarkTheme,
+        qrisMdrRate,
+        shiftNumber,
+        shiftStartTime,
+        openingFloat,
+        storeProfile,
+        backupMeta
+      };
+    }
+
     function saveState() {
       try {
-        const nameEl = document.getElementById("settingStoreName");
-        const phoneEl = document.getElementById("settingStorePhone");
-        const addrEl = document.getElementById("settingStoreAddress");
-        if (nameEl && nameEl.value.trim()) storeProfile.name = nameEl.value.trim();
-        if (phoneEl && phoneEl.value.trim()) storeProfile.phone = phoneEl.value.trim();
-        if (addrEl && addrEl.value.trim()) storeProfile.address = addrEl.value.trim();
-
-        const payload = {
-          version: 2,
-          products,
-          cart,
-          transactions,
-          shiftHistory,
-          categories: CATEGORIES,
-          includeTax,
-          discountAmount,
-          isDarkTheme,
-          qrisMdrRate,
-          shiftNumber,
-          shiftStartTime,
-          openingFloat,
-          storeProfile
-        };
+        const payload = buildStatePayload();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        if (typeof updateOfflineAndBackupUI === "function") updateOfflineAndBackupUI();
       } catch (e) {
         console.warn("PawPOS localStorage save warning:", e);
       }
@@ -2741,6 +3192,13 @@ Minimum version required to store current data is: `+i+`.
         if (data.storeProfile && typeof data.storeProfile === "object") {
           storeProfile = { ...storeProfile, ...data.storeProfile };
         }
+        if (data.backupMeta && typeof data.backupMeta === "object") {
+          backupMeta = {
+            lastBackupAt: typeof data.backupMeta.lastBackupAt === "number" ? data.backupMeta.lastBackupAt : null,
+            salesSinceBackup: Math.max(0, Number(data.backupMeta.salesSinceBackup || 0)),
+            reminderDismissedAt: typeof data.backupMeta.reminderDismissedAt === "number" ? data.backupMeta.reminderDismissedAt : null
+          };
+        }
         currentReceiptTx = transactions[0] || null;
       } catch (e) {
         console.warn("PawPOS localStorage load warning:", e);
@@ -2763,6 +3221,9 @@ Minimum version required to store current data is: `+i+`.
       if (setCb) setCb.checked = includeTax;
 
       document.body.classList.toggle("dark-theme", isDarkTheme);
+      const metaTheme = document.getElementById("metaThemeColor");
+      if (metaTheme) metaTheme.setAttribute("content", isDarkTheme ? "#010101" : "#F2F2F7");
+
       const tIcon = document.getElementById("themeIcon");
       const tLbl = document.getElementById("themeLabel");
       if (tIcon) tIcon.innerText = isDarkTheme ? "☀️" : "🌙";
@@ -3766,6 +4227,7 @@ Minimum version required to store current data is: `+i+`.
       currentReceiptTx = tx;
       cart = [];
       discountAmount = 0;
+      backupMeta.salesSinceBackup = (backupMeta.salesSinceBackup || 0) + 1;
 
       saveState();
       closeCheckoutModal();
@@ -4757,10 +5219,16 @@ Minimum version required to store current data is: `+i+`.
         document.getElementById("closeShiftNotesInput").value = "";
       }
 
+      const autoBackupShift = document.getElementById("closeShiftAutoBackupCb")?.checked;
       saveState();
+      if (autoBackupShift && typeof exportFullBackup === "function") {
+        exportFullBackup(true);
+      }
       closeCloseShiftModal();
       renderAll();
-      showToast(`🔒 Shift #${closedShiftNum} closed! WhatsApp Z-Report ready.`);
+      showToast(autoBackupShift
+        ? `🔒 Shift #${closedShiftNum} closed! Backup (.json) & Z-Report saved.`
+        : `🔒 Shift #${closedShiftNum} closed! WhatsApp Z-Report ready.`);
       window.open(targetWaUrl, "_blank");
     }
 
@@ -4899,6 +5367,7 @@ Minimum version required to store current data is: `+i+`.
       renderInventoryFocusList();
       renderHistoryList();
       renderSalesRecap();
+      updateOfflineAndBackupUI();
     }
 
     function setFormFactor(mode, silent = false) {
@@ -4911,10 +5380,11 @@ Minimum version required to store current data is: `+i+`.
       const btnPhone = document.getElementById("btnModePhone");
       const phoneBar = document.getElementById("phoneBottomCartBar");
       const { count } = getCartTotals();
+      const isStandalone = Boolean(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
 
       if (mode === "phone") {
         vp.classList.add("phone-mode");
-        if (window.innerWidth <= 640) {
+        if (window.innerWidth <= 640 || isStandalone) {
           vp.style.maxWidth = "100%";
           vp.style.width = "100%";
           vp.style.minHeight = "100vh";
@@ -4944,13 +5414,23 @@ Minimum version required to store current data is: `+i+`.
         if (!silent) showToast("📱 Switched to Galaxy Phone View");
       } else {
         vp.classList.remove("phone-mode");
-        vp.style.maxWidth = "1280px";
-        vp.style.width = "100%";
-        vp.style.minHeight = "620px";
-        vp.style.height = "calc(100vh - 76px)";
-        vp.style.maxHeight = "940px";
-        vp.style.borderWidth = "5px";
-        vp.style.borderRadius = "32px";
+        if (isStandalone) {
+          vp.style.maxWidth = "100%";
+          vp.style.width = "100%";
+          vp.style.minHeight = "100vh";
+          vp.style.height = "100dvh";
+          vp.style.maxHeight = "none";
+          vp.style.borderWidth = "0";
+          vp.style.borderRadius = "0";
+        } else {
+          vp.style.maxWidth = "1280px";
+          vp.style.width = "100%";
+          vp.style.minHeight = "620px";
+          vp.style.height = "calc(100vh - 76px)";
+          vp.style.maxHeight = "940px";
+          vp.style.borderWidth = "5px";
+          vp.style.borderRadius = "32px";
+        }
         tabCashier.classList.add("lg:flex-row");
         leftPane.classList.add("lg:w-[62%]");
         rightPane.classList.add("lg:w-[38%]");
@@ -4968,6 +5448,8 @@ Minimum version required to store current data is: `+i+`.
     function toggleTheme() {
       isDarkTheme = !isDarkTheme;
       document.body.classList.toggle("dark-theme", isDarkTheme);
+      const metaTheme = document.getElementById("metaThemeColor");
+      if (metaTheme) metaTheme.setAttribute("content", isDarkTheme ? "#010101" : "#F2F2F7");
       document.getElementById("themeIcon").innerText = isDarkTheme ? "☀️" : "🌙";
       document.getElementById("themeLabel").innerText = isDarkTheme
         ? (appLang === "id" ? "Mode Terang" : "Light Mode")
@@ -5038,6 +5520,47 @@ Minimum version required to store current data is: `+i+`.
       // Settings Pane
       setTxt("settingsProfileTitle", isId ? "Profil Toko & Identitas Digital" : "Store Profile & Digital Identity");
       setTxt("settingsProfileSub", isId ? "Digunakan pada struk QR WhatsApp dan faktur pelanggan" : "Used on digital WhatsApp QR receipts and customer invoices");
+      setTxt("settingsOfflineTitle", isId ? "Aplikasi Offline & Keamanan Data" : "Offline App & Data Safety");
+      setTxt("settingsOfflineSub", isId ? "Instal layar penuh untuk mode kasir offline & cadangan JSON 1-ketuk" : "Install full-screen for offline counter use & keep 1-tap JSON backups");
+      setTxt("pwaCacheStatusLabel", isId ? "Cache Offline" : "Offline Cache");
+      setTxt("pwaStorageUsedLabel", isId ? "Penyimpanan Lokal" : "Local Storage");
+      setTxt("pwaLastBackupLabel", isId ? "Backup JSON Terakhir" : "Last JSON Backup");
+      setTxt("settingsInstallTitle", isId ? "Instal Paw POS ke Layar Utama" : "Install Paw POS to Home Screen");
+      setTxt("settingsInstallSub", isId ? "Berjalan layar penuh tanpa bilah browser — tetap aktif tanpa internet" : "Runs full-screen without browser bars — even with zero internet");
+      setTxt("settingsBackupRowTitle", isId ? "Backup & Pulihkan Data Toko (.json)" : "Full Shop Backup & Restore (.json)");
+      setTxt("settingsBackupRowSub", isId ? "Menyimpan produk, stok, struk, shift, kategori & profil toko dalam satu berkas" : "Saves products, stock, invoices, shifts, categories & store profile in one portable file");
+      setTxt("settingsExportBackupBtnLabel", isId ? "Ekspor Backup Lengkap (.json)" : "Export Full Backup (.json)");
+      setTxt("settingsRestoreBackupBtnLabel", isId ? "Pulihkan Backup (.json)" : "Restore Backup (.json)");
+      setTxt("closeShiftBackupTitle", isId ? "Unduh Backup JSON Shift" : "Download Shift JSON Backup");
+      setTxt("closeShiftBackupSub", isId ? "Simpan salinan pembukuan toko otomatis saat menutup shift" : "Saves full shop ledger copy automatically when closing shift");
+
+      // Backup / Restore / PWA / Reset Modals
+      setTxt("restoreModalTitle", isId ? "Pulihkan Backup Toko?" : "Restore Shop Backup?");
+      setTxt("restoreModalSub", isId ? "Periksa detail backup sebelum mengganti data perangkat saat ini" : "Verify backup details before replacing current device data");
+      setTxt("restoreMetaStoreLabel", isId ? "Toko" : "Store");
+      setTxt("restoreMetaDateLabel", isId ? "Waktu Ekspor" : "Exported At");
+      setTxt("restoreCountProductsLabel", isId ? "Produk" : "Products");
+      setTxt("restoreCountTxLabel", isId ? "Struk" : "Invoices");
+      setTxt("restoreCountShiftsLabel", isId ? "Arsip Shift" : "Shift Z-Reports");
+      setTxt("restoreCountCatsLabel", isId ? "Kategori" : "Categories");
+      setTxt("restoreWarningText", isId ? "⚠️ Pemulihan akan menggantikan stok, struk, dan pengaturan di browser ini." : "⚠️ Restoring will replace current inventory, invoices, and settings on this browser.");
+      setTxt("restoreDownloadSafetyBtn", isId ? "Unduh Salinan Aman Dulu" : "Download Safety Copy First");
+      setTxt("restoreConfirmBtnLabel", isId ? "Konfirmasi Pulihkan" : "Confirm Restore");
+      setTxt("pwaGuideTitle", isId ? "Instal Paw POS (Aplikasi Offline)" : "Install Paw POS (Offline App)");
+      setTxt("pwaGuideSub", isId ? "Buka layar penuh dari Layar Utama tanpa koneksi internet" : "Launch full-screen from your Home Screen with zero internet required");
+      setTxt("pwaGuideAndroidTitle", isId ? "Android (Chrome / Samsung Internet)" : "Android (Chrome / Samsung Internet)");
+      setTxt("pwaGuideIosTitle", isId ? "iPhone / iPad (Safari)" : "iPhone / iPad (Safari)");
+      setTxt("pwaGuideOfflineNote", isId ? "Tanpa CDN eksternal — setelah dibuka, Paw POS tetap berjalan meski Mode Pesawat." : "Zero external CDNs — once opened, Paw POS keeps running even in Airplane Mode.");
+      setTxt("pwaGuideDoneBtn", isId ? "Mengerti" : "Got It");
+      setTxt("resetModalTitle", isId ? "Reset Semua Data Toko Lokal?" : "Reset All Local Shop Data?");
+      setTxt("resetModalSub", isId ? "Mengembalikan katalog awal Rana Petshop dan menghapus struk & shift tersimpan" : "This restores the default Rana Petshop catalog and clears saved invoices & shifts");
+      setTxt("resetModalWarn", isId ? "💡 Disarankan: Ekspor backup JSON dulu sebelum reset agar data bisa dipulihkan." : "💡 Recommended: Export a JSON backup before resetting so you can restore anytime.");
+      setTxt("resetExportFirstBtn", isId ? "Ekspor Backup Dulu" : "Export Backup First");
+      setTxt("resetConfirmBtn", isId ? "Ya, Reset Data" : "Yes, Reset Data");
+      document.querySelectorAll(".backup-now-label").forEach(el => { el.innerText = isId ? "Backup Sekarang" : "Backup Now"; });
+      document.querySelectorAll(".backup-later-label").forEach(el => { el.innerText = isId ? "Nanti" : "Later"; });
+      document.querySelectorAll(".modal-cancel-label").forEach(el => { el.innerText = isId ? "Batal" : "Cancel"; });
+
       setTxt("settingsPrefsTitle", isId ? "Preferensi & Kontrol Data" : "Preferences & Data Control");
       setTxt("settingsLangTitle", isId ? "Bahasa Aplikasi / Language" : "App Language / Bahasa");
       setTxt("settingsLangSub", isId ? "Ubah antara Bahasa Indonesia dan English" : "Switch between English and Bahasa Indonesia");
@@ -5061,6 +5584,488 @@ Minimum version required to store current data is: `+i+`.
 
       updateTabHeaderText();
       renderAll();
+    }
+
+    // =========================================================================
+    // OFFLINE PWA ENGINE, 1-TAP FULL SHOP BACKUP/RESTORE & AUTO-BACKUP REMINDER
+    // =========================================================================
+    function formatRelativeBackupTime(ts) {
+      const isId = appLang === "id";
+      if (!ts) return isId ? "Belum pernah" : "Never";
+      const diffMs = Math.max(0, Date.now() - ts);
+      const mins = Math.floor(diffMs / 60000);
+      if (mins < 1) return isId ? "Baru saja" : "Just now";
+      if (mins < 60) return isId ? `${mins} mnt lalu` : `${mins}m ago`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return isId ? `${hrs} jam lalu` : `${hrs}h ago`;
+      const days = Math.floor(hrs / 24);
+      return isId ? `${days} hari lalu` : `${days}d ago`;
+    }
+
+    function shouldShowBackupReminder() {
+      const now = Date.now();
+      const sales = Number(backupMeta.salesSinceBackup || 0);
+      const hoursSinceBackup = backupMeta.lastBackupAt ? ((now - backupMeta.lastBackupAt) / 3600000) : Infinity;
+      const recentlyDismissed = backupMeta.reminderDismissedAt && ((now - backupMeta.reminderDismissedAt) < 4 * 3600000);
+      if (recentlyDismissed && sales < 10) return false;
+      if (sales >= 5) return true;
+      if (sales >= 1 && hoursSinceBackup >= 24) return true;
+      return false;
+    }
+
+    function updateOfflineAndBackupUI() {
+      const isId = appLang === "id";
+      const online = navigator.onLine !== false;
+      const isFileProtocol = window.location.protocol === "file:";
+
+      // 1. Status bar live Offline/Online pill
+      const pill = document.getElementById("pwaNetworkPill");
+      const dot = document.getElementById("pwaNetworkDot");
+      const txt = document.getElementById("pwaNetworkText");
+      const settingsBadge = document.getElementById("settingsOfflineBadge");
+
+      if (!online) {
+        if (pill) { pill.style.background = "var(--oneui-amber-tint)"; pill.style.color = "var(--oneui-amber)"; }
+        if (dot) dot.style.backgroundColor = "var(--oneui-amber)";
+        if (txt) txt.innerText = isId ? "⚡ Offline • Tersimpan Lokal" : "⚡ Offline • Saved Locally";
+        if (settingsBadge) {
+          settingsBadge.style.background = "var(--oneui-amber-tint)";
+          settingsBadge.style.color = "var(--oneui-amber)";
+          settingsBadge.innerText = isId ? "⚡ Mode Offline Aktif" : "⚡ Offline Mode Active";
+        }
+      } else if (pwaRuntime.swReady || isFileProtocol) {
+        if (pill) { pill.style.background = "var(--oneui-green-tint)"; pill.style.color = "var(--oneui-green)"; }
+        if (dot) dot.style.backgroundColor = "var(--oneui-green)";
+        if (txt) txt.innerText = isId ? "Siap Offline" : "Offline Ready";
+        if (settingsBadge) {
+          settingsBadge.style.background = "var(--oneui-green-tint)";
+          settingsBadge.style.color = "var(--oneui-green)";
+          settingsBadge.innerText = isId ? "✓ Siap Offline" : "✓ Offline Ready";
+        }
+      } else {
+        if (pill) { pill.style.background = "var(--oneui-blue-tint)"; pill.style.color = "var(--oneui-blue-text)"; }
+        if (dot) dot.style.backgroundColor = "var(--oneui-blue)";
+        if (txt) txt.innerText = isId ? "Online • Zero-CDN" : "Online • Zero-CDN";
+        if (settingsBadge) {
+          settingsBadge.style.background = "var(--oneui-blue-tint)";
+          settingsBadge.style.color = "var(--oneui-blue-text)";
+          settingsBadge.innerText = isId ? "✓ Zero-CDN Siap" : "✓ Zero-CDN Ready";
+        }
+      }
+
+      // 2. Cache status metric
+      const cacheVal = document.getElementById("pwaCacheStatusValue");
+      if (cacheVal) {
+        if (pwaRuntime.swReady) {
+          cacheVal.style.color = "var(--oneui-green)";
+          cacheVal.innerText = isId
+            ? `Tercache (${pwaRuntime.swVersion})`
+            : `Cached (${pwaRuntime.swVersion})`;
+        } else if (isFileProtocol) {
+          cacheVal.style.color = "var(--oneui-green)";
+          cacheVal.innerText = isId ? "Lokal (Zero-CDN)" : "Local (Zero-CDN)";
+        } else {
+          cacheVal.style.color = "var(--oneui-blue-text)";
+          cacheVal.innerText = isId ? "Siap (Zero-CDN)" : "Ready (Zero-CDN)";
+        }
+      }
+
+      // 3. Storage footprint metric
+      const storageVal = document.getElementById("pwaStorageUsedValue");
+      if (storageVal) {
+        let bytes = 0;
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY) || "";
+          bytes = new Blob([raw]).size;
+        } catch {
+          bytes = 0;
+        }
+        const kb = (bytes / 1024).toFixed(1);
+        const persistSuffix = pwaRuntime.storagePersisted === true
+          ? (isId ? " • Dilindungi" : " • Protected")
+          : "";
+        storageVal.innerText = `${kb} KB${persistSuffix}`;
+      }
+
+      // 4. Last Backup metric
+      const lastBackupEl = document.getElementById("pwaLastBackupValue");
+      const unsaved = Number(backupMeta.salesSinceBackup || 0);
+      if (lastBackupEl) {
+        const rel = formatRelativeBackupTime(backupMeta.lastBackupAt);
+        lastBackupEl.innerText = unsaved > 0
+          ? `${rel} • ${unsaved} ${isId ? "baru" : "new"}`
+          : rel;
+        lastBackupEl.style.color = shouldShowBackupReminder()
+          ? "var(--oneui-amber)"
+          : (backupMeta.lastBackupAt ? "var(--oneui-green)" : "var(--oneui-blue-text)");
+      }
+
+      // 5. Install PWA button state
+      const installBtnLabel = document.getElementById("settingsInstallBtnLabel");
+      const installBtn = document.getElementById("btnPwaInstall");
+      pwaRuntime.isStandalone = Boolean(
+        (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+        window.navigator.standalone === true
+      );
+      if (installBtnLabel && installBtn) {
+        if (pwaRuntime.isStandalone) {
+          installBtnLabel.innerText = isId ? "✓ Terinstal" : "✓ Installed";
+          installBtn.style.color = "var(--oneui-green)";
+        } else if (deferredInstallPrompt) {
+          installBtnLabel.innerText = isId ? "Instal Sekarang" : "Install Now";
+          installBtn.style.backgroundColor = "var(--oneui-blue)";
+          installBtn.style.color = "#FFFFFF";
+        } else {
+          installBtnLabel.innerText = isId ? "Cara Instal" : "Install App";
+          installBtn.style.backgroundColor = "var(--oneui-surface)";
+          installBtn.style.color = "var(--oneui-blue-text)";
+        }
+      }
+
+      // 6. Auto-Backup Reminder banners & Settings nav dot
+      const remind = shouldShowBackupReminder();
+      const recapBanner = document.getElementById("backupReminderRecap");
+      const settingsBanner = document.getElementById("backupReminderSettings");
+      const navDot = document.getElementById("navSettingsBackupDot");
+      if (recapBanner) recapBanner.classList.toggle("hidden", !remind);
+      if (settingsBanner) settingsBanner.classList.toggle("hidden", !remind);
+      if (navDot) navDot.classList.toggle("hidden", !remind);
+
+      if (remind) {
+        const titleTxt = isId ? "Disarankan Backup Data Toko" : "Backup Recommended";
+        const subTxt = isId
+          ? `${unsaved} transaksi baru sejak backup JSON terakhir (${formatRelativeBackupTime(backupMeta.lastBackupAt)}).`
+          : `${unsaved} new sale${unsaved === 1 ? "" : "s"} since last JSON backup (${formatRelativeBackupTime(backupMeta.lastBackupAt)}).`;
+        const rt = document.getElementById("backupReminderRecapTitle");
+        const rs = document.getElementById("backupReminderRecapSub");
+        const st = document.getElementById("backupReminderSettingsTitle");
+        const ss = document.getElementById("backupReminderSettingsSub");
+        if (rt) rt.innerText = titleTxt;
+        if (rs) rs.innerText = subTxt;
+        if (st) st.innerText = titleTxt;
+        if (ss) ss.innerText = subTxt;
+      }
+    }
+
+    function querySwCacheStatus(reg) {
+      try {
+        const worker = (reg && (reg.active || reg.waiting || reg.installing)) || navigator.serviceWorker.controller;
+        if (!worker) return;
+        const channel = new MessageChannel();
+        channel.port1.onmessage = (ev) => {
+          const info = ev.data || {};
+          if (info.ready) {
+            pwaRuntime.swReady = true;
+            if (info.version) pwaRuntime.swVersion = info.version;
+            pwaRuntime.cachedAssetsCount = Number(info.cachedCount || 0);
+            updateOfflineAndBackupUI();
+          }
+        };
+        worker.postMessage({ type: "GET_CACHE_STATUS" }, [channel.port2]);
+      } catch (e) {
+        console.warn("SW cache status query skipped:", e);
+      }
+    }
+
+    function initPwaOfflineSystem() {
+      // Request persistent browser storage so Android Chrome won't evict localStorage under disk pressure
+      if (navigator.storage && typeof navigator.storage.persist === "function") {
+        navigator.storage.persist()
+          .then((granted) => {
+            pwaRuntime.storagePersisted = Boolean(granted);
+            updateOfflineAndBackupUI();
+          })
+          .catch(() => {});
+      }
+
+      // Live Online / Offline network awareness
+      window.addEventListener("online", () => {
+        updateOfflineAndBackupUI();
+        showToast(appLang === "id" ? "🌐 Kembali online — data lokal aman" : "🌐 Back online — local data intact");
+      });
+      window.addEventListener("offline", () => {
+        updateOfflineAndBackupUI();
+        showToast(appLang === "id" ? "⚡ Mode Offline aktif — transaksi tetap tersimpan di perangkat" : "⚡ Offline Mode active — sales keep saving locally");
+      });
+
+      // Capture native Android/Desktop PWA install prompt
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        updateOfflineAndBackupUI();
+      });
+      window.addEventListener("appinstalled", () => {
+        deferredInstallPrompt = null;
+        pwaRuntime.isStandalone = true;
+        updateOfflineAndBackupUI();
+        showToast(appLang === "id" ? "📲 Paw POS berhasil diinstal ke Layar Utama!" : "📲 Paw POS installed to Home Screen!");
+      });
+
+      // Register Service Worker on HTTP/HTTPS origins (GitHub Pages / localhost)
+      if ("serviceWorker" in navigator && (window.location.protocol === "https:" || window.location.protocol === "http:")) {
+        navigator.serviceWorker.register("./sw.js", { scope: "./" })
+          .then((reg) => {
+            if (reg.active) {
+              pwaRuntime.swReady = true;
+              querySwCacheStatus(reg);
+              updateOfflineAndBackupUI();
+            }
+            reg.addEventListener("updatefound", () => {
+              const installing = reg.installing;
+              if (!installing) return;
+              installing.addEventListener("statechange", () => {
+                if (installing.state === "activated") {
+                  pwaRuntime.swReady = true;
+                  querySwCacheStatus(reg);
+                  updateOfflineAndBackupUI();
+                }
+              });
+            });
+            return navigator.serviceWorker.ready;
+          })
+          .then((readyReg) => {
+            pwaRuntime.swReady = true;
+            querySwCacheStatus(readyReg);
+            updateOfflineAndBackupUI();
+          })
+          .catch((err) => {
+            console.warn("Service worker registration skipped:", err);
+          });
+      }
+
+      updateOfflineAndBackupUI();
+    }
+
+    async function installPwaApp() {
+      const isId = appLang === "id";
+      if (pwaRuntime.isStandalone) {
+        showToast(isId ? "✓ Paw POS sudah berjalan dalam mode Aplikasi Offline" : "✓ Paw POS is already running as an installed Offline App");
+        return;
+      }
+      if (deferredInstallPrompt) {
+        try {
+          deferredInstallPrompt.prompt();
+          const choice = await deferredInstallPrompt.userChoice;
+          if (choice && choice.outcome === "accepted") {
+            deferredInstallPrompt = null;
+            updateOfflineAndBackupUI();
+          }
+          return;
+        } catch (e) {
+          console.warn("Install prompt error:", e);
+        }
+      }
+      document.getElementById("pwaInstallGuideModal")?.classList.remove("hidden");
+    }
+
+    function closePwaGuideModal() {
+      document.getElementById("pwaInstallGuideModal")?.classList.add("hidden");
+    }
+
+    function exportFullBackup(silentToast = false) {
+      const now = new Date();
+      backupMeta.lastBackupAt = now.getTime();
+      backupMeta.salesSinceBackup = 0;
+      backupMeta.reminderDismissedAt = null;
+
+      const stateData = buildStatePayload();
+      const backupEnvelope = {
+        app: "PawPOS",
+        schemaVersion: 2,
+        exportedAt: now.toISOString(),
+        storeName: stateData.storeProfile?.name || "Rana Petshop",
+        summary: {
+          productsCount: stateData.products.length,
+          transactionsCount: stateData.transactions.length,
+          shiftsCount: stateData.shiftHistory.length,
+          categoriesCount: stateData.categories.length
+        },
+        data: stateData
+      };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stateData));
+      } catch {}
+
+      const pad = (n) => String(n).padStart(2, "0");
+      const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+      const jsonStr = JSON.stringify(backupEnvelope, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `pawpos_backup_${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+      updateOfflineAndBackupUI();
+      if (!silentToast) {
+        showToast(appLang === "id"
+          ? `💾 Backup lengkap diunduh (${stateData.products.length} produk, ${stateData.transactions.length} struk)`
+          : `💾 Full shop backup downloaded (${stateData.products.length} products, ${stateData.transactions.length} invoices)`);
+      }
+    }
+
+    function dismissBackupReminder() {
+      backupMeta.reminderDismissedAt = Date.now();
+      saveState();
+      updateOfflineAndBackupUI();
+      showToast(appLang === "id" ? "⏰ Pengingat backup ditunda 4 jam" : "⏰ Backup reminder snoozed for 4 hours");
+    }
+
+    function parseAndValidateBackupJson(rawText) {
+      let parsed;
+      try {
+        parsed = JSON.parse(rawText);
+      } catch {
+        return { ok: false, error: appLang === "id" ? "Berkas bukan JSON yang valid." : "File is not valid JSON." };
+      }
+      if (!parsed || typeof parsed !== "object") {
+        return { ok: false, error: appLang === "id" ? "Format backup tidak dikenali." : "Unrecognized backup structure." };
+      }
+
+      // Support both versioned envelope { app: "PawPOS", data: {...} } and raw localStorage state payloads
+      const data = (parsed.app === "PawPOS" && parsed.data && typeof parsed.data === "object")
+        ? parsed.data
+        : parsed;
+
+      if (!Array.isArray(data.products) || data.products.length === 0) {
+        return { ok: false, error: appLang === "id" ? "Berkas backup tidak memiliki daftar produk valid." : "Backup file does not contain a valid products list." };
+      }
+      const validProducts = data.products.every(p => p && typeof p.name === "string" && typeof p.price === "number");
+      if (!validProducts) {
+        return { ok: false, error: appLang === "id" ? "Data produk di dalam backup rusak." : "Product entries inside backup are malformed." };
+      }
+
+      return {
+        ok: true,
+        meta: {
+          storeName: parsed.storeName || data.storeProfile?.name || "Rana Petshop",
+          exportedAt: parsed.exportedAt || null,
+          productsCount: data.products.length,
+          transactionsCount: Array.isArray(data.transactions) ? data.transactions.length : 0,
+          shiftsCount: Array.isArray(data.shiftHistory) ? data.shiftHistory.length : 0,
+          categoriesCount: Array.isArray(data.categories) ? data.categories.length : CATEGORIES.length
+        },
+        data
+      };
+    }
+
+    function handleRestoreBackupFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const res = parseAndValidateBackupJson(String(ev.target.result || ""));
+        if (!res.ok) {
+          showToast(`⚠️ ${res.error}`);
+          return;
+        }
+        pendingRestorePayload = res;
+
+        const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = String(v); };
+        setTxt("restorePreviewStore", res.meta.storeName);
+        setTxt("restorePreviewDate", res.meta.exportedAt
+          ? new Date(res.meta.exportedAt).toLocaleString(appLang === "id" ? "id-ID" : "en-US", { dateStyle: "medium", timeStyle: "short" })
+          : (appLang === "id" ? "Tanggal tidak tercatat" : "Timestamp not recorded"));
+        setTxt("restorePreviewProducts", res.meta.productsCount);
+        setTxt("restorePreviewTx", res.meta.transactionsCount);
+        setTxt("restorePreviewShifts", res.meta.shiftsCount);
+        setTxt("restorePreviewCats", res.meta.categoriesCount);
+
+        document.getElementById("restoreBackupModal")?.classList.remove("hidden");
+      };
+      reader.onerror = () => {
+        showToast(appLang === "id" ? "⚠️ Gagal membaca berkas backup" : "⚠️ Failed to read backup file");
+      };
+      reader.readAsText(file);
+    }
+
+    function closeRestoreBackupModal() {
+      pendingRestorePayload = null;
+      document.getElementById("restoreBackupModal")?.classList.add("hidden");
+    }
+
+    function confirmRestoreBackup() {
+      if (!pendingRestorePayload || !pendingRestorePayload.data) {
+        closeRestoreBackupModal();
+        return;
+      }
+      const data = pendingRestorePayload.data;
+
+      products = JSON.parse(JSON.stringify(data.products));
+      cart = Array.isArray(data.cart) ? JSON.parse(JSON.stringify(data.cart)) : [];
+      transactions = Array.isArray(data.transactions) ? JSON.parse(JSON.stringify(data.transactions)) : [];
+      shiftHistory = Array.isArray(data.shiftHistory) ? JSON.parse(JSON.stringify(data.shiftHistory)) : [];
+      if (Array.isArray(data.categories) && data.categories.length > 0) {
+        CATEGORIES = JSON.parse(JSON.stringify(data.categories));
+      }
+      if (typeof data.includeTax === "boolean") includeTax = data.includeTax;
+      if (typeof data.discountAmount === "number") discountAmount = data.discountAmount;
+      if (typeof data.isDarkTheme === "boolean") isDarkTheme = data.isDarkTheme;
+      if (typeof data.qrisMdrRate === "number") qrisMdrRate = data.qrisMdrRate;
+      if (typeof data.shiftNumber === "number") shiftNumber = data.shiftNumber;
+      if (typeof data.shiftStartTime === "number") shiftStartTime = data.shiftStartTime;
+      if (typeof data.openingFloat === "number") openingFloat = data.openingFloat;
+      if (data.storeProfile && typeof data.storeProfile === "object") {
+        storeProfile = { ...storeProfile, ...data.storeProfile };
+      }
+      if (data.appLang === "id" || data.appLang === "en") {
+        appLang = data.appLang;
+        localStorage.setItem("pawpos_lang", appLang);
+      }
+
+      selectedCategory = "ALL";
+      currentReceiptTx = transactions[0] || null;
+      backupMeta = {
+        lastBackupAt: Date.now(),
+        salesSinceBackup: 0,
+        reminderDismissedAt: null
+      };
+
+      const restoredCount = products.length;
+      const restoredTx = transactions.length;
+      closeRestoreBackupModal();
+      syncControlsFromState();
+      saveState();
+      applyLanguage();
+      showToast(appLang === "id"
+        ? `✓ Data dipulihkan (${restoredCount} produk, ${restoredTx} struk)`
+        : `✓ Backup restored (${restoredCount} products, ${restoredTx} invoices)`);
+    }
+
+    function openResetConfirmModal() {
+      document.getElementById("confirmResetModal")?.classList.remove("hidden");
+    }
+
+    function closeResetConfirmModal() {
+      document.getElementById("confirmResetModal")?.classList.add("hidden");
+    }
+
+    function confirmResetDemoData() {
+      localStorage.removeItem(STORAGE_KEY);
+      CATEGORIES = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+      products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+      cart = [{ productId: 1, quantity: 1 }, { productId: 4, quantity: 2 }];
+      transactions = createDefaultTransactions();
+      shiftHistory = createDefaultShiftHistory();
+      shiftNumber = 1;
+      shiftStartTime = Date.now() - 3600 * 1000 * 4;
+      openingFloat = 200000;
+      discountAmount = 0;
+      includeTax = false;
+      qrisMdrRate = 0.003;
+      selectedCategory = "ALL";
+      storeProfile = { name: "Rana Petshop", phone: "+62 812-3456-7890", address: "Rana Petshop • Solo Counter" };
+      backupMeta = { lastBackupAt: null, salesSinceBackup: 0, reminderDismissedAt: null };
+      currentReceiptTx = transactions[0] || null;
+
+      closeResetConfirmModal();
+      syncControlsFromState();
+      updateTabHeaderText();
+      renderAll();
+      showToast(appLang === "id" ? "🔄 Katalog & data demo telah direset" : "🔄 Demo catalog & data reset");
     }
 
     function exportInventoryCsv() {
@@ -5360,22 +6365,35 @@ Minimum version required to store current data is: `+i+`.
         case "toggleLanguage": toggleLanguage(); break;
         case "toggleReachability": toggleReachability(); break;
         case "resetDemoData":
-          localStorage.removeItem(STORAGE_KEY);
-          CATEGORIES = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
-          products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-          cart = [{ productId: 1, quantity: 1 }, { productId: 4, quantity: 2 }];
-          transactions = createDefaultTransactions();
-          shiftHistory = createDefaultShiftHistory();
-          shiftNumber = 1;
-          discountAmount = 0;
-          includeTax = false;
-          qrisMdrRate = 0.003;
-          selectedCategory = "ALL";
-          storeProfile = { name: "Rana Petshop", phone: "+62 812-3456-7890", address: "Rana Petshop • Solo Counter" };
-          syncControlsFromState();
-          updateTabHeaderText();
-          renderAll();
-          showToast(appLang === "id" ? "🔄 Katalog & data demo telah direset" : "🔄 Demo catalog & data reset");
+        case "openResetConfirmModal":
+          openResetConfirmModal();
+          break;
+        case "closeResetConfirmModal":
+          closeResetConfirmModal();
+          break;
+        case "confirmResetDemoData":
+          confirmResetDemoData();
+          break;
+        case "installPwaApp":
+          installPwaApp();
+          break;
+        case "closePwaGuideModal":
+          closePwaGuideModal();
+          break;
+        case "exportFullBackup":
+          exportFullBackup(false);
+          break;
+        case "triggerRestoreBackup":
+          document.getElementById("restoreBackupFileInput")?.click();
+          break;
+        case "closeRestoreBackupModal":
+          closeRestoreBackupModal();
+          break;
+        case "confirmRestoreBackup":
+          confirmRestoreBackup();
+          break;
+        case "dismissBackupReminder":
+          dismissBackupReminder();
           break;
         case "selectCategory":
           selectedCategory = arg;
@@ -5732,6 +6750,13 @@ Minimum version required to store current data is: `+i+`.
       showToast("📷 Scanned photo barcode: " + p.name);
     });
 
+    // Full Shop JSON Backup Restore File Input Listener
+    document.getElementById("restoreBackupFileInput")?.addEventListener("change", (ev) => {
+      const file = ev.target.files && ev.target.files[0];
+      if (file) handleRestoreBackupFile(file);
+      ev.target.value = "";
+    });
+
     // Live status bar clock
     function updateStatusClock() {
       const el = document.getElementById("statusTime");
@@ -5742,8 +6767,9 @@ Minimum version required to store current data is: `+i+`.
     updateStatusClock();
     setInterval(updateStatusClock, 30000);
 
-    // Boot Sequence: Restore persisted state, sync controls, apply language, init layout
+    // Boot Sequence: Restore persisted state, sync controls, apply language, init layout & offline PWA
     loadState();
+    if (!localStorage.getItem(STORAGE_KEY)) saveState();
     syncControlsFromState();
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -5765,6 +6791,7 @@ Minimum version required to store current data is: `+i+`.
     }
 
     applyLanguage();
+    initPwaOfflineSystem();
 
     if (urlParams.get("tab")) {
       switchTab(urlParams.get("tab"));
