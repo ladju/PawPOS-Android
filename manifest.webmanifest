@@ -2,7 +2,7 @@
   "id": "./index.html",
   "name": "Paw POS — Rana Petshop",
   "short_name": "Paw POS",
-  "description": "Offline-first Samsung One UI 8 Point of Sale for Rana Petshop — Cashier, Inventory, Sales Recap & Shift Z-Report.",
+  "description": "Offline-first Point of Sale for Rana Petshop — Cashier, Inventory, Sales Recap & Shift Z-Report.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

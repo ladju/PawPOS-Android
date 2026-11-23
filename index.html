@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Paw POS — Samsung One UI 8 Edition (Rana Petshop)</title>
+  <title>Paw POS — Rana Petshop</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#010101" id="metaThemeColor">
   <meta name="mobile-web-app-capable" content="yes">
@@ -53,7 +53,13 @@
     .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .col-span-2 { grid-column: span 2 / span 2; }
     .col-span-full { grid-column: 1 / -1; }
+    .aspect-square { aspect-ratio: 1 / 1; }
+    .object-contain { object-fit: contain; }
+    .max-w-\[340px\] { max-width: 340px; }
+    .max-h-\[65vh\] { max-height: 65vh; }
+    .text-\[64px\] { font-size: 64px; line-height: 1; }
 
     .gap-1 { gap: 0.25rem; }
     .gap-1\.5 { gap: 0.375rem; }
@@ -884,7 +890,6 @@
       </div>
       <div class="flex items-center gap-2 flex-wrap min-w-0">
         <span class="font-extrabold text-sm tracking-tight">Paw POS</span>
-        <span class="text-[11px] px-2.5 py-0.5 rounded-full font-bold" style="background: var(--oneui-blue-tint); color: var(--oneui-blue-text);">One UI 8</span>
         <span id="demoNoticeBadge" role="status" class="text-[11px] px-2.5 py-0.5 rounded-full font-bold inline-flex items-center gap-1" style="background: var(--oneui-amber-tint); color: var(--oneui-amber);" title="QRIS codes, RRN and bank settlement in this web preview are simulated. Use the Android APK for live store operations.">
           <span>DEMO WEB PREVIEW</span>
           <button type="button" data-action="dismissDemoNotice" class="ml-1 font-black hover:opacity-75" aria-label="Dismiss demo notice">✕</button>
@@ -1158,10 +1163,16 @@
               </div>
             </div>
             <div>
-              <label id="newProdCategoryLabel" class="text-xs font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Category (Editable)</label>
-              <select id="newProdCategory" class="oneui-input w-full px-3.5 py-2.5 text-xs font-semibold">
-                <!-- Populated via JS -->
-              </select>
+              <label id="newProdCategoryLabel" class="text-xs font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Category</label>
+              <div class="flex items-center gap-1.5">
+                <select id="newProdCategory" class="oneui-input flex-1 min-w-0 px-3 py-2.5 text-xs font-semibold">
+                  <!-- Populated via JS -->
+                </select>
+                <button type="button" id="btnAddNewCategoryFromProd" data-action="openCategoryModal" class="min-h-[44px] px-3 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1 shrink-0 transition active:scale-95" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);" title="Add New Category">
+                  <span>＋</span>
+                  <span id="newProdAddCatBtnLabel">New</span>
+                </button>
+              </div>
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
@@ -1199,7 +1210,7 @@
         <!-- Inventory List Focus Block (Unified single-scroll list, zero nested scroll trap) -->
         <div class="oneui-focus-block overflow-hidden shrink-0">
           <div class="px-4 sm:px-5 py-2.5 flex items-center justify-between" style="border-bottom: 1px solid var(--oneui-divider);">
-            <span id="invTableHeaderLeft" class="text-xs font-bold uppercase tracking-wider truncate" style="color: var(--oneui-text-muted);">📦 Products & Category (Tap ✎ to Edit)</span>
+            <span id="invTableHeaderLeft" class="text-xs font-bold uppercase tracking-wider truncate" style="color: var(--oneui-text-muted);">📦 Products & Categories</span>
             <span id="invTableHeaderRight" class="text-xs font-bold uppercase tracking-wider whitespace-nowrap hidden sm:inline-block" style="color: var(--oneui-text-muted);">Price, Edit & Stock Stepper</span>
           </div>
           <div id="inventoryFocusList" class="divide-y-0">
@@ -1598,9 +1609,6 @@
               <h2 id="settingsProfileTitle" class="text-base font-extrabold">Store Profile & Digital Identity</h2>
               <p id="settingsProfileSub" class="text-xs" style="color: var(--oneui-text-muted);">Used on digital WhatsApp QR receipts and customer invoices</p>
             </div>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0" style="background: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
-              One UI 8
-            </span>
           </div>
 
           <div class="space-y-3 text-xs">
@@ -1925,7 +1933,7 @@
           </button>
           <div class="min-w-0">
             <h3 id="checkoutModalTitle" class="text-base font-extrabold tracking-tight truncate">Payment & Tender</h3>
-            <p id="checkoutModalSub" class="text-[11px] truncate" style="color: var(--oneui-text-muted);">Samsung Tactile Numpad</p>
+            <p id="checkoutModalSub" class="text-[11px] truncate" style="color: var(--oneui-text-muted);">Quick Cash Calculator • Zero Typing</p>
           </div>
         </div>
         <button data-action="closeCheckoutModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style="background-color: var(--oneui-surface);" aria-label="Close checkout">✕</button>
@@ -1952,7 +1960,7 @@
 
       <!-- Scrollable Middle Checkout Body -->
       <div class="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-2">
-        <!-- VIEW A: CASH TENDER & SAMSUNG CALCULATOR NUMPAD -->
+        <!-- VIEW A: CASH TENDER & CALCULATOR NUMPAD -->
         <div id="checkoutCashView" class="space-y-2">
           <!-- Viewing Area Readout (Amount Due, Tendered, High-Contrast Change Due) -->
           <div id="checkoutCashReadoutBox" class="oneui-focus-block p-3 space-y-1.5">
@@ -1972,12 +1980,12 @@
             </div>
           </div>
 
-          <!-- Smart IDR Quick Denominations (2x2 Grid on regular screens, 1-row strip on compact screens) -->
+          <!-- Smart IDR Quick Denominations (2x2 Grid on regular screens) -->
           <div id="smartCashPresets" class="grid grid-cols-2 gap-1.5 w-full hide-scrollbar">
             <!-- Populated dynamically via JS -->
           </div>
 
-          <!-- Samsung Calculator Tactile Capsule Numpad (4 Columns, Uniform 8px Grid Gap) -->
+          <!-- Tactile Capsule Numpad (4 Columns, Uniform 8px Grid Gap, No redundant '=' button) -->
           <div id="calculatorNumpadGrid" class="grid grid-cols-4 gap-2 w-full py-0.5">
             <button data-action="numpadPress" data-arg="7" class="oneui-calc-btn tabular-nums">7</button>
             <button data-action="numpadPress" data-arg="8" class="oneui-calc-btn tabular-nums">8</button>
@@ -1994,10 +2002,9 @@
             <button data-action="numpadPress" data-arg="3" class="oneui-calc-btn tabular-nums">3</button>
             <button id="numpadExactBtn" data-action="numpadPress" data-arg="EXACT" class="oneui-calc-btn text-xs font-extrabold" style="color: var(--oneui-blue-text); background-color: var(--oneui-blue-tint);">Exact</button>
 
-            <button data-action="numpadPress" data-arg="0" class="oneui-calc-btn tabular-nums">0</button>
+            <button data-action="numpadPress" data-arg="0" class="oneui-calc-btn col-span-2 tabular-nums">0</button>
             <button data-action="numpadPress" data-arg="000" class="oneui-calc-btn text-sm font-bold tabular-nums">000</button>
             <button data-action="numpadPress" data-arg="+50000" class="oneui-calc-btn text-xs font-bold tabular-nums" style="color: var(--oneui-green);">+50k</button>
-            <button id="calcEqualsConfirmBtn" data-action="completeSale" class="oneui-calc-btn font-extrabold text-white text-2xl shadow-lg" style="background-color: var(--oneui-green);" title="Complete Sale">=</button>
           </div>
         </div>
 
@@ -2609,7 +2616,31 @@
     </div>
   </div>
 
-  <!-- TOAST NOTIFICATION (Samsung One UI 8 Capsule at Top) -->
+  <!-- =========================================================================== -->
+  <!-- MODAL 12: PRODUCT PHOTO ZOOM / LIGHTBOX PREVIEW (Tap outside to close)      -->
+  <!-- =========================================================================== -->
+  <div id="productImagePreviewModal" data-action="closeProductImagePreview" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4 gap-3 cursor-pointer hidden">
+    <div id="productImagePreviewCard" data-action="noop" class="w-full max-w-[340px] rounded-[28px] overflow-hidden shadow-2xl border border-white/10 cursor-default" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+      <div id="imgPreviewVisualBox" class="w-full aspect-square max-h-[65vh] flex items-center justify-center overflow-hidden relative" style="background-color: var(--oneui-surface-2);">
+        <!-- Populated via JS: full-size <img> or large product visual -->
+      </div>
+      <div class="p-4 space-y-1.5" style="border-top: 1px solid var(--oneui-divider);">
+        <div class="flex items-start justify-between gap-2">
+          <h3 id="imgPreviewProdName" class="text-base font-extrabold leading-snug break-words">Product Name</h3>
+          <span id="imgPreviewProdPrice" class="text-sm font-extrabold tabular-nums whitespace-nowrap shrink-0" style="color: var(--oneui-blue-text);">Rp 0</span>
+        </div>
+        <div class="flex items-center justify-between gap-2 text-xs">
+          <span id="imgPreviewProdCat" class="font-semibold" style="color: var(--oneui-text-secondary);">Category</span>
+          <span id="imgPreviewProdStock" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold tabular-nums" style="background-color: var(--oneui-surface-2); color: var(--oneui-text-secondary);">0 pcs</span>
+        </div>
+      </div>
+    </div>
+    <div id="imgPreviewTapOutsideHint" class="px-4 py-2 rounded-full text-xs font-bold text-white/90 bg-black/60 border border-white/15 pointer-events-none">
+      👆 Tap outside photo to return to cashier
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
   <div id="oneUiToast" class="fixed top-2.5 left-1/2 -translate-x-1/2 max-w-[92vw] truncate px-4 py-2 rounded-full text-xs font-bold shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2" style="background-color: #1C1C1E; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2);">
     Notification
   </div>
@@ -3395,7 +3426,6 @@ Minimum version required to store current data is: `+i+`.
     function renderCategoryPills() {
       const container = document.getElementById("posCategoryPills");
       if (!container) return;
-      const editText = appLang === "id" ? "Ubah" : "Edit";
       container.innerHTML = CATEGORIES.map(cat => {
         const isActive = selectedCategory === cat.id;
         return `
@@ -3404,12 +3434,7 @@ Minimum version required to store current data is: `+i+`.
             <span>${getCatLabel(cat)}</span>
           </button>
         `;
-      }).join("") + `
-        <button data-action="openCategoryModal" class="oneui-chip" title="Edit or Add Categories">
-          <span>✏️</span>
-          <span>${editText}</span>
-        </button>
-      `;
+      }).join("");
 
       const catOptionsHtml = CATEGORIES.filter(c => c.id !== "ALL").map(c =>
         `<option value="${c.id}">${c.icon} ${getCatLabel(c)}</option>`
@@ -3428,11 +3453,66 @@ Minimum version required to store current data is: `+i+`.
       }
     }
 
-    function renderProductThumb(p, catObj, sizeClass = "w-10 h-10") {
+    function renderProductThumb(p, catObj, sizeClass = "w-11 h-11", zoomable = true) {
+      const isId = appLang === "id";
+      const zoomTitle = isId ? `Ketuk untuk perbesar foto ${p.name}` : `Tap to zoom ${p.name} photo`;
+      const actionAttrs = zoomable
+        ? `type="button" data-action="previewProductImage" data-arg="${p.id}" title="${zoomTitle}" aria-label="${zoomTitle}"`
+        : "";
+      const Tag = zoomable ? "button" : "div";
       if (p.imageDataUrl) {
-        return `<div class="${sizeClass} rounded-2xl overflow-hidden shrink-0 shadow-sm" style="background-color: ${catObj.tint || 'var(--oneui-surface-2)'};"><img src="${p.imageDataUrl}" alt="${p.name}" class="w-full h-full object-cover"></div>`;
+        return `<${Tag} ${actionAttrs} class="${sizeClass} min-w-[44px] min-h-[44px] rounded-2xl overflow-hidden shrink-0 shadow-sm relative cursor-pointer transition active:scale-95" style="background-color: ${catObj.tint || 'var(--oneui-surface-2)'};"><img src="${p.imageDataUrl}" alt="${p.name}" class="w-full h-full object-cover pointer-events-none"></${Tag}>`;
       }
-      return `<div class="${sizeClass} rounded-2xl flex items-center justify-center text-lg shrink-0" style="background-color: ${catObj.tint || 'var(--oneui-surface-2)'};">${p.icon || catObj.icon}</div>`;
+      return `<${Tag} ${actionAttrs} class="${sizeClass} min-w-[44px] min-h-[44px] rounded-2xl flex items-center justify-center text-lg shrink-0 relative cursor-pointer transition active:scale-95" style="background-color: ${catObj.tint || 'var(--oneui-surface-2)'};"><span class="pointer-events-none">${p.icon || catObj.icon}</span></${Tag}>`;
+    }
+
+    function openProductImagePreview(prodId) {
+      const p = products.find(x => x.id === Number(prodId));
+      if (!p) return;
+      const isId = appLang === "id";
+      const catObj = CATEGORIES.find(c => c.id === p.category) || CATEGORIES[0];
+      const visualBox = document.getElementById("imgPreviewVisualBox");
+      if (visualBox) {
+        visualBox.style.backgroundColor = catObj.tint || "var(--oneui-surface-2)";
+        if (p.imageDataUrl) {
+          visualBox.innerHTML = `<img src="${p.imageDataUrl}" alt="${p.name}" class="w-full h-full object-contain">`;
+        } else {
+          visualBox.innerHTML = `
+            <div class="flex flex-col items-center justify-center gap-3 p-6 text-center select-none">
+              <div class="w-28 h-28 rounded-[28px] flex items-center justify-center text-[64px] shadow-lg" style="background-color: var(--oneui-surface);">
+                ${p.icon || catObj.icon}
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold tabular-nums" style="background-color: var(--oneui-surface); color: var(--oneui-text-secondary);">
+                SKU: ${p.barcode || p.id}
+              </span>
+            </div>
+          `;
+        }
+      }
+      const nameEl = document.getElementById("imgPreviewProdName");
+      if (nameEl) nameEl.innerText = p.name;
+      const priceEl = document.getElementById("imgPreviewProdPrice");
+      if (priceEl) priceEl.innerText = fmt(p.price);
+      const catEl = document.getElementById("imgPreviewProdCat");
+      if (catEl) catEl.innerText = `${catObj.icon} ${getCatLabel(catObj)}`;
+      const stockEl = document.getElementById("imgPreviewProdStock");
+      if (stockEl) {
+        const isOut = p.stock <= 0;
+        stockEl.innerText = isOut
+          ? (isId ? "Habis" : "Out of Stock")
+          : `${isId ? "Stok" : "Stock"}: ${p.stock} ${p.unit || "pcs"}`;
+      }
+      const hintEl = document.getElementById("imgPreviewTapOutsideHint");
+      if (hintEl) {
+        hintEl.innerText = isId
+          ? "👆 Ketuk di luar foto untuk kembali ke menu kasir"
+          : "👆 Tap outside photo to return to cashier";
+      }
+      document.getElementById("productImagePreviewModal")?.classList.remove("hidden");
+    }
+
+    function closeProductImagePreview() {
+      document.getElementById("productImagePreviewModal")?.classList.add("hidden");
     }
 
     function shortProductLabel(name) {
@@ -3477,9 +3557,9 @@ Minimum version required to store current data is: `+i+`.
 
         return `
           <div data-action="addToCart" data-arg="${p.id}" class="oneui-product-card p-2.5 sm:p-3 flex flex-col justify-between gap-1.5 sm:gap-2 relative cursor-pointer select-none transition-all duration-150" style="border: ${qty > 0 ? '2px solid var(--oneui-blue)' : '1px solid var(--oneui-hairline)'};">
-            <!-- Top Row: Tinted One UI Icon Circle + Stock Pill -->
+            <!-- Top Row: Tappable Product Photo/Icon (Tap photo to zoom) + Stock Pill -->
             <div class="flex items-start justify-between gap-1.5">
-              ${renderProductThumb(p, catObj, "w-9 h-9 sm:w-10 sm:h-10")}
+              ${renderProductThumb(p, catObj, "w-11 h-11", true)}
               <span class="px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums whitespace-nowrap shrink-0" style="background-color: ${isOutOfStock ? 'var(--oneui-coral-tint)' : isLow ? 'var(--oneui-amber-tint)' : 'var(--oneui-surface-2)'}; color: ${isOutOfStock ? 'var(--oneui-coral)' : isLow ? 'var(--oneui-amber)' : 'var(--oneui-text-secondary)'};">
                 ${isOutOfStock ? outText : `${p.stock} ${p.unit || 'pcs'}`}
               </span>
@@ -3542,7 +3622,7 @@ Minimum version required to store current data is: `+i+`.
           <!-- Top Row: Product Thumb + Full Unclipped Product Name + Line Subtotal -->
           <div class="flex items-start justify-between gap-2.5">
             <div class="flex items-start gap-2.5 min-w-0 flex-1">
-              ${renderProductThumb(item.product, catObj, "w-10 h-10")}
+              ${renderProductThumb(item.product, catObj, "w-11 h-11", false)}
               <div class="min-w-0 flex-1">
                 <div class="text-xs sm:text-sm font-bold leading-snug break-words" title="${item.product.name}">${item.product.name}</div>
                 <div class="text-[11px] tabular-nums mt-0.5" style="color: var(--oneui-text-muted);">
@@ -3727,16 +3807,16 @@ Minimum version required to store current data is: `+i+`.
               
               <!-- Top / Left: Product Icon, Full Product Name, SKU & Badges -->
               <div class="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                ${renderProductThumb(p, catObj, "w-11 h-11")}
+                ${renderProductThumb(p, catObj, "w-11 h-11", true)}
                 <div class="min-w-0 flex-1">
                   <div class="text-sm font-bold leading-snug break-words" style="color: var(--oneui-text);" title="${p.name}">
                     ${p.name}
                   </div>
                   <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
                     <span class="text-[11px] sm:text-xs tabular-nums whitespace-nowrap shrink-0" style="color: var(--oneui-text-muted);">SKU: ${p.barcode}</span>
-                    <button type="button" data-action="editProductCategory" data-arg="${p.id}" class="min-h-[44px] px-2.5 sm:px-3 rounded-full text-xs font-bold flex items-center gap-1 whitespace-nowrap shrink-0 transition active:scale-95" style="background: var(--oneui-blue-tint); color: var(--oneui-blue-text);" title="Tap to change category">
-                      <span>${catObj.icon}</span> <span>${getCatLabel(catObj)}</span> <span>✎</span>
-                    </button>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap shrink-0" style="background: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
+                      <span>${catObj.icon}</span> <span>${getCatLabel(catObj)}</span>
+                    </span>
                     ${isOut ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap shrink-0" style="background: var(--oneui-coral-tint); color: var(--oneui-coral);">❌ ${isId ? "Habis" : "Out of Stock"}</span>`
                       : isLow ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap shrink-0" style="background: var(--oneui-amber-tint); color: var(--oneui-amber);">⚠️ ${isId ? "Stok Menipis" : "Low Stock"}</span>` : ''}
                   </div>
@@ -4448,7 +4528,7 @@ Minimum version required to store current data is: `+i+`.
       const isId = appLang === "id";
       const titles = isId ? {
         cashier: ["Kasir", `${storeName} • Mode Kasir Mandiri`],
-        inventory: ["Inventaris & Stok", "Ketuk kategori, ubah produk, atau atur stok cepat"],
+        inventory: ["Inventaris", "Tambah produk, kategori baru, atau atur stok cepat"],
         recap: ["Rekap Penjualan", "Omzet, Margin Laba, Audit Kasir & Laporan WhatsApp"],
         history: ["Riwayat", "Struk QR WhatsApp & Arsip Tutup Shift (Z-Report)"],
         settings: ["Setelan", "Profil Toko, Pajak PPN, MDR QRIS & Preferensi"]
@@ -5282,7 +5362,7 @@ Minimum version required to store current data is: `+i+`.
       }
 
       zMsg += `────────────────────────────\n`;
-      zMsg += `_Z-Report verified & sealed by Paw POS One UI 8_\n`;
+      zMsg += `_Z-Report verified & sealed by Paw POS_\n`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(zMsg).catch(() => {});
@@ -5355,7 +5435,7 @@ Minimum version required to store current data is: `+i+`.
         zMsg += `📝 *NOTES*: "${s.notes}"\n`;
       }
       zMsg += `────────────────────────────\n`;
-      zMsg += `_Archived record from Paw POS One UI 8_\n`;
+      zMsg += `_Archived record from Paw POS_\n`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(zMsg).catch(() => {});
@@ -5541,7 +5621,9 @@ Minimum version required to store current data is: `+i+`.
         ? (appLang === "id" ? "Mode Terang" : "Light Mode")
         : (appLang === "id" ? "Mode Gelap" : "OLED Dark");
       saveState();
-      showToast(isDarkTheme ? "🌙 One UI True OLED Dark Mode (#010101)" : "☀️ One UI Soft Light Mode (#F2F2F7)");
+      showToast(isDarkTheme
+        ? (appLang === "id" ? "🌙 Mode Gelap Aktif (#010101)" : "🌙 Dark Mode Active (#010101)")
+        : (appLang === "id" ? "☀️ Mode Terang Aktif (#F2F2F7)" : "☀️ Light Mode Active (#F2F2F7)"));
     }
 
     function applyLanguage() {
@@ -5571,6 +5653,7 @@ Minimum version required to store current data is: `+i+`.
       setTxt("chargeCtaLabel", isId ? "Bayar" : "Charge");
       setTxt("phoneCartTapLabel", isId ? "item • Ketuk untuk Tinjau" : "items • Tap to Review");
       setTxt("phoneReviewCartBtnText", isId ? "Tinjau Keranjang" : "Review Cart");
+      setTxt("imgPreviewTapOutsideHint", isId ? "👆 Ketuk di luar foto untuk kembali ke menu kasir" : "👆 Tap outside photo to return to cashier");
 
       // Inventory Pane & Add/Edit Product Forms
       setPlaceholder("invSearchInput", isId ? "Cari nama produk, kategori, atau SKU..." : "Search inventory name, category, or SKU...");
@@ -5580,6 +5663,7 @@ Minimum version required to store current data is: `+i+`.
       setTxt("exportCsvLabel", isId ? "Ekspor CSV" : "Export CSV");
       setTxt("addProductToggleText", isId ? "Produk Baru" : "New Product");
       setTxt("addProdHeading", isId ? "Tambah Produk Baru" : "Add New Pet Product");
+      setTxt("addProdSub", isId ? "Format harga IDR otomatis • Siap foto & pindai barcode" : "Auto-formatted IDR pricing • Picture & Barcode scanner ready");
       setTxt("takePhotoLabel", isId ? "Ambil Foto" : "Take Photo");
       setTxt("chooseGalleryLabel", isId ? "Pilih Galeri" : "Choose Gallery");
       setTxt("newProdNameLabel", isId ? "Nama Produk *" : "Product Name *");
@@ -5587,13 +5671,14 @@ Minimum version required to store current data is: `+i+`.
       setTxt("newProdBarcodeLabel", isId ? "Barcode / SKU (Atau Pindai Foto)" : "Barcode / SKU (Or Scan Photo)");
       setTxt("newProdScanPhotoLabel", isId ? "Pindai" : "Scan");
       setTxt("newProdCategoryLabel", isId ? "Kategori" : "Category");
+      setTxt("newProdAddCatBtnLabel", isId ? "Kategori Baru" : "New");
       setTxt("newProdCostLabel", isId ? "Harga Modal (IDR)" : "Cost (IDR)");
       setTxt("newProdPriceLabel", isId ? "Harga Jual (IDR) *" : "Price (IDR) *");
       setTxt("newProdStockLabel", isId ? "Stok Awal" : "Initial Stock");
       setTxt("newProdMinStockLabel", isId ? "Batas Stok Tipis" : "Low Alert");
       setTxt("newProdUnitLabel", isId ? "Satuan" : "Unit");
       setTxt("saveNewProductLabel", isId ? "✓ Simpan ke Inventaris" : "✓ Save to Inventory");
-      setTxt("invTableHeaderLeft", isId ? "📦 Produk & Kategori (Ketuk ✎ untuk Ubah)" : "📦 Products & Category (Tap ✎ to Edit)");
+      setTxt("invTableHeaderLeft", isId ? "📦 Daftar Produk & Kategori" : "📦 Products & Categories");
       setTxt("invTableHeaderRight", isId ? "Harga, Ubah & Stok" : "Price, Edit & Stock Stepper");
 
       // Edit Product Modal (Modal 8)
@@ -5625,7 +5710,7 @@ Minimum version required to store current data is: `+i+`.
       // Checkout & Payment Modal (Modal 1)
       setTxt("checkoutBackItemsText", isId ? "Item" : "Items");
       setTxt("checkoutModalTitle", isId ? "Pembayaran" : "Payment");
-      setTxt("checkoutModalSub", isId ? "Kasir Kalkulator One UI • Cepat & Akurat" : "One UI Calculator Cashier • Zero Typing");
+      setTxt("checkoutModalSub", isId ? "Kalkulator Kasir • Cepat & Akurat" : "Quick Cash Calculator • Zero Typing");
       setTxt("checkoutEditItemsText", isId ? "✎ Ubah" : "✎ Edit");
       setTxt("payMethodCashLabel", isId ? "Tunai (IDR)" : "Cash (IDR)");
       setTxt("payMethodQrisLabel", "QRIS (BCA)");
@@ -6401,7 +6486,7 @@ Minimum version required to store current data is: `+i+`.
       isReachabilityExpanded = !isReachabilityExpanded;
       const header = document.getElementById("oneUiViewingArea");
       header.classList.toggle("viewing-area-expanded", isReachabilityExpanded);
-      showToast(isReachabilityExpanded ? "👇 Viewing Area expanded — controls pushed into thumb zone" : "👆 Standard One UI header height");
+      showToast(isReachabilityExpanded ? "👇 Viewing Area expanded — controls pushed into thumb zone" : "👆 Standard header height");
     }
 
     function openCategoryModal(prodId = null) {
@@ -6488,7 +6573,7 @@ Minimum version required to store current data is: `+i+`.
         });
       }
       msg += `────────────────────────────\n`;
-      msg += `_Generated automatically by Paw POS One UI 8_\n`;
+      msg += `_Generated automatically by Paw POS_\n`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(msg).catch(() => {});
@@ -6772,6 +6857,8 @@ Minimum version required to store current data is: `+i+`.
           }
           break;
         }
+        case "previewProductImage": openProductImagePreview(Number(arg)); break;
+        case "closeProductImagePreview": closeProductImagePreview(); break;
         case "openCategoryModal": openCategoryModal(); break;
         case "editProductCategory": openCategoryModal(arg); break;
         case "closeCategoryModal":
@@ -6788,6 +6875,10 @@ Minimum version required to store current data is: `+i+`.
           document.getElementById("categoryEditModal").classList.add("hidden");
           saveState();
           renderAll();
+          const newCatSel = document.getElementById("newProdCategory");
+          if (newCatSel && [...newCatSel.options].some(o => o.value === arg)) {
+            newCatSel.value = arg;
+          }
           break;
         }
         case "addCustomCategory": {
@@ -6806,7 +6897,11 @@ Minimum version required to store current data is: `+i+`.
           document.getElementById("categoryEditModal").classList.add("hidden");
           saveState();
           renderAll();
-          showToast("✓ Added category: " + emoji + " " + label);
+          const newCatSel = document.getElementById("newProdCategory");
+          if (newCatSel && [...newCatSel.options].some(o => o.value === id)) {
+            newCatSel.value = id;
+          }
+          showToast((appLang === "id" ? "✓ Kategori ditambahkan: " : "✓ Added category: ") + emoji + " " + label);
           break;
         }
         case "openScannerModal": openScannerModal(); break;
