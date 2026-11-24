@@ -1122,6 +1122,9 @@
             <button data-action="toggleAddProductBlock" id="addProductToggleBtn" class="h-11 px-4 rounded-full font-bold text-xs text-white flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap shrink-0" style="background-color: var(--oneui-blue);">
               <span>＋</span> <span id="addProductToggleText">New Product</span>
             </button>
+            <button type="button" data-action="openCategoryModal" id="btnManageCategories" class="h-11 px-4 rounded-full font-bold text-xs flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap shrink-0" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
+              <span>🏷️</span> <span id="manageCategoriesBtnLabel">Categories</span>
+            </button>
             <button data-action="importInventoryCsv" id="btnImportCsv" class="h-11 px-4 rounded-full font-bold text-xs flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap shrink-0" style="background-color: var(--oneui-surface-2); color: var(--oneui-text);">
               <span>📥</span> <span id="importCsvLabel">Import CSV</span>
             </button>
@@ -2226,21 +2229,29 @@
   </div>
 
   <!-- =========================================================================== -->
-  <!-- MODAL 4: EDITABLE CATEGORY PILL DIALOG                                      -->
+  <!-- MODAL 4: EDITABLE CATEGORY PILL DIALOG (ADD / EDIT / DELETE CATEGORIES)     -->
   <!-- =========================================================================== -->
   <div id="categoryEditModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3.5 hidden">
-    <div class="w-full max-w-sm rounded-[28px] p-4 sm:p-5 space-y-4 shadow-2xl overflow-hidden" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
-      <div class="flex items-center justify-between gap-2">
-        <h3 id="catModalTitle" class="text-base font-extrabold">Edit or Add Category</h3>
-        <button data-action="closeCategoryModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style="background: var(--oneui-surface-2);" aria-label="Close category dialog">✕</button>
+    <div class="w-full max-w-md rounded-[28px] p-4 sm:p-5 flex flex-col gap-3.5 shadow-2xl max-h-[90vh] overflow-hidden" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+      <div class="flex items-center justify-between gap-2 shrink-0">
+        <div class="min-w-0">
+          <h3 id="catModalTitle" class="text-base font-extrabold truncate">Manage Categories</h3>
+          <p id="catModalSub" class="text-xs leading-snug" style="color: var(--oneui-text-muted);">Tap category to select, or use ✎ and 🗑️ to edit or delete</p>
+        </div>
+        <button type="button" data-action="closeCategoryModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer" style="background: var(--oneui-surface-2);" aria-label="Close category dialog">✕</button>
       </div>
-      <div id="categoryModalList" class="flex flex-wrap gap-2"></div>
-      <div class="pt-2 space-y-2" style="border-top: 1px solid var(--oneui-divider);">
-        <label id="catModalCreateLabel" class="text-xs font-semibold block" style="color: var(--oneui-text-secondary);">Create Custom Pet Category</label>
+      <div id="categoryModalList" class="flex-1 min-h-0 max-h-[50vh] overflow-y-auto hide-scrollbar space-y-2 pr-0.5"></div>
+      <div class="pt-2.5 space-y-2 shrink-0" style="border-top: 1px solid var(--oneui-divider);">
+        <div class="flex items-center justify-between gap-2">
+          <label id="catModalCreateLabel" class="text-xs font-semibold block" style="color: var(--oneui-text-secondary);">Create Custom Pet Category</label>
+          <button type="button" id="cancelEditCatBtn" data-action="cancelEditCategory" class="hidden min-h-[36px] px-3 rounded-full text-xs font-bold cursor-pointer transition active:scale-95" style="background-color: var(--oneui-surface-2); color: var(--oneui-text-secondary);">
+            ✕ <span id="cancelEditCatBtnLabel">Cancel Edit</span>
+          </button>
+        </div>
         <div class="flex items-center gap-2 w-full min-w-0">
           <input id="customCatEmoji" type="text" value="🐹" class="oneui-input w-11 shrink-0 text-center py-2 text-sm">
           <input id="customCatLabel" type="text" placeholder="e.g. Hamster & Small Pets" class="oneui-input flex-1 min-w-0 px-3 py-2 text-xs font-semibold">
-          <button id="addCustomCatBtn" data-action="addCustomCategory" class="h-11 px-4 rounded-full text-xs font-bold text-white shrink-0" style="background-color: var(--oneui-blue);">Add</button>
+          <button type="button" id="addCustomCatBtn" data-action="addCustomCategory" class="h-11 px-4 rounded-full text-xs font-bold text-white shrink-0 cursor-pointer transition active:scale-95" style="background-color: var(--oneui-blue);">Add</button>
         </div>
       </div>
     </div>
@@ -2566,7 +2577,10 @@
           </div>
           <div>
             <label id="editProdCatLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Category</label>
-            <select id="editProdCategory" class="oneui-input w-full px-3 py-2.5 font-semibold"></select>
+            <div class="flex items-center gap-1.5">
+              <select id="editProdCategory" class="oneui-input flex-1 min-w-0 px-3 py-2.5 font-semibold"></select>
+              <button type="button" data-action="openCategoryModal" class="w-11 h-11 rounded-xl text-xs font-bold flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);" title="Manage Categories" aria-label="Manage categories">✎</button>
+            </div>
           </div>
         </div>
 
@@ -3760,6 +3774,7 @@ Minimum version required to store current data is: `+i+`.
     function renderCategoryPills() {
       const container = document.getElementById("posCategoryPills");
       if (!container) return;
+      const isId = appLang === "id";
       container.innerHTML = CATEGORIES.map(cat => {
         const isActive = selectedCategory === cat.id;
         return `
@@ -3768,7 +3783,12 @@ Minimum version required to store current data is: `+i+`.
             <span>${getCatLabel(cat)}</span>
           </button>
         `;
-      }).join("");
+      }).join("") + `
+        <button type="button" data-action="openCategoryModal" class="oneui-chip" style="border-style: dashed; color: var(--oneui-blue-text);" title="${isId ? 'Kelola Kategori' : 'Manage Categories'}">
+          <span>✎</span>
+          <span>${isId ? "Kategori" : "Categories"}</span>
+        </button>
+      `;
 
       const catOptionsHtml = CATEGORIES.filter(c => c.id !== "ALL").map(c =>
         `<option value="${c.id}">${c.icon} ${getCatLabel(c)}</option>`
@@ -4136,9 +4156,9 @@ Minimum version required to store current data is: `+i+`.
                   </div>
                   <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
                     <span class="text-[11px] sm:text-xs tabular-nums whitespace-nowrap shrink-0" style="color: var(--oneui-text-muted);">SKU: ${p.barcode}</span>
-                    <span class="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap shrink-0" style="background: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
+                    <button type="button" data-action="editProductCategory" data-arg="${p.id}" class="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer transition active:scale-95" style="background: var(--oneui-blue-tint); color: var(--oneui-blue-text);" title="${isId ? 'Ketuk untuk ubah kategori' : 'Tap to change or edit category'}">
                       <span>${catObj.icon}</span> <span>${getCatLabel(catObj)}</span>
-                    </span>
+                    </button>
                     ${isOut ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap shrink-0" style="background: var(--oneui-coral-tint); color: var(--oneui-coral);">❌ ${isId ? "Habis" : "Out of Stock"}</span>`
                       : isLow ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap shrink-0" style="background: var(--oneui-amber-tint); color: var(--oneui-amber);">⚠️ ${isId ? "Stok Menipis" : "Low Stock"}</span>` : ''}
                   </div>
@@ -4305,9 +4325,14 @@ Minimum version required to store current data is: `+i+`.
                     <span class="text-xs font-bold">${dateStr} • ${startStr} - ${endStr}</span>
                     ${varianceBadge}
                   </div>
-                  <button data-action="shareArchiveShiftWhatsApp" data-arg="${idx}" class="self-start sm:self-auto min-h-[44px] px-4 rounded-full text-xs font-bold text-white flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer" style="background-color: #075E54;" title="Send Historical Z-Report to WhatsApp">
-                    <span>📱</span> WhatsApp Z-Report
-                  </button>
+                  <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
+                    <button type="button" data-action="shareArchiveShiftWhatsApp" data-arg="${idx}" class="min-h-[44px] px-4 rounded-full text-xs font-bold text-white flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer" style="background-color: #075E54;" title="Send Historical Z-Report to WhatsApp">
+                      <span>📱</span> WhatsApp Z-Report
+                    </button>
+                    <button type="button" data-action="deleteArchiveShift" data-arg="${idx}" class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full text-sm font-bold flex items-center justify-center transition active:scale-95 cursor-pointer shrink-0" style="background-color: var(--oneui-coral-tint); color: var(--oneui-coral);" title="${isId ? 'Hapus Arsip Shift' : 'Delete Shift Archive'}" aria-label="${isId ? 'Hapus arsip shift' : 'Delete shift archive'} #${s.shiftNumber}">
+                      🗑️
+                    </button>
+                  </div>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1">
@@ -5969,6 +5994,19 @@ Minimum version required to store current data is: `+i+`.
       window.open(targetWaUrl, "_blank");
     }
 
+    function deleteArchiveShift(idx) {
+      const i = Number(idx);
+      if (isNaN(i) || i < 0 || i >= shiftHistory.length) return;
+      const removed = shiftHistory[i];
+      shiftHistory.splice(i, 1);
+      saveState();
+      renderAll();
+      const isId = appLang === "id";
+      showToast(isId
+        ? `🗑️ Arsip Shift #${removed.shiftNumber} dihapus`
+        : `🗑️ Deleted Shift #${removed.shiftNumber} archive`);
+    }
+
     // ===========================================================================
     // PRODUCT EDIT / DELETE CRUD (MODAL 8)
     // ===========================================================================
@@ -6215,6 +6253,7 @@ Minimum version required to store current data is: `+i+`.
       setPlaceholder("invSearchInput", isId ? "Cari nama produk, kategori, atau SKU..." : "Search inventory name, category, or SKU...");
       setTxt("invFilterAll", isId ? "Semua Barang" : "All Items");
       setTxt("invFilterLow", isId ? "⚠️ Stok Menipis" : "⚠️ Low Stock");
+      setTxt("manageCategoriesBtnLabel", isId ? "Kategori" : "Categories");
       setTxt("importCsvLabel", isId ? "Impor CSV" : "Import CSV");
       setTxt("exportCsvLabel", isId ? "Ekspor CSV" : "Export CSV");
       setTxt("addProductToggleText", isId ? "Produk Baru" : "New Product");
@@ -6287,8 +6326,10 @@ Minimum version required to store current data is: `+i+`.
       setTxt("waSimCopyBtnLabel", isId ? "Salin Struk" : "Copy Receipt");
       setTxt("waSimOpenWaBtnLabel", isId ? "Kirim WA" : "Send WA");
       setTxt("waSimBackBtnLabel", isId ? "Kembali" : "Back");
-      setTxt("catModalTitle", isId ? "Pilih atau Tambah Kategori" : "Select or Create Category");
-      setTxt("catModalCreateLabel", isId ? "Buat Kategori Kustom" : "Create Custom Category");
+      setTxt("catModalTitle", isId ? "Kelola Kategori" : "Manage Categories");
+      setTxt("catModalSub", isId ? "Ketuk kategori untuk memilih, atau gunakan ✎ dan 🗑️ untuk ubah & hapus" : "Tap category to select, or use ✎ and 🗑️ to edit or delete");
+      setTxt("catModalCreateLabel", isId ? "Buat Kategori Baru" : "Create Custom Category");
+      setTxt("cancelEditCatBtnLabel", isId ? "Batal Ubah" : "Cancel Edit");
       setPlaceholder("customCatLabel", isId ? "Nama kategori (cth. Reptil)" : "Category name (e.g. Reptiles)");
       setTxt("addCustomCatBtn", isId ? "Tambah" : "Add");
       setTxt("scannerModalTitle", isId ? "📷 Pemindai Barcode" : "📷 Camera Barcode Scanner");
@@ -7065,15 +7106,196 @@ Minimum version required to store current data is: `+i+`.
       showToast(appLang === "id" ? "🇮🇩 Bahasa diubah ke Bahasa Indonesia" : "🇬🇧 Language switched to English");
     }
 
+    let editingCategoryId = null;
+
+    function renderCategoryModalList() {
+      const isId = appLang === "id";
+      const list = document.getElementById("categoryModalList");
+      if (list) {
+        const editableCats = CATEGORIES.filter(c => c.id !== "ALL");
+        list.innerHTML = editableCats.map(c => {
+          const prodCount = products.filter(p => p.category === c.id).length;
+          const isEditingThis = editingCategoryId === c.id;
+          return `
+            <div class="p-2 rounded-2xl flex items-center justify-between gap-2 transition" style="background-color: var(--oneui-surface-2); border: ${isEditingThis ? '2px solid var(--oneui-blue)' : '1px solid var(--oneui-hairline)'};">
+              <button type="button" data-action="assignCategoryToProd" data-arg="${c.id}" class="flex-1 min-w-0 min-h-[44px] px-2.5 rounded-xl flex items-center gap-2.5 text-left transition active:scale-98 cursor-pointer">
+                <span class="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0" style="background-color: ${c.tint || 'var(--oneui-surface)'};">${c.icon}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="font-bold text-xs sm:text-sm block truncate" style="color: var(--oneui-text);">${getCatLabel(c)}</span>
+                  <span class="text-[11px] font-semibold tabular-nums block" style="color: var(--oneui-text-muted);">${prodCount} ${isId ? "produk" : (prodCount === 1 ? "item" : "items")}</span>
+                </span>
+              </button>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" data-action="startEditCategory" data-arg="${c.id}" class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-xs font-bold transition active:scale-95 shrink-0 cursor-pointer" style="background-color: ${isEditingThis ? 'var(--oneui-blue)' : 'var(--oneui-surface)'}; color: ${isEditingThis ? '#FFFFFF' : 'var(--oneui-blue-text)'};" title="${isId ? 'Ubah Kategori' : 'Edit Category'}" aria-label="${isId ? 'Ubah kategori' : 'Edit category'} ${getCatLabel(c)}">
+                  ✎
+                </button>
+                <button type="button" data-action="deleteCategory" data-arg="${c.id}" class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-xs font-bold transition active:scale-95 shrink-0 cursor-pointer" style="background-color: var(--oneui-coral-tint); color: var(--oneui-coral);" title="${isId ? 'Hapus Kategori' : 'Delete Category'}" aria-label="${isId ? 'Hapus kategori' : 'Delete category'} ${getCatLabel(c)}">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      const formLabel = document.getElementById("catModalCreateLabel");
+      const cancelBtn = document.getElementById("cancelEditCatBtn");
+      const cancelBtnLbl = document.getElementById("cancelEditCatBtnLabel");
+      const submitBtn = document.getElementById("addCustomCatBtn");
+
+      if (editingCategoryId) {
+        const targetCat = CATEGORIES.find(c => c.id === editingCategoryId);
+        const catName = targetCat ? getCatLabel(targetCat) : editingCategoryId;
+        if (formLabel) {
+          formLabel.innerText = isId ? `✏️ Ubah Kategori: ${catName}` : `✏️ Edit Category: ${catName}`;
+          formLabel.style.color = "var(--oneui-blue-text)";
+        }
+        if (cancelBtn) cancelBtn.classList.remove("hidden");
+        if (cancelBtnLbl) cancelBtnLbl.innerText = isId ? "Batal Ubah" : "Cancel Edit";
+        if (submitBtn) submitBtn.innerText = isId ? "✓ Simpan" : "✓ Save";
+      } else {
+        if (formLabel) {
+          formLabel.innerText = isId ? "Buat Kategori Baru" : "Create Custom Category";
+          formLabel.style.color = "var(--oneui-text-secondary)";
+        }
+        if (cancelBtn) cancelBtn.classList.add("hidden");
+        if (submitBtn) submitBtn.innerText = isId ? "Tambah" : "Add";
+      }
+    }
+
     function openCategoryModal(prodId = null) {
       editingCategoryProductId = prodId ? Number(prodId) : null;
-      const list = document.getElementById("categoryModalList");
-      list.innerHTML = CATEGORIES.filter(c => c.id !== "ALL").map(c => `
-        <button data-action="assignCategoryToProd" data-arg="${c.id}" class="oneui-chip">
-          <span>${c.icon}</span> <span>${getCatLabel(c)}</span>
-        </button>
-      `).join("");
-      document.getElementById("categoryEditModal").classList.remove("hidden");
+      editingCategoryId = null;
+      const emojiInp = document.getElementById("customCatEmoji");
+      const labelInp = document.getElementById("customCatLabel");
+      if (emojiInp) emojiInp.value = "🐹";
+      if (labelInp) labelInp.value = "";
+      renderCategoryModalList();
+      document.getElementById("categoryEditModal")?.classList.remove("hidden");
+    }
+
+    function startEditCategory(catId) {
+      const cat = CATEGORIES.find(c => c.id === catId && c.id !== "ALL");
+      if (!cat) return;
+      editingCategoryId = cat.id;
+      const emojiInp = document.getElementById("customCatEmoji");
+      const labelInp = document.getElementById("customCatLabel");
+      if (emojiInp) emojiInp.value = cat.icon || "🐾";
+      if (labelInp) {
+        labelInp.value = getCatLabel(cat);
+        labelInp.focus();
+      }
+      renderCategoryModalList();
+    }
+
+    function cancelEditCategory() {
+      editingCategoryId = null;
+      const emojiInp = document.getElementById("customCatEmoji");
+      const labelInp = document.getElementById("customCatLabel");
+      if (emojiInp) emojiInp.value = "🐹";
+      if (labelInp) labelInp.value = "";
+      renderCategoryModalList();
+    }
+
+    function saveCategoryForm() {
+      const isId = appLang === "id";
+      const emojiInp = document.getElementById("customCatEmoji");
+      const labelInp = document.getElementById("customCatLabel");
+      const emoji = (emojiInp?.value || "").trim() || "🐾";
+      const label = (labelInp?.value || "").trim();
+      if (!label) {
+        showToast(isId ? "⚠️ Masukkan nama kategori" : "⚠️ Enter a category name");
+        return;
+      }
+
+      if (editingCategoryId) {
+        const cat = CATEGORIES.find(c => c.id === editingCategoryId);
+        if (cat) {
+          cat.icon = emoji;
+          cat.label = label;
+          cat.labelId = label;
+        }
+        editingCategoryId = null;
+        if (emojiInp) emojiInp.value = "🐹";
+        if (labelInp) labelInp.value = "";
+        saveState();
+        renderAll();
+        renderCategoryModalList();
+        showToast(isId ? `✓ Kategori diperbarui: ${emoji} ${label}` : `✓ Category updated: ${emoji} ${label}`);
+        return;
+      }
+
+      const id = label.toUpperCase().replace(/[^A-Z0-9]/g, "_") || ("CAT_" + Date.now());
+      const existing = CATEGORIES.find(c => c.id === id);
+      if (existing) {
+        existing.icon = emoji;
+        existing.label = label;
+        existing.labelId = label;
+      } else {
+        CATEGORIES.push({ id, label, labelId: label, icon: emoji, tint: "rgba(0, 102, 204, 0.16)" });
+      }
+      if (editingCategoryProductId) {
+        const p = products.find(x => x.id === editingCategoryProductId);
+        if (p) p.category = id;
+      }
+      if (labelInp) labelInp.value = "";
+      if (emojiInp) emojiInp.value = "🐹";
+      saveState();
+      renderAll();
+      renderCategoryModalList();
+      const newCatSel = document.getElementById("newProdCategory");
+      if (newCatSel && [...newCatSel.options].some(o => o.value === id)) {
+        newCatSel.value = id;
+      }
+      const editCatSel = document.getElementById("editProdCategory");
+      if (editCatSel && [...editCatSel.options].some(o => o.value === id)) {
+        editCatSel.value = id;
+      }
+      showToast((isId ? "✓ Kategori ditambahkan: " : "✓ Added category: ") + emoji + " " + label);
+    }
+
+    function deleteCategory(catId) {
+      const isId = appLang === "id";
+      const nonAllCats = CATEGORIES.filter(c => c.id !== "ALL");
+      if (nonAllCats.length <= 1) {
+        showToast(isId ? "⚠️ Minimal harus ada 1 kategori produk" : "⚠️ At least 1 product category is required");
+        return;
+      }
+      const idx = CATEGORIES.findIndex(c => c.id === catId && c.id !== "ALL");
+      if (idx === -1) return;
+      const removed = CATEGORIES[idx];
+      const removedName = getCatLabel(removed);
+      CATEGORIES.splice(idx, 1);
+
+      const fallbackCat = CATEGORIES.find(c => c.id !== "ALL") || CATEGORIES[0];
+      let movedCount = 0;
+      products.forEach(p => {
+        if (p.category === catId && fallbackCat) {
+          p.category = fallbackCat.id;
+          movedCount++;
+        }
+      });
+
+      if (selectedCategory === catId) {
+        selectedCategory = "ALL";
+      }
+      if (editingCategoryId === catId) {
+        cancelEditCategory();
+      }
+
+      saveState();
+      renderAll();
+      renderCategoryModalList();
+
+      if (movedCount > 0 && fallbackCat) {
+        showToast(isId
+          ? `🗑️ Kategori "${removedName}" dihapus (${movedCount} produk dipindah ke ${getCatLabel(fallbackCat)})`
+          : `🗑️ Deleted "${removedName}" (${movedCount} items moved to ${getCatLabel(fallbackCat)})`);
+      } else {
+        showToast(isId
+          ? `🗑️ Kategori "${removedName}" dihapus`
+          : `🗑️ Deleted category "${removedName}"`);
+      }
     }
 
     // =========================================================================
@@ -7704,16 +7926,26 @@ Minimum version required to store current data is: `+i+`.
         case "openCategoryModal": openCategoryModal(); break;
         case "editProductCategory": openCategoryModal(arg); break;
         case "closeCategoryModal":
+          editingCategoryId = null;
           document.getElementById("categoryEditModal").classList.add("hidden");
           break;
+        case "startEditCategory": startEditCategory(arg); break;
+        case "cancelEditCategory": cancelEditCategory(); break;
+        case "deleteCategory": deleteCategory(arg); break;
         case "assignCategoryToProd": {
+          const isId = appLang === "id";
+          const catObj = CATEGORIES.find(c => c.id === arg);
+          const catLabel = catObj ? getCatLabel(catObj) : arg;
           if (editingCategoryProductId) {
             const p = products.find(x => x.id === editingCategoryProductId);
             if (p) {
               p.category = arg;
-              showToast("✓ Updated category for " + p.name);
+              showToast(isId ? `✓ Kategori ${p.name} diubah ke ${catLabel}` : `✓ Updated category for ${p.name} to ${catLabel}`);
             }
+          } else {
+            selectedCategory = arg;
           }
+          editingCategoryId = null;
           document.getElementById("categoryEditModal").classList.add("hidden");
           saveState();
           renderAll();
@@ -7721,31 +7953,15 @@ Minimum version required to store current data is: `+i+`.
           if (newCatSel && [...newCatSel.options].some(o => o.value === arg)) {
             newCatSel.value = arg;
           }
+          const editCatSel = document.getElementById("editProdCategory");
+          if (editCatSel && [...editCatSel.options].some(o => o.value === arg)) {
+            editCatSel.value = arg;
+          }
           break;
         }
-        case "addCustomCategory": {
-          const emoji = document.getElementById("customCatEmoji").value.trim() || "🐾";
-          const label = document.getElementById("customCatLabel").value.trim();
-          if (!label) break;
-          const id = label.toUpperCase().replace(/[^A-Z0-9]/g, "_");
-          if (!CATEGORIES.some(c => c.id === id)) {
-            CATEGORIES.push({ id, label, labelId: label, icon: emoji, tint: "rgba(0, 102, 204, 0.16)" });
-          }
-          if (editingCategoryProductId) {
-            const p = products.find(x => x.id === editingCategoryProductId);
-            if (p) p.category = id;
-          }
-          document.getElementById("customCatLabel").value = "";
-          document.getElementById("categoryEditModal").classList.add("hidden");
-          saveState();
-          renderAll();
-          const newCatSel = document.getElementById("newProdCategory");
-          if (newCatSel && [...newCatSel.options].some(o => o.value === id)) {
-            newCatSel.value = id;
-          }
-          showToast((appLang === "id" ? "✓ Kategori ditambahkan: " : "✓ Added category: ") + emoji + " " + label);
+        case "addCustomCategory":
+          saveCategoryForm();
           break;
-        }
         case "openScannerModal": openScannerModal(arg || "cashier"); break;
         case "closeScannerModal": closeScannerModal(); break;
         case "toggleScannerTorch": toggleScannerTorch(); break;
@@ -7759,6 +7975,7 @@ Minimum version required to store current data is: `+i+`.
         case "confirmCloseShift": confirmCloseShift(); break;
         case "setHistorySubTab": setHistorySubTab(arg); break;
         case "shareArchiveShiftWhatsApp": shareArchiveShiftWhatsApp(Number(arg)); break;
+        case "deleteArchiveShift": deleteArchiveShift(Number(arg)); break;
         case "viewHistoryReceipt": {
           const tx = transactions[Number(arg)];
           if (tx) showReceiptModal(tx);
@@ -7823,6 +8040,9 @@ Minimum version required to store current data is: `+i+`.
       } else if (e.target && e.target.id === "scannerManualInput" && e.key === "Enter") {
         e.preventDefault();
         submitManualBarcode();
+      } else if (e.target && (e.target.id === "customCatLabel" || e.target.id === "customCatEmoji") && e.key === "Enter") {
+        e.preventDefault();
+        saveCategoryForm();
       }
     });
 
