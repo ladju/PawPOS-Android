@@ -925,7 +925,6 @@
     <!-- One UI Status Bar -->
     <div class="w-full px-7 pt-2.5 pb-1 flex items-center justify-between text-xs font-semibold select-none shrink-0" style="color: var(--oneui-text-secondary);">
       <div class="flex items-center gap-2">
-        <span id="statusTime" class="tabular-nums font-bold" style="color: var(--oneui-text);">12:39</span>
         <span>🐾</span>
       </div>
       <div class="flex items-center gap-2 tabular-nums">
@@ -7376,16 +7375,6 @@ Minimum version required to store current data is: `+i+`.
       if (file) handleRestoreBackupFile(file);
       ev.target.value = "";
     });
-
-    // Live status bar clock
-    function updateStatusClock() {
-      const el = document.getElementById("statusTime");
-      if (el) {
-        el.innerText = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
-      }
-    }
-    updateStatusClock();
-    setInterval(updateStatusClock, 30000);
 
     // Boot Sequence: Restore persisted state, sync controls, apply language, init layout & offline PWA
     loadState();
