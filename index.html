@@ -2885,7 +2885,7 @@ Minimum version required to store current data is: `+i+`.
             "barcode": "89970014",
             "category": "CAT_FOOD",
             "costPrice": 16600,
-            "price": 180000,
+            "price": 18000,
             "stock": 10,
             "minStock": 3,
             "unit": "pcs",
@@ -3025,11 +3025,23 @@ Minimum version required to store current data is: `+i+`.
       },
       {
             "id": 26,
-            "name": "Pasir Wangi",
+            "name": "Pasir Wangi 5kg",
             "barcode": "89970026",
             "category": "LITTER",
-            "costPrice": 80000,
+            "costPrice": 16000,
             "price": 20000,
+            "stock": 10,
+            "minStock": 3,
+            "unit": "bag",
+            "icon": "\ud83e\udea3"
+      },
+      {
+            "id": 41,
+            "name": "Pasir Wangi 2kg",
+            "barcode": "89970041",
+            "category": "LITTER",
+            "costPrice": 6400,
+            "price": 9000,
             "stock": 10,
             "minStock": 3,
             "unit": "bag",
@@ -3205,7 +3217,7 @@ Minimum version required to store current data is: `+i+`.
       }
 ];
 
-    const STORAGE_KEY = "pawpos_state_v3";
+    const STORAGE_KEY = "pawpos_state_v4";
     let appLang = localStorage.getItem("pawpos_lang") || "en";
 
     function createDefaultTransactions() {
