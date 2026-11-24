@@ -1636,8 +1636,14 @@
               <input id="settingStoreName" type="text" value="Rana Petshop" class="oneui-input w-full px-3.5 py-2.5 font-semibold">
             </div>
             <div>
-              <label id="settingStorePhoneLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Store WhatsApp Number (For QR Receipts)</label>
-              <input id="settingStorePhone" type="text" value="+62 812-3456-7890" class="oneui-input w-full px-3.5 py-2.5 font-semibold tabular-nums">
+              <label id="settingStorePhoneLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Nomor WhatsApp Toko (untuk Struk QR)</label>
+              <div class="oneui-input w-full flex items-center overflow-hidden p-0">
+                <span class="px-3.5 py-2.5 font-extrabold text-xs shrink-0 select-none flex items-center gap-1 tabular-nums" style="background-color: var(--oneui-surface-3); color: var(--oneui-blue-text); border-right: 1px solid var(--oneui-divider);">
+                  <span>🇮🇩</span> <span>+62</span>
+                </span>
+                <input id="settingStorePhone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="812-3456-7890" value="812-3456-7890" class="flex-1 min-w-0 bg-transparent px-3 py-2.5 font-semibold tabular-nums focus:outline-none" style="color: var(--oneui-text);">
+              </div>
+              <div id="settingStorePhoneStatus" class="text-[11px] font-semibold mt-1 tabular-nums" style="color: var(--oneui-green);">✓ Format valid: wa.me/6281234567890</div>
             </div>
             <div>
               <label id="settingStoreAddressLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Store Address</label>
@@ -3364,10 +3370,60 @@ Minimum version required to store current data is: `+i+`.
       waReportFooter: DEFAULT_WA_REPORT_FOOTER
     };
 
+    function extractIndoWaLocalDigits(raw) {
+      let digits = String(raw || "").replace(/[^0-9]/g, "");
+      while (digits.startsWith("62")) digits = digits.slice(2);
+      digits = digits.replace(/^0+/, "");
+      return digits.slice(0, 13);
+    }
+
+    function formatIndoWaLocalDisplay(raw) {
+      const d = extractIndoWaLocalDigits(raw);
+      if (d.length <= 3) return d;
+      if (d.length <= 7) return `${d.slice(0, 3)}-${d.slice(3)}`;
+      if (d.length <= 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+      return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7, 11)}-${d.slice(11)}`;
+    }
+
+    function getCleanStoreWaDigits() {
+      const el = document.getElementById("settingStorePhone");
+      const raw = (el && el.value.trim()) ? el.value : (storeProfile.phone || "81234567890");
+      const local = extractIndoWaLocalDigits(raw);
+      return local ? ("62" + local) : "6281234567890";
+    }
+
+    function getFormattedStoreWaPhone() {
+      const el = document.getElementById("settingStorePhone");
+      const raw = (el && el.value.trim()) ? el.value : (storeProfile.phone || "81234567890");
+      const formatted = formatIndoWaLocalDisplay(raw);
+      return formatted ? (`+62 ${formatted}`) : "+62 812-3456-7890";
+    }
+
+    function updateStorePhoneValidationUI() {
+      const statusEl = document.getElementById("settingStorePhoneStatus");
+      const el = document.getElementById("settingStorePhone");
+      if (!statusEl || !el) return;
+      const isId = appLang === "id";
+      const local = extractIndoWaLocalDigits(el.value);
+      if (!local) {
+        statusEl.style.color = "var(--oneui-amber)";
+        statusEl.innerText = isId ? "⚠️ Masukkan nomor WhatsApp (dimulai dari angka 8)" : "⚠️ Enter WhatsApp number (starting with 8)";
+      } else if (!local.startsWith("8")) {
+        statusEl.style.color = "var(--oneui-amber)";
+        statusEl.innerText = isId ? "⚠️ Nomor HP Indonesia harus dimulai angka 8 (cth: 812-xxxx-xxxx)" : "⚠️ Indonesian mobile numbers must start with 8 (e.g. 812-xxxx-xxxx)";
+      } else if (local.length < 9) {
+        statusEl.style.color = "var(--oneui-amber)";
+        statusEl.innerText = isId ? `⚠️ Minimal 9 digit setelah +62 (baru ${local.length} digit)` : `⚠️ Minimum 9 digits after +62 (${local.length} entered)`;
+      } else {
+        statusEl.style.color = "var(--oneui-green)";
+        statusEl.innerText = isId ? `✓ Format valid: wa.me/62${local}` : `✓ Valid format: wa.me/62${local}`;
+      }
+    }
+
     function formatWaTemplate(tpl, vars = {}) {
       const storeName = vars.store || document.getElementById("settingStoreName")?.value?.trim() || storeProfile.name || "Rana Petshop";
       const storeAddr = vars.address || document.getElementById("settingStoreAddress")?.value?.trim() || storeProfile.address || "Rana Petshop • Solo Counter";
-      const storePhone = vars.phone || document.getElementById("settingStorePhone")?.value?.trim() || storeProfile.phone || "+62 812-3456-7890";
+      const storePhone = vars.phone || getFormattedStoreWaPhone();
       const invoice = vars.invoice || "INV-0491";
       const total = vars.total || "Rp 40.000";
       const method = vars.method || "CASH";
@@ -3483,7 +3539,7 @@ Minimum version required to store current data is: `+i+`.
       const waFootEl = document.getElementById("settingWaReceiptFooter");
       const waRepEl = document.getElementById("settingWaReportFooter");
       if (nameEl && nameEl.value.trim()) storeProfile.name = nameEl.value.trim();
-      if (phoneEl && phoneEl.value.trim()) storeProfile.phone = phoneEl.value.trim();
+      if (phoneEl && extractIndoWaLocalDigits(phoneEl.value).length > 0) storeProfile.phone = getFormattedStoreWaPhone();
       if (addrEl && addrEl.value.trim()) storeProfile.address = addrEl.value.trim();
       if (waCustEl && waCustEl.value.trim()) storeProfile.waCustomerTemplate = waCustEl.value.trim();
       if (waFootEl && waFootEl.value.trim()) storeProfile.waReceiptFooter = waFootEl.value.trim();
@@ -3561,11 +3617,12 @@ Minimum version required to store current data is: `+i+`.
       const waFootEl = document.getElementById("settingWaReceiptFooter");
       const waRepEl = document.getElementById("settingWaReportFooter");
       if (nameEl) nameEl.value = storeProfile.name || "Rana Petshop";
-      if (phoneEl) phoneEl.value = storeProfile.phone || "+62 812-3456-7890";
+      if (phoneEl) phoneEl.value = formatIndoWaLocalDisplay(storeProfile.phone || "+62 812-3456-7890");
       if (addrEl) addrEl.value = storeProfile.address || "Rana Petshop • Solo Counter";
       if (waCustEl) waCustEl.value = storeProfile.waCustomerTemplate || DEFAULT_WA_CUSTOMER_TPL;
       if (waFootEl) waFootEl.value = storeProfile.waReceiptFooter || DEFAULT_WA_RECEIPT_FOOTER;
       if (waRepEl) waRepEl.value = storeProfile.waReportFooter || DEFAULT_WA_REPORT_FOOTER;
+      updateStorePhoneValidationUI();
       updateWaTemplatePreview();
 
       const posCb = document.getElementById("posTaxCheckbox");
@@ -4750,12 +4807,9 @@ Minimum version required to store current data is: `+i+`.
       const isId = appLang === "id";
       const container = document.getElementById("thermalReceiptContent");
       const storeName = document.getElementById("settingStoreName")?.value || storeProfile.name || "Rana Petshop";
-      const storePhone = document.getElementById("settingStorePhone")?.value || storeProfile.phone || "+62 812-3456-7890";
+      const storePhone = getFormattedStoreWaPhone();
       const storeAddr = document.getElementById("settingStoreAddress")?.value || storeProfile.address || "Rana Petshop • Solo Counter";
-
-      let cleanPhone = storePhone.replace(/[^0-9]/g, "");
-      if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
-      if (!cleanPhone.startsWith("62")) cleanPhone = "62" + cleanPhone;
+      const cleanPhone = getCleanStoreWaDigits();
 
       const customerMsg = getRenderedWaCustomerMessage(tx, storeName);
       const receiptFooter = getRenderedWaReceiptFooter(storeName);
@@ -5732,9 +5786,7 @@ Minimum version required to store current data is: `+i+`.
         navigator.clipboard.writeText(zMsg).catch(() => {});
       }
 
-      const storePhone = document.getElementById("settingStorePhone")?.value || "";
-      let cleanPhone = storePhone.replace(/[^0-9]/g, "");
-      if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
+      const cleanPhone = getCleanStoreWaDigits();
 
       const targetWaUrl = cleanPhone 
         ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(zMsg)}`
@@ -5804,9 +5856,7 @@ Minimum version required to store current data is: `+i+`.
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(zMsg).catch(() => {});
       }
-      const storePhone = document.getElementById("settingStorePhone")?.value || "";
-      let cleanPhone = storePhone.replace(/[^0-9]/g, "");
-      if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
+      const cleanPhone = getCleanStoreWaDigits();
       const targetWaUrl = cleanPhone 
         ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(zMsg)}`
         : `https://wa.me/?text=${encodeURIComponent(zMsg)}`;
@@ -7227,9 +7277,7 @@ Minimum version required to store current data is: `+i+`.
         navigator.clipboard.writeText(msg).catch(() => {});
       }
 
-      const storePhone = document.getElementById("settingStorePhone")?.value || "";
-      let cleanPhone = storePhone.replace(/[^0-9]/g, "");
-      if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
+      const cleanPhone = getCleanStoreWaDigits();
 
       const targetWaUrl = cleanPhone 
         ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`
@@ -7611,7 +7659,11 @@ Minimum version required to store current data is: `+i+`.
     document.getElementById("settingsDefaultTaxCheckbox")?.addEventListener("change", (e) => setIncludeTax(e.target.checked));
 
     ["settingStoreName", "settingStorePhone", "settingStoreAddress", "settingWaCustomerTemplate", "settingWaReceiptFooter", "settingWaReportFooter"].forEach(id => {
-      document.getElementById(id)?.addEventListener("input", () => {
+      document.getElementById(id)?.addEventListener("input", (ev) => {
+        if (id === "settingStorePhone" && ev.target) {
+          ev.target.value = formatIndoWaLocalDisplay(ev.target.value);
+          updateStorePhoneValidationUI();
+        }
         saveState();
         updateTabHeaderText();
         updateWaTemplatePreview();
