@@ -1179,7 +1179,7 @@
             <div>
               <label id="newProdBarcodeLabel" class="text-xs font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Barcode / SKU</label>
               <div class="flex items-center gap-1.5">
-                <input id="newProdBarcode" type="text" placeholder="89970042" class="oneui-input flex-1 min-w-0 px-3 py-2.5 text-xs font-medium tabular-nums">
+                <input id="newProdBarcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="89970042" class="oneui-input flex-1 min-w-0 px-3 py-2.5 text-xs font-medium tabular-nums">
                 <button type="button" data-action="openScannerModal" data-arg="newProduct" class="min-h-[44px] px-3 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1 shrink-0 transition active:scale-95" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);" title="Scan Barcode with Camera">
                   <span>📷</span>
                   <span id="newProdScanPhotoLabel">Scan</span>
@@ -1201,25 +1201,35 @@
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <label id="newProdCostLabel" class="text-xs font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Cost (IDR)</label>
-                <input id="newProdCost" type="number" min="0" placeholder="45000" class="oneui-input w-full px-3 py-2.5 text-xs font-bold tabular-nums">
+                <input id="newProdCost" type="text" inputmode="numeric" pattern="[0-9.]*" placeholder="Rp 45.000" class="oneui-input w-full px-3 py-2.5 text-xs font-bold tabular-nums">
               </div>
               <div>
                 <label id="newProdPriceLabel" class="text-xs font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Price (IDR) *</label>
-                <input id="newProdPrice" type="text" placeholder="Rp 65.000" class="oneui-input w-full px-3 py-2.5 text-xs font-bold tabular-nums">
+                <input id="newProdPrice" type="text" inputmode="numeric" pattern="[0-9.]*" placeholder="Rp 65.000" class="oneui-input w-full px-3 py-2.5 text-xs font-bold tabular-nums">
               </div>
             </div>
             <div class="grid grid-cols-3 gap-2 sm:col-span-2 lg:col-span-4">
               <div>
                 <label id="newProdStockLabel" class="text-xs font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Stock Qty *</label>
-                <input id="newProdStock" type="number" min="0" value="20" class="oneui-input w-full px-3 py-2.5 text-xs font-bold tabular-nums">
+                <input id="newProdStock" type="number" inputmode="numeric" min="0" value="20" class="oneui-input w-full px-3 py-2.5 text-xs font-bold tabular-nums">
               </div>
               <div>
                 <label id="newProdMinStockLabel" class="text-xs font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Low Alert</label>
-                <input id="newProdMinStock" type="number" min="0" value="5" class="oneui-input w-full px-3 py-2.5 text-xs font-bold tabular-nums">
+                <input id="newProdMinStock" type="number" inputmode="numeric" min="0" value="5" class="oneui-input w-full px-3 py-2.5 text-xs font-bold tabular-nums">
               </div>
               <div>
                 <label id="newProdUnitLabel" class="text-xs font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Unit</label>
-                <input id="newProdUnit" type="text" value="pcs" placeholder="pcs / can" class="oneui-input w-full px-3 py-2.5 text-xs font-semibold">
+                <select id="newProdUnit" class="oneui-input w-full px-3 py-2.5 text-xs font-semibold">
+                  <option value="pcs">pcs</option>
+                  <option value="Kg">Kg</option>
+                  <option value="can">can</option>
+                  <option value="bag">bag</option>
+                  <option value="pack">pack</option>
+                  <option value="btl">btl</option>
+                  <option value="box">box</option>
+                  <option value="sachet">sachet</option>
+                  <option value="unit">unit</option>
+                </select>
               </div>
             </div>
           </div>
@@ -2571,7 +2581,7 @@
           <div>
             <label id="editProdBarcodeLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Barcode / SKU</label>
             <div class="flex items-center gap-1.5">
-              <input id="editProdBarcode" type="text" class="oneui-input flex-1 min-w-0 px-3 py-2.5 font-semibold tabular-nums">
+              <input id="editProdBarcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="89970001" class="oneui-input flex-1 min-w-0 px-3 py-2.5 font-semibold tabular-nums">
               <button type="button" data-action="openScannerModal" data-arg="editProduct" class="w-11 h-11 rounded-xl text-sm font-bold flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);" title="Scan Barcode" aria-label="Scan barcode">📷</button>
             </div>
           </div>
@@ -2587,26 +2597,36 @@
         <div class="grid grid-cols-2 gap-2.5">
           <div>
             <label id="editProdCostLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Cost Price (IDR)</label>
-            <input id="editProdCost" type="number" min="0" class="oneui-input w-full px-3.5 py-2.5 font-bold tabular-nums">
+            <input id="editProdCost" type="text" inputmode="numeric" pattern="[0-9.]*" placeholder="Rp 45.000" class="oneui-input w-full px-3.5 py-2.5 font-bold tabular-nums">
           </div>
           <div>
             <label id="editProdPriceLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Selling Price (IDR) *</label>
-            <input id="editProdPrice" type="number" min="0" class="oneui-input w-full px-3.5 py-2.5 font-bold tabular-nums">
+            <input id="editProdPrice" type="text" inputmode="numeric" pattern="[0-9.]*" placeholder="Rp 65.000" class="oneui-input w-full px-3.5 py-2.5 font-bold tabular-nums">
           </div>
         </div>
 
         <div class="grid grid-cols-3 gap-2.5">
           <div>
             <label id="editProdStockLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Stock Qty</label>
-            <input id="editProdStock" type="number" min="0" class="oneui-input w-full px-3 py-2.5 font-bold tabular-nums">
+            <input id="editProdStock" type="number" inputmode="numeric" min="0" class="oneui-input w-full px-3 py-2.5 font-bold tabular-nums">
           </div>
           <div>
             <label id="editProdMinStockLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Low Alert</label>
-            <input id="editProdMinStock" type="number" min="0" class="oneui-input w-full px-3 py-2.5 font-bold tabular-nums">
+            <input id="editProdMinStock" type="number" inputmode="numeric" min="0" class="oneui-input w-full px-3 py-2.5 font-bold tabular-nums">
           </div>
           <div>
             <label id="editProdUnitLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Unit</label>
-            <input id="editProdUnit" type="text" placeholder="pcs / can / bag" class="oneui-input w-full px-3 py-2.5 font-semibold">
+            <select id="editProdUnit" class="oneui-input w-full px-3 py-2.5 font-semibold">
+              <option value="pcs">pcs</option>
+              <option value="Kg">Kg</option>
+              <option value="can">can</option>
+              <option value="bag">bag</option>
+              <option value="pack">pack</option>
+              <option value="btl">btl</option>
+              <option value="box">box</option>
+              <option value="sachet">sachet</option>
+              <option value="unit">unit</option>
+            </select>
           </div>
         </div>
       </div>
@@ -6053,7 +6073,7 @@ Minimum version required to store current data is: `+i+`.
 
       document.getElementById("editProdId").value = p.id;
       document.getElementById("editProdName").value = p.name || "";
-      document.getElementById("editProdBarcode").value = p.barcode || "";
+      document.getElementById("editProdBarcode").value = String(p.barcode || "").replace(/[^0-9]/g, "");
       const catSel = document.getElementById("editProdCategory");
       if (catSel) {
         if (![...catSel.options].some(o => o.value === p.category) && p.category) {
@@ -6064,11 +6084,23 @@ Minimum version required to store current data is: `+i+`.
         }
         catSel.value = p.category || "CAT_FOOD";
       }
-      document.getElementById("editProdCost").value = p.costPrice ?? Math.round((p.price || 0) * 0.7);
-      document.getElementById("editProdPrice").value = p.price ?? 0;
+      const rawCost = p.costPrice ?? Math.round((p.price || 0) * 0.7);
+      const rawPrice = p.price ?? 0;
+      document.getElementById("editProdCost").value = rawCost > 0 ? ("Rp " + Number(rawCost).toLocaleString("id-ID")) : "Rp 0";
+      document.getElementById("editProdPrice").value = rawPrice > 0 ? ("Rp " + Number(rawPrice).toLocaleString("id-ID")) : "Rp 0";
       document.getElementById("editProdStock").value = p.stock ?? 0;
       document.getElementById("editProdMinStock").value = p.minStock ?? 5;
-      document.getElementById("editProdUnit").value = p.unit || "pcs";
+      const unitSel = document.getElementById("editProdUnit");
+      if (unitSel) {
+        const uVal = p.unit || "pcs";
+        if (![...unitSel.options].some(o => o.value === uVal)) {
+          const opt = document.createElement("option");
+          opt.value = uVal;
+          opt.textContent = uVal;
+          unitSel.appendChild(opt);
+        }
+        unitSel.value = uVal;
+      }
       document.getElementById("editProductModal")?.classList.remove("hidden");
     }
 
@@ -6085,11 +6117,13 @@ Minimum version required to store current data is: `+i+`.
         showToast(appLang === "id" ? "⚠️ Nama produk wajib diisi" : "⚠️ Product name is required");
         return;
       }
-      const price = Math.max(0, parseInt(document.getElementById("editProdPrice").value || "0", 10) || 0);
-      const costPrice = Math.max(0, parseInt(document.getElementById("editProdCost").value || "0", 10) || 0);
+      const rawPrice = (document.getElementById("editProdPrice").value || "").replace(/[^0-9]/g, "");
+      const rawCost = (document.getElementById("editProdCost").value || "").replace(/[^0-9]/g, "");
+      const price = Math.max(0, parseInt(rawPrice || "0", 10) || 0);
+      const costPrice = Math.max(0, parseInt(rawCost || "0", 10) || 0);
       const stock = Math.max(0, parseInt(document.getElementById("editProdStock").value || "0", 10) || 0);
       const minStock = Math.max(0, parseInt(document.getElementById("editProdMinStock").value || "5", 10) || 0);
-      const barcode = document.getElementById("editProdBarcode").value.trim() || p.barcode;
+      const barcode = (document.getElementById("editProdBarcode").value || "").replace(/[^0-9]/g, "") || p.barcode;
       const category = document.getElementById("editProdCategory").value || p.category;
       const unit = document.getElementById("editProdUnit").value.trim() || "pcs";
 
@@ -7861,7 +7895,7 @@ Minimum version required to store current data is: `+i+`.
           break;
         case "saveNewProduct": {
           const name = document.getElementById("newProdName").value.trim();
-          const barcode = document.getElementById("newProdBarcode").value.trim() || ("899" + Math.floor(100000 + Math.random() * 900000));
+          const barcode = (document.getElementById("newProdBarcode").value || "").replace(/[^0-9]/g, "") || ("899" + Math.floor(100000 + Math.random() * 900000));
           const cat = document.getElementById("newProdCategory").value;
           const rawPrice = document.getElementById("newProdPrice").value.replace(/[^0-9]/g, "");
           const price = parseInt(rawPrice || "45000", 10);
@@ -8046,10 +8080,18 @@ Minimum version required to store current data is: `+i+`.
       }
     });
 
-    // Auto-format IDR input
-    document.getElementById("newProdPrice")?.addEventListener("input", (e) => {
-      const raw = e.target.value.replace(/[^0-9]/g, "");
-      e.target.value = raw ? "Rp " + Number(raw).toLocaleString("id-ID") : "";
+    // Auto-format IDR input for both Cost and Price (New & Edit Product), and numeric-only for Barcode/SKU
+    ["newProdCost", "newProdPrice", "editProdCost", "editProdPrice"].forEach(id => {
+      document.getElementById(id)?.addEventListener("input", (e) => {
+        const raw = e.target.value.replace(/[^0-9]/g, "");
+        e.target.value = raw ? "Rp " + Number(raw).toLocaleString("id-ID") : "";
+      });
+    });
+
+    ["newProdBarcode", "editProdBarcode", "scannerManualInput"].forEach(id => {
+      document.getElementById(id)?.addEventListener("input", (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, "");
+      });
     });
 
     // Product Photo & Gallery Upload Listeners (Auto-compressed JPEG for safe localStorage persistence)
