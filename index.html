@@ -865,11 +865,6 @@
     .viewing-area-header {
       transition: padding 0.35s cubic-bezier(0.22, 1, 0.36, 1), min-height 0.35s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    .viewing-area-expanded {
-      padding-top: 32px !important;
-      padding-bottom: 24px !important;
-      text-align: center;
-    }
 
     /* Thermal Receipt inside Modal */
     .thermal-paper {
@@ -903,9 +898,6 @@
       </button>
       <button id="btnModePhone" data-action="setFormFactor" data-arg="phone" class="min-h-[36px] px-3 py-1 rounded-full text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shrink-0" style="background: var(--oneui-surface-2); color: var(--oneui-text-secondary);">
         <span>📱</span> Phone
-      </button>
-      <button id="btnReachability" data-action="toggleReachability" class="min-h-[36px] px-3 py-1 rounded-full text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shrink-0" style="background: var(--oneui-surface-2); color: var(--oneui-text);" title="Pull screen down into One-Handed Interaction Zone">
-        <span>👇</span> One-Hand
       </button>
       <button id="btnThemeToggle" data-action="toggleTheme" class="min-h-[36px] px-3 py-1 rounded-full text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shrink-0" style="background: var(--oneui-surface-2); color: var(--oneui-amber);">
         <span id="themeIcon">☀️</span> <span id="themeLabel">Light Mode</span>
@@ -3324,7 +3316,6 @@ Minimum version required to store current data is: `+i+`.
     let includeTax = false; // Optional tax by default for small pet shop
     let discountAmount = 0;
     let isDarkTheme = true;
-    let isReachabilityExpanded = false;
     let currentFormFactor = "tablet";
     let paymentMethod = "CASH";
     let tenderInputRaw = "";
@@ -6853,13 +6844,6 @@ Minimum version required to store current data is: `+i+`.
       showToast(appLang === "id" ? "🇮🇩 Bahasa diubah ke Bahasa Indonesia" : "🇬🇧 Language switched to English");
     }
 
-    function toggleReachability() {
-      isReachabilityExpanded = !isReachabilityExpanded;
-      const header = document.getElementById("oneUiViewingArea");
-      header.classList.toggle("viewing-area-expanded", isReachabilityExpanded);
-      showToast(isReachabilityExpanded ? "👇 Viewing Area expanded — controls pushed into thumb zone" : "👆 Standard header height");
-    }
-
     function openCategoryModal(prodId = null) {
       editingCategoryProductId = prodId ? Number(prodId) : null;
       const list = document.getElementById("categoryModalList");
@@ -7251,7 +7235,6 @@ Minimum version required to store current data is: `+i+`.
         case "setFormFactor": setFormFactor(arg); break;
         case "toggleTheme": toggleTheme(); break;
         case "toggleLanguage": toggleLanguage(); break;
-        case "toggleReachability": toggleReachability(); break;
         case "resetDemoData":
         case "openResetConfirmModal":
           openResetConfirmModal();
