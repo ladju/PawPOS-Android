@@ -1107,7 +1107,7 @@
       <!-- ==================== TAB 2: INVENTORY FOCUS BLOCKS ==================== -->
       <div id="tab-inventory" class="flex-1 flex flex-col gap-2.5 hidden min-h-0 overflow-y-auto hide-scrollbar pb-4">
         <!-- Search, Filter & Add Product Bar (Compact single-row scrollable chips on Phone) -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+        <div id="invToolbarRow" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
           <div class="oneui-search-pill flex-1 min-w-0 flex items-center px-4 gap-2.5">
             <svg class="w-4 h-4 shrink-0" style="color: var(--oneui-text-muted);" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8"></circle>
@@ -1142,7 +1142,7 @@
               <h3 id="addProdHeading" class="text-base font-extrabold">Add New Pet Product</h3>
               <p id="addProdSub" class="text-xs" style="color: var(--oneui-text-muted);">Auto-formatted IDR pricing • Picture & Barcode scanner ready</p>
             </div>
-            <button data-action="toggleAddProductBlock" class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-sm font-bold shrink-0" style="background: var(--oneui-surface-2);" aria-label="Close form">✕</button>
+            <button type="button" data-action="toggleAddProductBlock" class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer" style="background: var(--oneui-surface-2);" aria-label="Close form">✕</button>
           </div>
 
           <!-- Picture Picker Row (Contained inside 26dp block, zero overflow, un-crumpled buttons) -->
@@ -1235,14 +1235,17 @@
           </div>
 
           <div class="flex justify-end gap-2">
-            <button data-action="saveNewProduct" class="h-11 px-6 rounded-full font-bold text-xs text-white transition active:scale-95" style="background-color: var(--oneui-blue);">
+            <button type="button" data-action="toggleAddProductBlock" class="h-11 px-5 rounded-full font-bold text-xs transition active:scale-95 cursor-pointer" style="background-color: var(--oneui-surface-2); color: var(--oneui-text-secondary);">
+              <span class="modal-cancel-label">Cancel</span>
+            </button>
+            <button type="button" data-action="saveNewProduct" class="h-11 px-6 rounded-full font-bold text-xs text-white transition active:scale-95 cursor-pointer" style="background-color: var(--oneui-blue);">
               <span id="saveNewProductLabel">✓ Save to Inventory</span>
             </button>
           </div>
         </div>
 
         <!-- Inventory List Focus Block (Unified single-scroll list, zero nested scroll trap) -->
-        <div class="oneui-focus-block overflow-hidden shrink-0">
+        <div id="invListFocusBlock" class="oneui-focus-block overflow-hidden shrink-0">
           <div class="px-4 sm:px-5 py-2.5 flex items-center justify-between" style="border-bottom: 1px solid var(--oneui-divider);">
             <span id="invTableHeaderLeft" class="text-xs font-bold uppercase tracking-wider truncate" style="color: var(--oneui-text-muted);">📦 Products & Categories</span>
             <span id="invTableHeaderRight" class="text-xs font-bold uppercase tracking-wider whitespace-nowrap hidden sm:inline-block" style="color: var(--oneui-text-muted);">Price, Edit & Stock Stepper</span>
@@ -2841,7 +2844,7 @@
         </div>
       </div>
     </div>
-    <div id="imgPreviewTapOutsideHint" class="px-4 py-2 rounded-full text-xs font-bold text-white/90 bg-black/60 border border-white/15 pointer-events-none">
+    <div id="imgPreviewTapOutsideHint" class="px-4 py-2 rounded-full text-xs font-bold shadow-lg pointer-events-none" style="background-color: rgba(15, 23, 42, 0.9); color: #FFFFFF; border: 1px solid rgba(255, 255, 255, 0.22);">
       👆 Tap outside photo to return to cashier
     </div>
   </div>
@@ -3927,9 +3930,10 @@ Minimum version required to store current data is: `+i+`.
         const isLow = p.stock <= p.minStock && p.minStock > 0;
         const isOutOfStock = p.stock <= 0;
         const catObj = CATEGORIES.find(c => c.id === p.category) || CATEGORIES[0];
+        const rowTapAttrs = (!isOutOfStock && qty === 0) ? `data-action="addToCart" data-arg="${p.id}"` : `data-action="noop"`;
 
         return `
-          <div data-action="addToCart" data-arg="${p.id}" class="oneui-product-card px-2.5 py-2 flex items-center justify-between gap-2.5 relative cursor-pointer select-none transition-all duration-150" style="border-radius: 18px; border: ${qty > 0 ? '2px solid var(--oneui-blue)' : '1px solid var(--oneui-hairline)'};">
+          <div ${rowTapAttrs} class="oneui-product-card px-2.5 py-2 flex items-center justify-between gap-2.5 relative ${qty === 0 && !isOutOfStock ? 'cursor-pointer' : ''} select-none transition-all duration-150" style="border-radius: 18px; border: ${qty > 0 ? '2px solid var(--oneui-blue)' : '1px solid var(--oneui-hairline)'}; ${qty > 0 ? 'cursor: default;' : ''}">
             <!-- Left: Tappable Product Thumbnail (Tap photo directly to zoom) + Name, Price & Stock -->
             <div class="flex items-center gap-2.5 min-w-0 flex-1">
               ${renderProductThumb(p, catObj, "w-11 h-11", true)}
@@ -3946,21 +3950,21 @@ Minimum version required to store current data is: `+i+`.
               </div>
             </div>
 
-            <!-- Right: Compact 44px Touch Action (+ Tambah or − qty + Stepper) -->
+            <!-- Right: Compact 44px Touch Action (+ Tambah or Separated 44x44px − qty + Stepper) -->
             <div class="shrink-0 flex items-center">
               ${isOutOfStock ? `
                 <div data-action="noop" class="min-h-[44px] px-3 rounded-full flex items-center justify-center text-xs font-semibold whitespace-nowrap" style="background-color: var(--oneui-surface-2); color: var(--oneui-text-muted);">
                   ${outText}
                 </div>
               ` : qty > 0 ? `
-                <div data-action="noop" class="min-h-[44px] flex items-center p-0.5 rounded-full text-white shadow-sm shrink-0" style="background-color: var(--oneui-blue);">
-                  <button type="button" data-action="stepCartQty" data-arg="${p.id}" data-delta="-1" class="oneui-stepper-btn w-9 h-10 rounded-full bg-white/20 hover:bg-white/30 active:scale-90 flex items-center justify-center text-base font-black transition cursor-pointer select-none shrink-0" title="Decrease quantity" aria-label="Decrease quantity of ${p.name}">
+                <div data-action="noop" class="min-h-[44px] flex items-center gap-1.5 sm:gap-2 pl-2 py-0.5 shrink-0">
+                  <button type="button" data-action="stepCartQty" data-arg="${p.id}" data-delta="-1" class="oneui-stepper-circle" title="Decrease quantity" aria-label="Decrease quantity of ${p.name}">
                     −
                   </button>
-                  <span class="min-w-[26px] text-xs font-black tabular-nums text-center select-none px-1">
+                  <span class="min-w-[32px] sm:min-w-[36px] text-sm font-extrabold tabular-nums text-center select-none px-1" style="color: var(--oneui-blue-text);">
                     ${qty}
                   </span>
-                  <button type="button" data-action="stepCartQty" data-arg="${p.id}" data-delta="1" class="oneui-stepper-btn w-9 h-10 rounded-full bg-white/20 hover:bg-white/30 active:scale-90 flex items-center justify-center text-base font-black transition cursor-pointer select-none shrink-0" title="Increase quantity" aria-label="Increase quantity of ${p.name}">
+                  <button type="button" data-action="stepCartQty" data-arg="${p.id}" data-delta="1" class="oneui-stepper-circle primary" title="Increase quantity" aria-label="Increase quantity of ${p.name}">
                     ＋
                   </button>
                 </div>
@@ -7867,6 +7871,7 @@ Minimum version required to store current data is: `+i+`.
           document.getElementById("receiptModal").classList.remove("hidden");
           break;
         case "setInvFilter":
+          setAddProductFormOpen(false);
           invFilter = arg;
           document.getElementById("invFilterAll").classList.toggle("active", arg === "ALL");
           document.getElementById("invFilterLow").classList.toggle("active", arg === "LOW");
@@ -7874,14 +7879,18 @@ Minimum version required to store current data is: `+i+`.
           break;
         case "jumpToLowStock":
           switchTab("inventory");
+          setAddProductFormOpen(false);
           invFilter = "LOW";
           document.getElementById("invFilterAll").classList.remove("active");
           document.getElementById("invFilterLow").classList.add("active");
           renderInventoryFocusList();
           break;
-        case "toggleAddProductBlock":
-          document.getElementById("invAddProductCard").classList.toggle("hidden");
+        case "toggleAddProductBlock": {
+          const addCard = document.getElementById("invAddProductCard");
+          const shouldOpen = Boolean(addCard && addCard.classList.contains("hidden"));
+          setAddProductFormOpen(shouldOpen);
           break;
+        }
         case "importInventoryCsv":
           document.getElementById("invCsvFileInput")?.click();
           break;
@@ -7929,7 +7938,7 @@ Minimum version required to store current data is: `+i+`.
           if (document.getElementById("newProdUnit")) document.getElementById("newProdUnit").value = "pcs";
           newProdImageDataUrl = "";
           document.getElementById("newProdPreviewIcon").innerText = newProdSelectedEmoji;
-          document.getElementById("invAddProductCard").classList.add("hidden");
+          setAddProductFormOpen(false);
           saveState();
           renderAll();
           showToast(appLang === "id" ? `✓ ${name} ditambahkan ke Inventaris` : `✓ Added ${name} to Inventory`);
@@ -8028,6 +8037,22 @@ Minimum version required to store current data is: `+i+`.
           break;
       }
     });
+
+    function setAddProductFormOpen(isOpen) {
+      const addCard = document.getElementById("invAddProductCard");
+      const listBlock = document.getElementById("invListFocusBlock");
+      const toolbarRow = document.getElementById("invToolbarRow");
+      const tabInv = document.getElementById("tab-inventory");
+      if (addCard) addCard.classList.toggle("hidden", !isOpen);
+      if (listBlock) listBlock.classList.toggle("hidden", Boolean(isOpen));
+      if (toolbarRow) toolbarRow.classList.toggle("hidden", Boolean(isOpen));
+      if (tabInv) tabInv.scrollTop = 0;
+      if (isOpen) {
+        setTimeout(() => {
+          document.getElementById("newProdName")?.focus();
+        }, 50);
+      }
+    }
 
     // Helper to keep all 3 tax checkboxes synchronized & persisted
     function setIncludeTax(enabled) {
@@ -8392,9 +8417,9 @@ Minimum version required to store current data is: `+i+`.
         closeCartReviewModal();
         return true;
       }
-      // 15. Inline "+ New Product" Card in Stock tab → collapse card
+      // 15. Inline "+ New Product" Card in Stock tab → collapse card and restore stock list
       if (activeTab === "inventory" && isModalVisible("invAddProductCard")) {
-        document.getElementById("invAddProductCard")?.classList.add("hidden");
+        setAddProductFormOpen(false);
         return true;
       }
       // 16. Non-Cashier Main Tab (Stock, Recap, History, Settings) → step back to previous tab / Cashier
