@@ -2730,6 +2730,43 @@
   </div>
 
   <!-- =========================================================================== -->
+  <!-- MODAL 12: CANCEL / VOID INVOICE CONFIRMATION SHEET                          -->
+  <!-- =========================================================================== -->
+  <div id="confirmVoidInvoiceModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-sm rounded-[28px] p-5 flex flex-col gap-3.5 shadow-2xl max-h-[92vh] overflow-hidden" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+      <div class="flex items-center justify-between gap-2 shrink-0">
+        <div>
+          <h3 id="voidModalTitle" class="text-base sm:text-lg font-extrabold tracking-tight" style="color: var(--oneui-coral);">Batalkan Pesanan?</h3>
+          <p id="voidModalSub" class="text-xs" style="color: var(--oneui-text-muted);">Transaksi akan dihapus dari Riwayat &amp; Rekap Penjualan</p>
+        </div>
+        <button type="button" data-action="closeVoidInvoiceModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer" style="background: var(--oneui-surface-2);" aria-label="Close cancel order dialog">✕</button>
+      </div>
+
+      <div class="p-3.5 rounded-2xl space-y-1.5 text-xs" style="background-color: var(--oneui-surface-2);">
+        <div class="flex items-center justify-between font-extrabold">
+          <span id="voidModalInvoiceNum" class="tabular-nums">INV-0491 • CASH</span>
+          <span id="voidModalAmount" class="tabular-nums" style="color: var(--oneui-coral);">Rp 28.000</span>
+        </div>
+        <div id="voidModalItemsSummary" class="text-[11px] leading-snug" style="color: var(--oneui-text-secondary);"></div>
+      </div>
+
+      <label class="flex items-center gap-2.5 p-3 rounded-2xl cursor-pointer select-none text-xs font-semibold" style="background-color: var(--oneui-green-tint); color: var(--oneui-green);">
+        <input id="voidRestoreStockCb" type="checkbox" checked class="w-5 h-5 rounded accent-emerald-600 shrink-0 cursor-pointer">
+        <span id="voidRestoreStockLabel">Kembalikan stok barang ke Inventaris secara otomatis</span>
+      </label>
+
+      <div class="flex items-center justify-end gap-2 pt-2 shrink-0" style="border-top: 1px solid var(--oneui-divider);">
+        <button type="button" data-action="closeVoidInvoiceModal" class="h-11 px-4 rounded-full text-xs font-bold transition active:scale-95 cursor-pointer" style="background-color: var(--oneui-surface-2); color: var(--oneui-text-secondary);">
+          <span class="modal-cancel-label">Batal</span>
+        </button>
+        <button type="button" data-action="confirmVoidInvoice" class="h-11 px-5 rounded-full text-xs font-bold text-white transition active:scale-95 shadow cursor-pointer" style="background-color: var(--oneui-coral);">
+          🗑️ <span id="voidConfirmBtnLabel">Ya, Batalkan</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================== -->
   <!-- MODAL 12: PRODUCT PHOTO ZOOM / LIGHTBOX PREVIEW (Tap outside to close)      -->
   <!-- =========================================================================== -->
   <div id="productImagePreviewModal" data-action="closeProductImagePreview" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4 gap-3 cursor-pointer hidden">
@@ -4209,15 +4246,18 @@ Minimum version required to store current data is: `+i+`.
                   </div>
 
                   <!-- Direct 1-Tap Actions Bar (No need to open popup first) -->
-                  <div class="flex items-center gap-1.5 pt-1">
-                    <button type="button" data-action="copyHistoryInvoiceWa" data-arg="${idx}" class="flex-1 min-h-[44px] px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-surface-2); color: var(--oneui-text);">
-                      <span>📋</span> <span>${isId ? "Salin Struk" : "Copy Receipt"}</span>
+                  <div class="flex items-center gap-1 pt-1 w-full">
+                    <button type="button" data-action="copyHistoryInvoiceWa" data-arg="${idx}" class="flex-1 min-w-0 min-h-[44px] px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition whitespace-nowrap" style="background-color: var(--oneui-surface-2); color: var(--oneui-text);">
+                      <span>📋</span> <span>${isId ? "Salin" : "Copy"}</span>
                     </button>
-                    <button type="button" data-action="sendHistoryInvoiceWa" data-arg="${idx}" class="flex-1 min-h-[44px] px-2.5 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition shadow-xs" style="background-color: #047857; color: #FFFFFF;">
+                    <button type="button" data-action="sendHistoryInvoiceWa" data-arg="${idx}" class="flex-1 min-w-0 min-h-[44px] px-2 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition shadow-xs whitespace-nowrap" style="background-color: #047857; color: #FFFFFF;">
                       <span>📲</span> <span>${isId ? "Kirim WA" : "Send WA"}</span>
                     </button>
-                    <button type="button" data-action="viewHistoryReceipt" data-arg="${idx}" class="min-h-[44px] px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition shrink-0" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
-                      <span>🧾</span> <span>${isId ? "Detail" : "Receipt"}</span>
+                    <button type="button" data-action="viewHistoryReceipt" data-arg="${idx}" class="min-h-[44px] px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition shrink-0 whitespace-nowrap" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
+                      <span>🧾</span> <span>${isId ? "Detail" : "View"}</span>
+                    </button>
+                    <button type="button" data-action="openVoidInvoiceModal" data-arg="${idx}" class="w-11 h-11 rounded-xl text-sm font-bold flex items-center justify-center cursor-pointer active:scale-95 transition shrink-0" style="background-color: var(--oneui-coral-tint); color: var(--oneui-coral);" title="${isId ? 'Batalkan / Hapus Pesanan' : 'Cancel / Void Order'}" aria-label="${isId ? 'Batalkan pesanan' : 'Cancel order'} ${tx.invoice}">
+                      🗑️
                     </button>
                   </div>
                 </div>
@@ -4800,6 +4840,60 @@ Minimum version required to store current data is: `+i+`.
       showToast(tx.waSent
         ? (isId ? `✓ ${tx.invoice} ditandai: WA Terkirim` : `✓ ${tx.invoice} marked: WA Sent`)
         : (isId ? `⏳ ${tx.invoice} ditandai: Belum Dikirim` : `⏳ ${tx.invoice} marked: Pending WA`));
+    }
+
+    let pendingVoidInvoiceIdx = -1;
+
+    function openVoidInvoiceModal(idx) {
+      const i = Number(idx);
+      const tx = transactions[i];
+      if (!tx) return;
+      pendingVoidInvoiceIdx = i;
+      const isId = appLang === "id";
+      const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
+      setTxt("voidModalTitle", isId ? "Batalkan Pesanan?" : "Cancel / Void Order?");
+      setTxt("voidModalSub", isId ? "Transaksi akan dihapus dari Riwayat & Rekap Penjualan" : "This invoice will be removed from History & Sales Recap");
+      setTxt("voidModalInvoiceNum", `${tx.invoice} • ${tx.paymentMethod}`);
+      setTxt("voidModalAmount", fmt(tx.grandTotal));
+      setTxt("voidModalItemsSummary", (tx.items || []).map(it => `• ${it.quantity}x ${it.product.name} (${fmt(it.product.price * it.quantity)})`).join("\n"));
+      setTxt("voidRestoreStockLabel", isId ? "Kembalikan stok barang ke Inventaris secara otomatis" : "Automatically restore item stock to Inventory");
+      setTxt("voidConfirmBtnLabel", isId ? "Ya, Batalkan" : "Yes, Cancel Order");
+      const cb = document.getElementById("voidRestoreStockCb");
+      if (cb) cb.checked = true;
+      document.getElementById("confirmVoidInvoiceModal")?.classList.remove("hidden");
+    }
+
+    function closeVoidInvoiceModal() {
+      pendingVoidInvoiceIdx = -1;
+      document.getElementById("confirmVoidInvoiceModal")?.classList.add("hidden");
+    }
+
+    function confirmVoidInvoice() {
+      if (pendingVoidInvoiceIdx < 0 || pendingVoidInvoiceIdx >= transactions.length) {
+        closeVoidInvoiceModal();
+        return;
+      }
+      const tx = transactions[pendingVoidInvoiceIdx];
+      const restoreStock = Boolean(document.getElementById("voidRestoreStockCb")?.checked);
+      if (restoreStock && Array.isArray(tx.items)) {
+        tx.items.forEach(it => {
+          const prod = products.find(p => p.id === it.product.id) || products.find(p => p.name === it.product.name);
+          if (prod && prod.unit !== "session") {
+            prod.stock = Math.max(0, (prod.stock || 0) + (it.quantity || 1));
+          }
+        });
+      }
+      transactions.splice(pendingVoidInvoiceIdx, 1);
+      if (currentReceiptTx && currentReceiptTx.invoice === tx.invoice) {
+        currentReceiptTx = transactions[0] || null;
+      }
+      closeVoidInvoiceModal();
+      saveState();
+      renderAll();
+      const isId = appLang === "id";
+      showToast(restoreStock
+        ? (isId ? `🗑️ ${tx.invoice} dibatalkan & stok barang dikembalikan` : `🗑️ ${tx.invoice} cancelled & stock restored`)
+        : (isId ? `🗑️ ${tx.invoice} dibatalkan & dihapus dari Riwayat` : `🗑️ ${tx.invoice} cancelled & removed from History`));
     }
 
     function showReceiptModal(tx) {
@@ -7624,6 +7718,9 @@ Minimum version required to store current data is: `+i+`.
         case "copyHistoryInvoiceWa": copyHistoryInvoiceWa(Number(arg)); break;
         case "sendHistoryInvoiceWa": sendHistoryInvoiceWa(Number(arg)); break;
         case "toggleHistoryWaStatus": toggleHistoryWaStatus(Number(arg)); break;
+        case "openVoidInvoiceModal": openVoidInvoiceModal(Number(arg)); break;
+        case "closeVoidInvoiceModal": closeVoidInvoiceModal(); break;
+        case "confirmVoidInvoice": confirmVoidInvoice(); break;
         case "clearPosSearch":
           document.getElementById("posSearchInput").value = "";
           document.getElementById("clearPosSearchBtn").classList.add("hidden");
