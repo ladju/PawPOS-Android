@@ -7964,6 +7964,201 @@ Minimum version required to store current data is: `+i+`.
       currentQrisRrn = "261112502600";
       completeSale();
     }
+
+    // =========================================================================
+    // ANDROID HARDWARE BACK BUTTON & GESTURE NAVIGATION STACK (popstate)
+    // =========================================================================
+    // Ensures pressing the phone's Back button closes the top-most open modal/overlay
+    // or returns to the previous step/tab instead of immediately exiting the app.
+    let navTabHistoryStack = ["cashier"];
+    let navGuardArmed = false;
+    let navHandlingPopState = false;
+    let checkoutOpenedFromCartReview = false;
+
+    const origProceedFromCartToPayment = proceedFromCartToPayment;
+    proceedFromCartToPayment = function() {
+      checkoutOpenedFromCartReview = true;
+      origProceedFromCartToPayment();
+      ensureNavHistoryGuard();
+    };
+
+    const origOpenCheckoutModal = openCheckoutModal;
+    openCheckoutModal = function() {
+      origOpenCheckoutModal();
+      ensureNavHistoryGuard();
+    };
+
+    const origCloseCheckoutModal = closeCheckoutModal;
+    closeCheckoutModal = function() {
+      checkoutOpenedFromCartReview = false;
+      origCloseCheckoutModal();
+    };
+
+    const origSwitchTab = switchTab;
+    switchTab = function(tab) {
+      if (tab && tab !== activeTab && !navHandlingPopState) {
+        if (tab === "cashier") {
+          navTabHistoryStack = ["cashier"];
+        } else {
+          navTabHistoryStack = navTabHistoryStack.filter(t => t !== tab);
+          navTabHistoryStack.push(tab);
+        }
+      }
+      origSwitchTab(tab);
+      ensureNavHistoryGuard();
+    };
+
+    function isModalVisible(id) {
+      const el = document.getElementById(id);
+      return Boolean(el && !el.classList.contains("hidden"));
+    }
+
+    function hasBackInterceptableLayer() {
+      const modalIds = [
+        "productImagePreviewModal",
+        "scannerModal",
+        "categoryEditModal",
+        "qrisFullscreenModal",
+        "whatsappSimulatorModal",
+        "confirmVoidInvoiceModal",
+        "confirmResetModal",
+        "restoreBackupModal",
+        "pwaInstallGuideModal",
+        "editProductModal",
+        "closeShiftModal",
+        "receiptModal",
+        "checkoutModal",
+        "cartReviewModal"
+      ];
+      if (modalIds.some(isModalVisible)) return true;
+      if (activeTab === "inventory" && isModalVisible("invAddProductCard")) return true;
+      if (activeTab !== "cashier") return true;
+      return false;
+    }
+
+    function ensureNavHistoryGuard() {
+      if (navHandlingPopState) return;
+      if (hasBackInterceptableLayer()) {
+        if (!navGuardArmed) {
+          try {
+            history.pushState({ pawposBackGuard: true }, "");
+            navGuardArmed = true;
+          } catch (e) {}
+        }
+      }
+    }
+
+    // Arm guard whenever any click opens a modal, form, or tab
+    document.addEventListener("click", () => {
+      setTimeout(ensureNavHistoryGuard, 0);
+    });
+
+    // Step backward through the top-most visible screen when Android Back is pressed
+    function handleHardwareBackStep() {
+      // 1. Photo Zoom Lightbox → back to Cashier / Stock
+      if (isModalVisible("productImagePreviewModal")) {
+        closeProductImagePreview();
+        return true;
+      }
+      // 2. Camera Barcode Scanner → stop camera & return to underlying screen
+      if (isModalVisible("scannerModal")) {
+        closeScannerModal();
+        return true;
+      }
+      // 3. Category Picker Dialog → return to New Product form
+      if (isModalVisible("categoryEditModal")) {
+        document.getElementById("categoryEditModal")?.classList.add("hidden");
+        return true;
+      }
+      // 4. Fullscreen Customer QRIS → return to Checkout QRIS modal
+      if (isModalVisible("qrisFullscreenModal")) {
+        closeQrisFullscreen();
+        return true;
+      }
+      // 5. WhatsApp Chat Preview → return to Receipt modal
+      if (isModalVisible("whatsappSimulatorModal")) {
+        document.getElementById("whatsappSimulatorModal")?.classList.add("hidden");
+        document.getElementById("receiptModal")?.classList.remove("hidden");
+        return true;
+      }
+      // 6. Cancel/Void Invoice Confirmation → return to History
+      if (isModalVisible("confirmVoidInvoiceModal")) {
+        closeVoidInvoiceModal();
+        return true;
+      }
+      // 7. Factory Reset Confirmation → return to Settings
+      if (isModalVisible("confirmResetModal")) {
+        closeResetConfirmModal();
+        return true;
+      }
+      // 8. Restore JSON Backup Confirmation → return to Settings
+      if (isModalVisible("restoreBackupModal")) {
+        closeRestoreBackupModal();
+        return true;
+      }
+      // 9. PWA Install Guide → return to Settings
+      if (isModalVisible("pwaInstallGuideModal")) {
+        closePwaGuideModal();
+        return true;
+      }
+      // 10. Edit Product Modal → return to Stock list
+      if (isModalVisible("editProductModal")) {
+        closeEditProductModal();
+        return true;
+      }
+      // 11. Close Shift Audit Modal → return to Recap
+      if (isModalVisible("closeShiftModal")) {
+        closeCloseShiftModal();
+        return true;
+      }
+      // 12. Receipt Modal → return to Cashier / History
+      if (isModalVisible("receiptModal")) {
+        document.getElementById("receiptModal")?.classList.add("hidden");
+        return true;
+      }
+      // 13. Checkout / Payment Modal → return to Cart Review (on phone / if opened from review)
+      if (isModalVisible("checkoutModal")) {
+        if ((currentFormFactor === "phone" || checkoutOpenedFromCartReview) && getCartTotals().count > 0) {
+          backToCartReview();
+        } else {
+          closeCheckoutModal();
+        }
+        return true;
+      }
+      // 14. Cart Review Modal → return to Cashier
+      if (isModalVisible("cartReviewModal")) {
+        closeCartReviewModal();
+        return true;
+      }
+      // 15. Inline "+ New Product" Card in Stock tab → collapse card
+      if (activeTab === "inventory" && isModalVisible("invAddProductCard")) {
+        document.getElementById("invAddProductCard")?.classList.add("hidden");
+        return true;
+      }
+      // 16. Non-Cashier Main Tab (Stock, Recap, History, Settings) → step back to previous tab / Cashier
+      if (activeTab !== "cashier") {
+        navTabHistoryStack.pop();
+        const prevTab = navTabHistoryStack[navTabHistoryStack.length - 1] || "cashier";
+        origSwitchTab(prevTab);
+        return true;
+      }
+      return false;
+    }
+
+    window.addEventListener("popstate", () => {
+      navHandlingPopState = true;
+      navGuardArmed = false;
+      const handled = handleHardwareBackStep();
+      navHandlingPopState = false;
+      if (handled && hasBackInterceptableLayer()) {
+        ensureNavHistoryGuard();
+      }
+    });
+
+    try {
+      history.replaceState({ pawposBase: true }, "");
+      ensureNavHistoryGuard();
+    } catch (e) {}
   </script>
 </body>
 </html>
