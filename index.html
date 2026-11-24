@@ -2528,7 +2528,27 @@
 
       <input type="hidden" id="editProdId">
 
-      <div class="space-y-3 text-xs">
+      <div class="space-y-3 text-xs overflow-y-auto hide-scrollbar flex-1 min-h-0">
+        <!-- Product Photo Picker (Camera / Gallery / Remove) -->
+        <div class="p-3 rounded-[20px] flex items-center gap-3" style="background-color: var(--oneui-bg);">
+          <div id="editProdPreviewIcon" class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 overflow-hidden" style="background-color: var(--oneui-surface);">
+            🐱
+          </div>
+          <div class="flex-1 min-w-0 flex flex-wrap items-center gap-1.5">
+            <label class="min-h-[44px] px-3 rounded-full text-xs font-bold cursor-pointer inline-flex items-center justify-center gap-1 whitespace-nowrap shrink-0 transition active:scale-95" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
+              <span>📷</span> <span id="editProdTakePhotoLabel">Ambil Foto</span>
+              <input type="file" id="editProdPhotoInput" accept="image/*" capture="environment" class="hidden">
+            </label>
+            <label class="min-h-[44px] px-3 rounded-full text-xs font-bold cursor-pointer inline-flex items-center justify-center gap-1 whitespace-nowrap shrink-0 transition active:scale-95" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+              <span>🖼️</span> <span id="editProdGalleryLabel">Galeri</span>
+              <input type="file" id="editProdGalleryInput" accept="image/*" class="hidden">
+            </label>
+            <button type="button" id="btnClearEditProdPhoto" data-action="clearEditProdPhoto" class="hidden min-h-[44px] px-3 rounded-full text-xs font-bold cursor-pointer inline-flex items-center justify-center gap-1 whitespace-nowrap shrink-0 transition active:scale-95" style="background-color: var(--oneui-coral-tint); color: var(--oneui-coral);">
+              <span>✕</span> <span id="editProdRemovePhotoLabel">Hapus Foto</span>
+            </button>
+          </div>
+        </div>
+
         <div>
           <label id="editProdNameLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Product Name *</label>
           <input id="editProdName" type="text" class="oneui-input w-full px-3.5 py-2.5 font-semibold">
@@ -5962,10 +5982,47 @@ Minimum version required to store current data is: `+i+`.
     // ===========================================================================
     // PRODUCT EDIT / DELETE CRUD (MODAL 8)
     // ===========================================================================
+    let editProdImageDataUrl = "";
+    let editProdFallbackIcon = "🐾";
+
+    function renderEditProdPhotoPreview() {
+      const prev = document.getElementById("editProdPreviewIcon");
+      const clearBtn = document.getElementById("btnClearEditProdPhoto");
+      if (prev) {
+        if (editProdImageDataUrl) {
+          prev.innerHTML = `<img src="${editProdImageDataUrl}" alt="Preview" class="w-full h-full object-cover">`;
+        } else {
+          prev.innerText = editProdFallbackIcon || "🐾";
+        }
+      }
+      if (clearBtn) {
+        clearBtn.classList.toggle("hidden", !editProdImageDataUrl);
+      }
+    }
+
+    function clearEditProdPhoto() {
+      editProdImageDataUrl = "";
+      renderEditProdPhotoPreview();
+      showToast(appLang === "id" ? "🖼️ Foto dihapus — kembali ke ikon kategori" : "🖼️ Photo removed — reverted to icon");
+    }
+
     function openEditProductModal(id) {
       const p = products.find(x => x.id === Number(id));
       if (!p) return;
       renderCategoryPills(); // ensure #editProdCategory options are fresh
+      const catObj = CATEGORIES.find(c => c.id === p.category) || CATEGORIES[0];
+      editProdImageDataUrl = p.imageDataUrl || "";
+      editProdFallbackIcon = p.icon || (catObj ? catObj.icon : "🐾");
+      renderEditProdPhotoPreview();
+
+      const isId = appLang === "id";
+      const tPhoto = document.getElementById("editProdTakePhotoLabel");
+      const tGal = document.getElementById("editProdGalleryLabel");
+      const tRem = document.getElementById("editProdRemovePhotoLabel");
+      if (tPhoto) tPhoto.innerText = isId ? "Ambil Foto" : "Take Photo";
+      if (tGal) tGal.innerText = isId ? "Galeri" : "Gallery";
+      if (tRem) tRem.innerText = isId ? "Hapus Foto" : "Remove";
+
       document.getElementById("editProdId").value = p.id;
       document.getElementById("editProdName").value = p.name || "";
       document.getElementById("editProdBarcode").value = p.barcode || "";
@@ -6016,6 +6073,7 @@ Minimum version required to store current data is: `+i+`.
       p.stock = stock;
       p.minStock = minStock;
       p.unit = unit;
+      p.imageDataUrl = editProdImageDataUrl || "";
 
       saveState();
       closeEditProductModal();
@@ -7633,6 +7691,7 @@ Minimum version required to store current data is: `+i+`.
         }
         case "openEditProductModal": openEditProductModal(Number(arg)); break;
         case "closeEditProductModal": closeEditProductModal(); break;
+        case "clearEditProdPhoto": clearEditProdPhoto(); break;
         case "saveEditedProduct": saveEditedProduct(); break;
         case "deleteProduct": deleteProduct(Number(arg)); break;
         case "deleteEditingProduct": {
@@ -7783,24 +7842,69 @@ Minimum version required to store current data is: `+i+`.
       e.target.value = raw ? "Rp " + Number(raw).toLocaleString("id-ID") : "";
     });
 
-    // Product Photo & Gallery Upload Listeners (Wired with FileReader preview)
-    function handleProductPhotoSelection(ev) {
-      const file = ev.target.files && ev.target.files[0];
+    // Product Photo & Gallery Upload Listeners (Auto-compressed JPEG for safe localStorage persistence)
+    function readAndCompressProductPhoto(file, onDone) {
       if (!file) return;
       const reader = new FileReader();
       reader.onload = (re) => {
-        newProdImageDataUrl = String(re.target.result || "");
+        const rawUrl = String(re.target.result || "");
+        if (!rawUrl) return;
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxDim = 560;
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w >= h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+              else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            const compressed = canvas.toDataURL("image/jpeg", 0.78);
+            onDone(compressed || rawUrl);
+          } catch (e) {
+            onDone(rawUrl);
+          }
+        };
+        img.onerror = () => onDone(rawUrl);
+        img.src = rawUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleProductPhotoSelection(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      readAndCompressProductPhoto(file, (dataUrl) => {
+        newProdImageDataUrl = dataUrl;
         const prev = document.getElementById("newProdPreviewIcon");
         if (prev && newProdImageDataUrl) {
           prev.innerHTML = `<img src="${newProdImageDataUrl}" alt="Preview" class="w-full h-full object-cover">`;
         }
         showToast(appLang === "id" ? "🖼️ Foto produk siap disimpan" : "🖼️ Product photo ready");
-      };
-      reader.readAsDataURL(file);
+      });
       ev.target.value = "";
     }
+
+    function handleEditProductPhotoSelection(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      readAndCompressProductPhoto(file, (dataUrl) => {
+        editProdImageDataUrl = dataUrl;
+        renderEditProdPhotoPreview();
+        showToast(appLang === "id" ? "🖼️ Foto baru dipilih — ketuk Simpan Perubahan" : "🖼️ New photo selected — tap Save Changes");
+      });
+      ev.target.value = "";
+    }
+
     document.getElementById("newProdPhotoInput")?.addEventListener("change", handleProductPhotoSelection);
     document.getElementById("newProdGalleryInput")?.addEventListener("change", handleProductPhotoSelection);
+    document.getElementById("editProdPhotoInput")?.addEventListener("change", handleEditProductPhotoSelection);
+    document.getElementById("editProdGalleryInput")?.addEventListener("change", handleEditProductPhotoSelection);
 
     // Real Barcode Photo Decoder Listener (Offline BarcodeDetector)
     document.getElementById("posBarcodePhotoInput")?.addEventListener("change", (ev) => {

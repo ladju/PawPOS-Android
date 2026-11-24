@@ -1,5 +1,5 @@
 /* Paw POS Offline-First Service Worker (GitHub Pages & Localhost Ready) */
-const CACHE_VERSION = "v12";
+const CACHE_VERSION = "v13";
 const CACHE_NAME = `pawpos-offline-${CACHE_VERSION}`;
 
 const PRECACHE_ASSETS = [
