@@ -601,8 +601,9 @@
       max-height: 940px;
     }
     #deviceViewport.phone-mode #posProductGrid {
-      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-      gap: 10px !important;
+      grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+      align-content: start !important;
     }
     /* Ensure Desktop Phone Simulator (430px frame on >640px desktop) matches real Phone layout 100% */
     #deviceViewport.phone-mode #viewingLiveCartPill,
@@ -689,8 +690,9 @@
         overflow: hidden !important;
       }
       #posProductGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 8px !important;
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+        gap: 6px !important;
+        align-content: start !important;
       }
     }
     /* Compact Phone Height (<700px, e.g. 360x640 with browser chrome): keep full numpad above fold with zero bottom clipping */
@@ -1026,8 +1028,8 @@
             <!-- Populated via JS -->
           </div>
 
-          <!-- Product Grid Focus Container -->
-          <div id="posProductGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 overflow-y-auto hide-scrollbar pr-0.5 pb-4 flex-1 min-h-0">
+          <!-- Product List Focus Container (Option 3: Compact Fast-Tap Rows) -->
+          <div id="posProductGrid" class="grid grid-cols-1 md:grid-cols-2 gap-1.5 sm:gap-2 overflow-y-auto hide-scrollbar pr-0.5 pb-4 flex-1 min-h-0" style="align-content: start;">
             <!-- Populated via JS -->
           </div>
         </div>
@@ -3876,9 +3878,8 @@ Minimum version required to store current data is: `+i+`.
         return;
       }
 
-      const outText = isId ? "Habis" : "Out of Stock";
-      const addText = isId ? "Tambah" : "Add to Cart";
-      const inCartText = isId ? "di keranjang" : "in cart";
+      const outText = isId ? "Habis" : "Out";
+      const addText = isId ? "Tambah" : "Add";
 
       container.innerHTML = filtered.map(p => {
         const inCart = cart.find(c => c.productId === p.id);
@@ -3888,54 +3889,43 @@ Minimum version required to store current data is: `+i+`.
         const catObj = CATEGORIES.find(c => c.id === p.category) || CATEGORIES[0];
 
         return `
-          <div data-action="addToCart" data-arg="${p.id}" class="oneui-product-card p-2.5 sm:p-3 flex flex-col justify-between gap-1.5 sm:gap-2 relative cursor-pointer select-none transition-all duration-150" style="border: ${qty > 0 ? '2px solid var(--oneui-blue)' : '1px solid var(--oneui-hairline)'};">
-            <!-- Top Row: Tappable Product Photo/Icon (Tap photo to zoom) + Stock Pill -->
-            <div class="flex items-start justify-between gap-1.5">
+          <div data-action="addToCart" data-arg="${p.id}" class="oneui-product-card px-2.5 py-2 flex items-center justify-between gap-2.5 relative cursor-pointer select-none transition-all duration-150" style="border-radius: 18px; border: ${qty > 0 ? '2px solid var(--oneui-blue)' : '1px solid var(--oneui-hairline)'};">
+            <!-- Left: Tappable Product Thumbnail (Tap photo directly to zoom) + Name, Price & Stock -->
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
               ${renderProductThumb(p, catObj, "w-11 h-11", true)}
-              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums whitespace-nowrap shrink-0" style="background-color: ${isOutOfStock ? 'var(--oneui-coral-tint)' : isLow ? 'var(--oneui-amber-tint)' : 'var(--oneui-surface-2)'}; color: ${isOutOfStock ? 'var(--oneui-coral)' : isLow ? 'var(--oneui-amber)' : 'var(--oneui-text-secondary)'};">
-                ${isOutOfStock ? outText : `${p.stock} ${p.unit || 'pcs'}`}
-              </span>
-            </div>
-
-            <!-- Bold 2-Line Product Title (14px) + Category Label -->
-            <div class="flex-1 min-h-[38px] sm:min-h-[44px] flex flex-col justify-start">
-              <h3 class="text-[13px] sm:text-[14px] font-semibold leading-snug line-clamp-2 break-words" title="${p.name}">${p.name}</h3>
-              <p class="text-[11px] mt-0.5 tabular-nums whitespace-nowrap" style="color: var(--oneui-text-muted);">${getCatLabel(catObj)}</p>
-            </div>
-
-            <!-- Price & Quick Stepper Row -->
-            <div class="pt-1.5 sm:pt-2 flex flex-col gap-1.5 sm:gap-2 mt-auto" style="border-top: 1px solid var(--oneui-hairline);">
-              <!-- Price & In-Cart Badge -->
-              <div class="flex items-center justify-between gap-1">
-                <span class="text-xs sm:text-[14px] font-extrabold tabular-nums whitespace-nowrap" style="color: var(--oneui-blue-text);">
-                  ${fmt(p.price)}
-                </span>
-                ${qty > 0 ? `
-                  <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-full tabular-nums text-white shrink-0" style="background-color: var(--oneui-blue);">
-                    ×${qty}
+              <div class="min-w-0 flex-1">
+                <h3 class="text-[13px] sm:text-[14px] font-bold leading-snug truncate" title="${p.name}">${p.name}</h3>
+                <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  <span class="text-xs font-extrabold tabular-nums whitespace-nowrap" style="color: var(--oneui-blue-text);">
+                    ${fmt(p.price)}
                   </span>
-                ` : ''}
+                  <span class="text-[11px] font-semibold tabular-nums whitespace-nowrap" style="color: ${isOutOfStock ? 'var(--oneui-coral)' : isLow ? 'var(--oneui-amber)' : 'var(--oneui-text-muted)'};">
+                    • ${isOutOfStock ? outText : `${p.stock} ${p.unit || 'pcs'}`}
+                  </span>
+                </div>
               </div>
+            </div>
 
-              <!-- Quick +- Stepper Bar (44px accessible targets, zero stopPropagation!) -->
+            <!-- Right: Compact 44px Touch Action (+ Tambah or − qty + Stepper) -->
+            <div class="shrink-0 flex items-center">
               ${isOutOfStock ? `
-                <div data-action="noop" class="w-full min-h-[44px] rounded-full flex items-center justify-center text-xs font-semibold" style="background-color: var(--oneui-surface-2); color: var(--oneui-text-muted);">
+                <div data-action="noop" class="min-h-[44px] px-3 rounded-full flex items-center justify-center text-xs font-semibold whitespace-nowrap" style="background-color: var(--oneui-surface-2); color: var(--oneui-text-muted);">
                   ${outText}
                 </div>
               ` : qty > 0 ? `
-                <div data-action="noop" class="w-full min-h-[44px] flex items-center justify-between p-0.5 rounded-full text-white shadow-sm shrink-0" style="background-color: var(--oneui-blue);">
-                  <button type="button" data-action="stepCartQty" data-arg="${p.id}" data-delta="-1" class="oneui-stepper-btn w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 active:scale-90 flex items-center justify-center text-base font-black transition cursor-pointer select-none shrink-0" title="Decrease quantity" aria-label="Decrease quantity of ${p.name}">
+                <div data-action="noop" class="min-h-[44px] flex items-center p-0.5 rounded-full text-white shadow-sm shrink-0" style="background-color: var(--oneui-blue);">
+                  <button type="button" data-action="stepCartQty" data-arg="${p.id}" data-delta="-1" class="oneui-stepper-btn w-9 h-10 rounded-full bg-white/20 hover:bg-white/30 active:scale-90 flex items-center justify-center text-base font-black transition cursor-pointer select-none shrink-0" title="Decrease quantity" aria-label="Decrease quantity of ${p.name}">
                     −
                   </button>
-                  <span class="text-xs font-black tabular-nums tracking-wide text-center flex-1 select-none px-1 truncate">
-                    ${qty}<span class="hidden sm:inline"> ${inCartText}</span>
+                  <span class="min-w-[26px] text-xs font-black tabular-nums text-center select-none px-1">
+                    ${qty}
                   </span>
-                  <button type="button" data-action="stepCartQty" data-arg="${p.id}" data-delta="1" class="oneui-stepper-btn w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 active:scale-90 flex items-center justify-center text-base font-black transition cursor-pointer select-none shrink-0" title="Increase quantity" aria-label="Increase quantity of ${p.name}">
+                  <button type="button" data-action="stepCartQty" data-arg="${p.id}" data-delta="1" class="oneui-stepper-btn w-9 h-10 rounded-full bg-white/20 hover:bg-white/30 active:scale-90 flex items-center justify-center text-base font-black transition cursor-pointer select-none shrink-0" title="Increase quantity" aria-label="Increase quantity of ${p.name}">
                     ＋
                   </button>
                 </div>
               ` : `
-                <button type="button" data-action="addToCart" data-arg="${p.id}" class="w-full min-h-[44px] rounded-full flex items-center justify-center gap-1 text-xs font-bold transition active:scale-95 cursor-pointer" style="background-color: var(--oneui-surface-2); color: var(--oneui-text);" title="Add to cart">
+                <button type="button" data-action="addToCart" data-arg="${p.id}" class="min-h-[44px] px-3.5 rounded-full flex items-center justify-center gap-1 text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap" style="background-color: var(--oneui-surface-2); color: var(--oneui-text);" title="Add to cart">
                   <span>＋</span>
                   <span>${addText}</span>
                 </button>
