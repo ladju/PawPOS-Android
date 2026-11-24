@@ -1153,12 +1153,11 @@
             <div>
               <label id="newProdBarcodeLabel" class="text-xs font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Barcode / SKU</label>
               <div class="flex items-center gap-1.5">
-                <input id="newProdBarcode" type="text" placeholder="89970041" class="oneui-input flex-1 min-w-0 px-3 py-2.5 text-xs font-medium tabular-nums">
-                <label class="min-h-[44px] px-3 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1 shrink-0" style="background-color: var(--oneui-surface-2); color: var(--oneui-blue-text);" title="Scan Barcode Photo">
+                <input id="newProdBarcode" type="text" placeholder="89970042" class="oneui-input flex-1 min-w-0 px-3 py-2.5 text-xs font-medium tabular-nums">
+                <button type="button" data-action="openScannerModal" data-arg="newProduct" class="min-h-[44px] px-3 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1 shrink-0 transition active:scale-95" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);" title="Scan Barcode with Camera">
                   <span>📷</span>
                   <span id="newProdScanPhotoLabel">Scan</span>
-                  <input type="file" id="newProdBarcodePhoto" accept="image/*" capture="environment" class="hidden">
-                </label>
+                </button>
               </div>
             </div>
             <div>
@@ -2219,18 +2218,49 @@
   </div>
 
   <!-- =========================================================================== -->
-  <!-- MODAL 5: BARCODE CAMERA / PICTURE SCANNER                                   -->
+  <!-- MODAL 5: REAL LIVE CAMERA BARCODE SCANNER (Offline BarcodeDetector + Manual) -->
   <!-- =========================================================================== -->
-  <div id="scannerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3.5 hidden">
-    <div class="w-full max-w-sm rounded-[28px] p-4 sm:p-5 space-y-4 shadow-2xl" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+  <div id="scannerModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-3.5 hidden">
+    <div class="w-full max-w-sm rounded-[28px] p-4 sm:p-5 space-y-3 shadow-2xl max-h-[92vh] overflow-y-auto hide-scrollbar" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
       <div class="flex items-center justify-between gap-2">
-        <h3 id="scannerModalTitle" class="text-base font-extrabold">Barcode & Picture Scanner</h3>
-        <button data-action="closeScannerModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style="background: var(--oneui-surface-2);" aria-label="Close scanner">✕</button>
+        <div class="min-w-0">
+          <h3 id="scannerModalTitle" class="text-base font-extrabold truncate">📷 Pemindai Barcode</h3>
+          <p id="scannerModalSub" class="text-xs leading-snug" style="color: var(--oneui-text-muted);">Arahkan kamera belakang ke barcode kemasan produk</p>
+        </div>
+        <button type="button" data-action="closeScannerModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer" style="background: var(--oneui-surface-2);" aria-label="Close scanner">✕</button>
       </div>
-      <p id="scannerModalSub" class="text-xs" style="color: var(--oneui-text-muted);">Tap a sample product barcode below or upload a photo to add straight to the live receipt.</p>
-      <div class="space-y-2" id="quickScanSampleList"></div>
-      <label class="w-full h-11 rounded-full font-bold text-xs text-white flex items-center justify-center gap-2 cursor-pointer" style="background-color: var(--oneui-blue);">
-        <span>📷</span> <span id="scannerModalBtnText">Scan Barcode from Camera / Photo</span>
+
+      <!-- Live Camera Viewfinder -->
+      <div id="scannerVideoWrap" class="relative w-full h-52 rounded-2xl overflow-hidden bg-black border" style="border-color: var(--oneui-divider);">
+        <video id="scannerVideo" playsinline muted autoplay class="w-full h-full object-cover"></video>
+        <!-- Targeting Reticle Overlay -->
+        <div class="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
+          <div class="w-full h-24 rounded-xl border-2 border-emerald-400/90 relative shadow-[0_0_0_9999px_rgba(0,0,0,0.42)]">
+            <div class="absolute inset-x-2 top-1/2 h-0.5 bg-rose-500/90 shadow-[0_0_8px_#f43f5e] animate-pulse"></div>
+          </div>
+        </div>
+        <!-- Live Status Pill & Torch Button -->
+        <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2">
+          <span id="scannerStatusPill" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-black/70 text-emerald-300 backdrop-blur-sm truncate">
+            ⏳ Membuka kamera...
+          </span>
+          <button type="button" id="scannerTorchBtn" data-action="toggleScannerTorch" class="hidden min-h-[36px] px-3 rounded-full text-xs font-bold bg-black/70 text-amber-300 backdrop-blur-sm cursor-pointer shrink-0">
+            🔦 Flash
+          </button>
+        </div>
+      </div>
+
+      <!-- Manual / Bluetooth / USB Scanner Fallback Input -->
+      <div class="flex items-center gap-1.5">
+        <input id="scannerManualInput" type="text" inputmode="numeric" placeholder="Ketik / tempel kode barcode..." class="oneui-input flex-1 min-w-0 min-h-[44px] px-3.5 text-xs font-semibold tabular-nums">
+        <button type="button" data-action="submitManualBarcode" class="min-h-[44px] px-4 rounded-xl text-xs font-extrabold text-white shrink-0 cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-blue);">
+          ✓ <span id="scannerManualSubmitLabel">Pakai</span>
+        </button>
+      </div>
+
+      <!-- Scan from Photo Fallback -->
+      <label class="w-full min-h-[44px] rounded-full font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition active:scale-95" style="background-color: var(--oneui-surface-2); color: var(--oneui-blue-text);">
+        <span>🖼️</span> <span id="scannerModalBtnText">Atau Pindai dari Foto / Galeri</span>
         <input type="file" id="posBarcodePhotoInput" accept="image/*" capture="environment" class="hidden">
       </label>
     </div>
@@ -2480,7 +2510,10 @@
         <div class="grid grid-cols-2 gap-2.5">
           <div>
             <label id="editProdBarcodeLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Barcode / SKU</label>
-            <input id="editProdBarcode" type="text" class="oneui-input w-full px-3.5 py-2.5 font-semibold tabular-nums">
+            <div class="flex items-center gap-1.5">
+              <input id="editProdBarcode" type="text" class="oneui-input flex-1 min-w-0 px-3 py-2.5 font-semibold tabular-nums">
+              <button type="button" data-action="openScannerModal" data-arg="editProduct" class="w-11 h-11 rounded-xl text-sm font-bold flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);" title="Scan Barcode" aria-label="Scan barcode">📷</button>
+            </div>
           </div>
           <div>
             <label id="editProdCatLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Category</label>
@@ -6047,8 +6080,10 @@ Minimum version required to store current data is: `+i+`.
       setPlaceholder("customCatLabel", isId ? "Nama kategori (cth. Reptil)" : "Category name (e.g. Reptiles)");
       setTxt("addCustomCatBtn", isId ? "Tambah" : "Add");
       setTxt("scannerModalTitle", isId ? "📷 Pemindai Barcode" : "📷 Camera Barcode Scanner");
-      setTxt("scannerModalSub", isId ? "Arahkan barcode ke bingkai atau ketuk sampel di bawah" : "Align product barcode within frame or tap a sample below");
-      setTxt("scannerModalBtnText", isId ? "Pindai" : "Scan");
+      setTxt("scannerModalSub", isId ? "Arahkan kamera belakang ke barcode kemasan produk" : "Point rear camera at product package barcode");
+      setPlaceholder("scannerManualInput", isId ? "Ketik / tempel kode barcode..." : "Type / paste barcode...");
+      setTxt("scannerManualSubmitLabel", isId ? "Pakai" : "Use");
+      setTxt("scannerModalBtnText", isId ? "Atau Pindai dari Foto / Galeri" : "Or Scan from Photo / Gallery");
       setTxt("closeShiftAuditBadge", isId ? "Rekonsiliasi Akhir Shift (Z-Report)" : "End-of-Day Reconciliation (Z-Report)");
       setTxt("closeShiftModalHeading", isId ? "Tutup Shift & Audit Laci" : "Close Shift & Drawer Audit");
       setTxt("closeShiftStartedText", isId ? "Kasir Mandiri • Mulai" : "Solo Cashier • Started");
@@ -6836,18 +6871,282 @@ Minimum version required to store current data is: `+i+`.
       document.getElementById("categoryEditModal").classList.remove("hidden");
     }
 
-    function openScannerModal() {
-      const list = document.getElementById("quickScanSampleList");
-      list.innerHTML = products.slice(0, 4).map(p => `
-        <button data-action="simulateBarcodeScan" data-arg="${p.barcode}" class="w-full min-h-[48px] p-3 rounded-2xl flex items-center justify-between text-left" style="background: var(--oneui-surface-2);">
-          <div>
-            <div class="text-xs font-bold">${p.icon || "🐾"} ${p.name}</div>
-            <div class="text-xs tabular-nums" style="color: var(--oneui-text-muted);">Barcode: ${p.barcode}</div>
-          </div>
-          <span class="text-xs font-extrabold tabular-nums" style="color: var(--oneui-blue-text);">+${fmt(p.price)}</span>
-        </button>
-      `).join("");
-      document.getElementById("scannerModal").classList.remove("hidden");
+    // =========================================================================
+    // REAL LIVE CAMERA BARCODE SCANNER (Offline BarcodeDetector + Photo + Manual)
+    // =========================================================================
+    let scannerStream = null;
+    let scannerRafId = null;
+    let scannerDetector = null;
+    let scannerTorchOn = false;
+    let scannerTargetMode = "cashier"; // "cashier" | "newProduct" | "editProduct"
+    let scannerLastDecodeAt = 0;
+    let scannerIsDetecting = false;
+
+    function playScanBeep() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1480, ctx.currentTime);
+        gain.gain.setValueAtTime(0.14, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.11);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
+      } catch (e) {}
+      try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
+    }
+
+    function setScannerStatus(text, isWarn = false) {
+      const pill = document.getElementById("scannerStatusPill");
+      if (!pill) return;
+      pill.innerText = text;
+      pill.style.color = isWarn ? "#fcd34d" : "#6ee7b7";
+    }
+
+    async function ensureBarcodeDetector() {
+      if (scannerDetector) return scannerDetector;
+      if (typeof window.BarcodeDetector === "undefined") return null;
+      const wanted = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code", "itf", "codabar"];
+      try {
+        if (typeof BarcodeDetector.getSupportedFormats === "function") {
+          const supported = await BarcodeDetector.getSupportedFormats();
+          const usable = wanted.filter(f => supported.includes(f));
+          scannerDetector = new BarcodeDetector(usable.length ? { formats: usable } : undefined);
+        } else {
+          scannerDetector = new BarcodeDetector({ formats: wanted });
+        }
+        return scannerDetector;
+      } catch (e) {
+        try {
+          scannerDetector = new BarcodeDetector();
+          return scannerDetector;
+        } catch (err) {
+          return null;
+        }
+      }
+    }
+
+    function stopCameraScanner() {
+      if (scannerRafId) {
+        cancelAnimationFrame(scannerRafId);
+        scannerRafId = null;
+      }
+      scannerIsDetecting = false;
+      scannerTorchOn = false;
+      if (scannerStream) {
+        try { scannerStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+        scannerStream = null;
+      }
+      const video = document.getElementById("scannerVideo");
+      if (video) {
+        try { video.pause(); } catch (e) {}
+        video.srcObject = null;
+      }
+      document.getElementById("scannerTorchBtn")?.classList.add("hidden");
+    }
+
+    function closeScannerModal() {
+      stopCameraScanner();
+      document.getElementById("scannerModal")?.classList.add("hidden");
+    }
+
+    async function toggleScannerTorch() {
+      if (!scannerStream) return;
+      const track = scannerStream.getVideoTracks()[0];
+      if (!track || !track.applyConstraints) return;
+      try {
+        scannerTorchOn = !scannerTorchOn;
+        await track.applyConstraints({ advanced: [{ torch: scannerTorchOn }] });
+        const btn = document.getElementById("scannerTorchBtn");
+        if (btn) btn.innerText = scannerTorchOn ? "🔦 Flash ON" : "🔦 Flash";
+      } catch (e) {
+        showToast(appLang === "id" ? "⚠️ Flash tidak didukung kamera ini" : "⚠️ Flash not supported on this camera");
+      }
+    }
+
+    function handleDecodedBarcode(rawCode) {
+      const code = String(rawCode || "").trim();
+      if (!code) return;
+      const isId = appLang === "id";
+      playScanBeep();
+
+      if (scannerTargetMode === "newProduct") {
+        const inp = document.getElementById("newProdBarcode");
+        if (inp) inp.value = code;
+        closeScannerModal();
+        showToast(isId ? `📷 Barcode produk baru: ${code}` : `📷 New product barcode: ${code}`);
+        return;
+      }
+
+      if (scannerTargetMode === "editProduct") {
+        const inp = document.getElementById("editProdBarcode");
+        if (inp) inp.value = code;
+        closeScannerModal();
+        showToast(isId ? `📷 Barcode diperbarui: ${code}` : `📷 Barcode updated: ${code}`);
+        return;
+      }
+
+      // Cashier mode: match product by barcode
+      const p = products.find(x => String(x.barcode || "").trim().toLowerCase() === code.toLowerCase());
+      if (p) {
+        if (p.stock <= 0) {
+          closeScannerModal();
+          showToast(isId ? `❌ Stok ${p.name} habis!` : `❌ ${p.name} is out of stock!`);
+          return;
+        }
+        const existing = cart.find(c => c.productId === p.id);
+        if (existing) {
+          if (p.stock > 0 && existing.quantity >= p.stock) {
+            closeScannerModal();
+            showToast(isId ? `⚠️ Stok maksimum tercapai untuk ${p.name}` : `⚠️ Max stock reached for ${p.name}`);
+            return;
+          }
+          existing.quantity += 1;
+        } else {
+          cart.push({ productId: p.id, quantity: 1 });
+        }
+        closeScannerModal();
+        saveState();
+        renderAll();
+        showToast(isId ? `📷 Masuk keranjang: ${p.name} (${fmt(p.price)})` : `📷 Added to cart: ${p.name} (${fmt(p.price)})`);
+      } else {
+        // Barcode not found in inventory yet — pre-fill New Product barcode input for convenience
+        const newBarcodeInp = document.getElementById("newProdBarcode");
+        if (newBarcodeInp) newBarcodeInp.value = code;
+        closeScannerModal();
+        showToast(isId
+          ? `⚠️ Barcode ${code} belum ada di Stok. Daftarkan di menu Stok → Produk Baru.`
+          : `⚠️ Barcode ${code} not in Inventory yet. Add it in Stock → New Product.`);
+      }
+    }
+
+    function submitManualBarcode() {
+      const inp = document.getElementById("scannerManualInput");
+      const code = (inp?.value || "").trim();
+      if (!code) {
+        showToast(appLang === "id" ? "⚠️ Ketik kode barcode terlebih dahulu" : "⚠️ Enter a barcode first");
+        return;
+      }
+      inp.value = "";
+      handleDecodedBarcode(code);
+    }
+
+    async function decodeBarcodeFromImageFile(file) {
+      if (!file) return;
+      const isId = appLang === "id";
+      const detector = await ensureBarcodeDetector();
+      if (!detector) {
+        showToast(isId
+          ? "⚠️ Browser ini belum mendukung deteksi foto barcode. Gunakan input manual di atas."
+          : "⚠️ This browser doesn't support photo barcode detection. Use manual input above.");
+        return;
+      }
+      try {
+        const bitmap = await createImageBitmap(file);
+        const results = await detector.detect(bitmap);
+        if (bitmap.close) bitmap.close();
+        if (results && results.length > 0 && results[0].rawValue) {
+          handleDecodedBarcode(results[0].rawValue);
+        } else {
+          showToast(isId
+            ? "⚠️ Barcode tidak terbaca di foto. Pastikan fokus & cahaya cukup."
+            : "⚠️ No barcode found in photo. Ensure clear focus & lighting.");
+        }
+      } catch (e) {
+        showToast(isId ? "⚠️ Gagal membaca foto barcode." : "⚠️ Failed to decode barcode photo.");
+      }
+    }
+
+    function runCameraScanLoop() {
+      const video = document.getElementById("scannerVideo");
+      if (!scannerStream || !video) return;
+
+      const tick = async (ts) => {
+        if (!scannerStream) return;
+        if (scannerDetector && !scannerIsDetecting && video.readyState >= 2 && (ts - scannerLastDecodeAt) >= 160) {
+          scannerIsDetecting = true;
+          scannerLastDecodeAt = ts;
+          try {
+            const codes = await scannerDetector.detect(video);
+            if (codes && codes.length > 0 && codes[0].rawValue) {
+              scannerIsDetecting = false;
+              handleDecodedBarcode(codes[0].rawValue);
+              return;
+            }
+          } catch (e) {}
+          scannerIsDetecting = false;
+        }
+        scannerRafId = requestAnimationFrame(tick);
+      };
+      scannerRafId = requestAnimationFrame(tick);
+    }
+
+    async function openScannerModal(mode = "cashier") {
+      scannerTargetMode = mode || "cashier";
+      const isId = appLang === "id";
+      const modal = document.getElementById("scannerModal");
+      const manualInp = document.getElementById("scannerManualInput");
+      if (manualInp) manualInp.value = "";
+      const subEl = document.getElementById("scannerModalSub");
+      if (subEl) {
+        if (scannerTargetMode === "cashier") {
+          subEl.innerText = isId
+            ? "Arahkan kamera belakang ke barcode produk untuk langsung masuk keranjang"
+            : "Point rear camera at product barcode to add directly to cart";
+        } else {
+          subEl.innerText = isId
+            ? "Arahkan kamera ke barcode kemasan untuk mengisi SKU otomatis"
+            : "Point camera at package barcode to auto-fill SKU field";
+        }
+      }
+      modal?.classList.remove("hidden");
+      setScannerStatus(isId ? "⏳ Membuka kamera belakang..." : "⏳ Starting rear camera...");
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setScannerStatus(isId ? "⚠️ Kamera tidak tersedia — ketik manual" : "⚠️ Camera unavailable — use manual input", true);
+        return;
+      }
+
+      try {
+        stopCameraScanner();
+        scannerStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        const video = document.getElementById("scannerVideo");
+        if (video) {
+          video.srcObject = scannerStream;
+          await video.play();
+        }
+
+        // Show flash/torch button if supported by hardware
+        const track = scannerStream.getVideoTracks()[0];
+        if (track && typeof track.getCapabilities === "function") {
+          const caps = track.getCapabilities();
+          if (caps && caps.torch) {
+            const torchBtn = document.getElementById("scannerTorchBtn");
+            if (torchBtn) {
+              torchBtn.innerText = "🔦 Flash";
+              torchBtn.classList.remove("hidden");
+            }
+          }
+        }
+
+        const detector = await ensureBarcodeDetector();
+        if (detector) {
+          setScannerStatus(isId ? "🟢 Kamera aktif — arahkan ke barcode" : "🟢 Camera live — align barcode");
+          runCameraScanLoop();
+        } else {
+          setScannerStatus(isId ? "⚠️ Auto-scan hanya di Chrome Android — ketik manual" : "⚠️ Auto-scan requires Android Chrome — use manual input", true);
+        }
+      } catch (err) {
+        setScannerStatus(isId ? "⚠️ Izin kamera ditolak — ketik manual / foto" : "⚠️ Camera permission denied — use manual / photo", true);
+      }
     }
 
     function shareRecapWhatsApp() {
@@ -7244,23 +7543,11 @@ Minimum version required to store current data is: `+i+`.
           showToast((appLang === "id" ? "✓ Kategori ditambahkan: " : "✓ Added category: ") + emoji + " " + label);
           break;
         }
-        case "openScannerModal": openScannerModal(); break;
-        case "closeScannerModal":
-          document.getElementById("scannerModal").classList.add("hidden");
-          break;
-        case "simulateBarcodeScan": {
-          const p = products.find(x => x.barcode === arg);
-          if (p) {
-            const existing = cart.find(c => c.productId === p.id);
-            if (existing) existing.quantity += 1;
-            else cart.push({ productId: p.id, quantity: 1 });
-            document.getElementById("scannerModal").classList.add("hidden");
-            saveState();
-            renderAll();
-            showToast("📷 Scanned: " + p.name);
-          }
-          break;
-        }
+        case "openScannerModal": openScannerModal(arg || "cashier"); break;
+        case "closeScannerModal": closeScannerModal(); break;
+        case "toggleScannerTorch": toggleScannerTorch(); break;
+        case "submitManualBarcode": submitManualBarcode(); break;
+        case "simulateBarcodeScan": handleDecodedBarcode(arg); break;
         case "openCloseShiftModal": openCloseShiftModal(); break;
         case "closeCloseShiftModal": closeCloseShiftModal(); break;
         case "addDenomination": addDenomination(Number(arg)); break;
@@ -7323,6 +7610,9 @@ Minimum version required to store current data is: `+i+`.
       if (e.target && e.target.id === "receiptCustomerWaInput" && e.key === "Enter") {
         e.preventDefault();
         sendOfficialReceiptToCustomerWa();
+      } else if (e.target && e.target.id === "scannerManualInput" && e.key === "Enter") {
+        e.preventDefault();
+        submitManualBarcode();
       }
     });
 
@@ -7351,22 +7641,11 @@ Minimum version required to store current data is: `+i+`.
     document.getElementById("newProdPhotoInput")?.addEventListener("change", handleProductPhotoSelection);
     document.getElementById("newProdGalleryInput")?.addEventListener("change", handleProductPhotoSelection);
 
-    // Picture / Barcode File Listeners
-    document.getElementById("newProdBarcodePhoto")?.addEventListener("change", () => {
-      const code = "8997" + Math.floor(1000 + Math.random() * 9000);
-      document.getElementById("newProdBarcode").value = code;
-      showToast("📷 Barcode extracted from photo: " + code);
-    });
-    document.getElementById("posBarcodePhotoInput")?.addEventListener("change", () => {
-      const p = products[0];
-      if (!p) return;
-      const existing = cart.find(c => c.productId === p.id);
-      if (existing) existing.quantity += 1;
-      else cart.push({ productId: p.id, quantity: 1 });
-      document.getElementById("scannerModal").classList.add("hidden");
-      saveState();
-      renderAll();
-      showToast("📷 Scanned photo barcode: " + p.name);
+    // Real Barcode Photo Decoder Listener (Offline BarcodeDetector)
+    document.getElementById("posBarcodePhotoInput")?.addEventListener("change", (ev) => {
+      const file = ev.target.files && ev.target.files[0];
+      if (file) decodeBarcodeFromImageFile(file);
+      ev.target.value = "";
     });
 
     // Full Shop JSON Backup Restore File Input Listener
