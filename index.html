@@ -17,7 +17,7 @@
 
     /* Zero-Dependency Embedded Tailwind Utility Engine (100% Offline & Sandbox Ready) */
     *, ::before, ::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: rgba(255,255,255,0.1); }
-    button, input, select { font-family: inherit; font-size: 100%; line-height: inherit; color: inherit; margin: 0; padding: 0; background-color: transparent; }
+    button, input, select, textarea { font-family: inherit; font-size: 100%; line-height: inherit; color: inherit; margin: 0; padding: 0; background-color: transparent; }
     button { cursor: pointer; }
     h1, h2, h3, h4, p, pre { margin: 0; }
     svg { display: block; vertical-align: middle; }
@@ -1602,9 +1602,9 @@
 
       <!-- ==================== TAB 5: DEDICATED STORE & ONE UI SETTINGS ==================== -->
       <div id="tab-settings" class="flex-1 flex flex-col gap-4 hidden overflow-y-auto hide-scrollbar pb-6">
-        <!-- Store Identity Focus Block -->
+        <!-- Store Identity & WhatsApp Template Focus Block -->
         <div class="oneui-focus-block p-4 sm:p-5 space-y-4">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <div>
               <h2 id="settingsProfileTitle" class="text-base font-extrabold">Store Profile & Digital Identity</h2>
               <p id="settingsProfileSub" class="text-xs" style="color: var(--oneui-text-muted);">Used on digital WhatsApp QR receipts and customer invoices</p>
@@ -1613,16 +1613,61 @@
 
           <div class="space-y-3 text-xs">
             <div>
-              <label class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Pet Shop / Clinic Name</label>
+              <label id="settingStoreNameLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Pet Shop / Clinic Name</label>
               <input id="settingStoreName" type="text" value="Rana Petshop" class="oneui-input w-full px-3.5 py-2.5 font-semibold">
             </div>
             <div>
-              <label class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Store WhatsApp Number (For QR Receipts)</label>
+              <label id="settingStorePhoneLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Store WhatsApp Number (For QR Receipts)</label>
               <input id="settingStorePhone" type="text" value="+62 812-3456-7890" class="oneui-input w-full px-3.5 py-2.5 font-semibold tabular-nums">
             </div>
             <div>
-              <label class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Store Address</label>
+              <label id="settingStoreAddressLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Store Address</label>
               <input id="settingStoreAddress" type="text" value="Rana Petshop • Solo Counter" class="oneui-input w-full px-3.5 py-2.5 font-semibold">
+            </div>
+
+            <!-- Customizable WhatsApp Message Templates Section -->
+            <div class="pt-3 space-y-3" style="border-top: 1px solid var(--oneui-divider);">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <div id="settingsWaSectionTitle" class="font-extrabold text-sm">💬 Template Pesan WhatsApp & Struk</div>
+                  <div id="settingsWaSectionSub" class="text-[11px]" style="color: var(--oneui-text-muted);">Gunakan tag {toko}, {invoice}, {total}, {metode} untuk data otomatis</div>
+                </div>
+                <button type="button" data-action="resetWaTemplates" class="min-h-[44px] px-3.5 rounded-full text-xs font-bold transition active:scale-95 shrink-0" style="background-color: var(--oneui-surface-2); color: var(--oneui-blue-text);">
+                  ↺ <span id="settingsWaResetBtnLabel">Reset Default</span>
+                </button>
+              </div>
+
+              <div>
+                <label id="settingWaCustomerTplLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Pesan WhatsApp Pelanggan (Saat Scan QR Struk)</label>
+                <textarea id="settingWaCustomerTemplate" rows="3" class="oneui-input w-full px-3.5 py-2.5 font-semibold leading-snug">Halo {toko}! Mohon kirimkan struk digital saya untuk Invoice {invoice} ({metode}, Total: {total}) 🐾</textarea>
+                <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                  <span id="settingWaInsertTagHint" class="text-[11px] font-semibold shrink-0 mr-0.5" style="color: var(--oneui-text-muted);">Sisipkan otomatis:</span>
+                  <button type="button" data-action="insertWaTemplateTag" data-arg="{toko}" class="min-h-[44px] px-3 rounded-full text-xs font-bold shrink-0 transition active:scale-95" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">+{toko}</button>
+                  <button type="button" data-action="insertWaTemplateTag" data-arg="{invoice}" class="min-h-[44px] px-3 rounded-full text-xs font-bold shrink-0 transition active:scale-95" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">+{invoice}</button>
+                  <button type="button" data-action="insertWaTemplateTag" data-arg="{total}" class="min-h-[44px] px-3 rounded-full text-xs font-bold shrink-0 transition active:scale-95" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">+{total}</button>
+                  <button type="button" data-action="insertWaTemplateTag" data-arg="{metode}" class="min-h-[44px] px-3 rounded-full text-xs font-bold shrink-0 transition active:scale-95" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">+{metode}</button>
+                </div>
+              </div>
+
+              <div>
+                <label id="settingWaReceiptFooterLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Ucapan Terima Kasih (Bawah Struk & Chat WA)</label>
+                <input id="settingWaReceiptFooter" type="text" value="Terima kasih sudah berbelanja di {toko}! 🐶🐱" class="oneui-input w-full px-3.5 py-2.5 font-semibold">
+              </div>
+
+              <div>
+                <label id="settingWaReportFooterLabel" class="font-semibold block mb-1" style="color: var(--oneui-text-secondary);">Catatan Kaki Laporan WA (Rekap & Tutup Shift)</label>
+                <input id="settingWaReportFooter" type="text" value="Laporan resmi {toko} • Paw POS" class="oneui-input w-full px-3.5 py-2.5 font-semibold">
+              </div>
+
+              <!-- Live Preview Box -->
+              <div class="p-3 rounded-2xl space-y-1.5" style="background-color: var(--oneui-surface-2);">
+                <div class="flex items-center justify-between">
+                  <span id="settingWaPreviewHeader" class="text-[11px] font-extrabold uppercase tracking-wider" style="color: var(--oneui-green);">📲 Pratinjau Pesan WhatsApp</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: var(--oneui-green-tint); color: var(--oneui-green);">Live</span>
+                </div>
+                <div id="settingWaLivePreviewText" class="text-xs font-medium leading-snug break-words" style="color: var(--oneui-text);"></div>
+                <div id="settingWaLivePreviewFooter" class="text-[11px] italic pt-1" style="color: var(--oneui-text-secondary); border-top: 1px dashed var(--oneui-divider);"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -3234,11 +3279,98 @@ Minimum version required to store current data is: `+i+`.
     let editingCategoryProductId = null;
     let newProdSelectedEmoji = "🐱";
     let newProdImageDataUrl = "";
+    const DEFAULT_WA_CUSTOMER_TPL = "Halo {toko}! Mohon kirimkan struk digital saya untuk Invoice {invoice} ({metode}, Total: {total}) 🐾";
+    const DEFAULT_WA_RECEIPT_FOOTER = "Terima kasih sudah berbelanja di {toko}! 🐶🐱";
+    const DEFAULT_WA_REPORT_FOOTER = "Laporan resmi {toko} • Paw POS";
     let storeProfile = {
       name: "Rana Petshop",
       phone: "+62 812-3456-7890",
-      address: "Rana Petshop • Solo Counter"
+      address: "Rana Petshop • Solo Counter",
+      waCustomerTemplate: DEFAULT_WA_CUSTOMER_TPL,
+      waReceiptFooter: DEFAULT_WA_RECEIPT_FOOTER,
+      waReportFooter: DEFAULT_WA_REPORT_FOOTER
     };
+
+    function formatWaTemplate(tpl, vars = {}) {
+      const storeName = vars.store || document.getElementById("settingStoreName")?.value?.trim() || storeProfile.name || "Rana Petshop";
+      const storeAddr = vars.address || document.getElementById("settingStoreAddress")?.value?.trim() || storeProfile.address || "Rana Petshop • Solo Counter";
+      const storePhone = vars.phone || document.getElementById("settingStorePhone")?.value?.trim() || storeProfile.phone || "+62 812-3456-7890";
+      const invoice = vars.invoice || "INV-0491";
+      const total = vars.total || "Rp 40.000";
+      const method = vars.method || "CASH";
+      return String(tpl || "")
+        .replace(/\{(toko|store)\}/gi, storeName)
+        .replace(/\{(alamat|address)\}/gi, storeAddr)
+        .replace(/\{(telepon|phone)\}/gi, storePhone)
+        .replace(/\{invoice\}/gi, invoice)
+        .replace(/\{total\}/gi, total)
+        .replace(/\{(metode|method)\}/gi, method);
+    }
+
+    function getRenderedWaCustomerMessage(tx, storeName) {
+      const rawTpl = document.getElementById("settingWaCustomerTemplate")?.value?.trim() || storeProfile.waCustomerTemplate || DEFAULT_WA_CUSTOMER_TPL;
+      const methodStr = tx ? `${tx.paymentMethod}${tx.rrn ? " RRN:" + tx.rrn : ""}` : "CASH";
+      return formatWaTemplate(rawTpl, {
+        store: storeName,
+        invoice: tx ? tx.invoice : "INV-0491",
+        total: tx ? fmt(tx.grandTotal) : "Rp 40.000",
+        method: methodStr
+      });
+    }
+
+    function getRenderedWaReceiptFooter(storeName) {
+      const rawFooter = document.getElementById("settingWaReceiptFooter")?.value?.trim() || storeProfile.waReceiptFooter || DEFAULT_WA_RECEIPT_FOOTER;
+      return formatWaTemplate(rawFooter, { store: storeName });
+    }
+
+    function getRenderedWaReportFooter(storeName) {
+      const rawFooter = document.getElementById("settingWaReportFooter")?.value?.trim() || storeProfile.waReportFooter || DEFAULT_WA_REPORT_FOOTER;
+      return formatWaTemplate(rawFooter, { store: storeName });
+    }
+
+    function updateWaTemplatePreview() {
+      const storeName = document.getElementById("settingStoreName")?.value?.trim() || storeProfile.name || "Rana Petshop";
+      const sampleTx = currentReceiptTx || transactions[0] || { invoice: "INV-0491", grandTotal: 40000, paymentMethod: "CASH" };
+      const prevTxt = document.getElementById("settingWaLivePreviewText");
+      if (prevTxt) {
+        prevTxt.innerText = `"${getRenderedWaCustomerMessage(sampleTx, storeName)}"`;
+      }
+      const prevFoot = document.getElementById("settingWaLivePreviewFooter");
+      if (prevFoot) {
+        prevFoot.innerText = `${getRenderedWaReceiptFooter(storeName)}  •  ${getRenderedWaReportFooter(storeName)}`;
+      }
+    }
+
+    function insertWaTemplateTag(tag) {
+      const el = document.getElementById("settingWaCustomerTemplate");
+      if (!el || !tag) return;
+      const start = typeof el.selectionStart === "number" ? el.selectionStart : el.value.length;
+      const end = typeof el.selectionEnd === "number" ? el.selectionEnd : el.value.length;
+      const before = el.value.slice(0, start);
+      const after = el.value.slice(end);
+      const needsSpace = before.length > 0 && !/\s$/.test(before) ? " " : "";
+      el.value = `${before}${needsSpace}${tag}${after}`;
+      el.focus();
+      const pos = (before + needsSpace + tag).length;
+      if (typeof el.setSelectionRange === "function") el.setSelectionRange(pos, pos);
+      saveState();
+      updateWaTemplatePreview();
+    }
+
+    function resetWaTemplates() {
+      storeProfile.waCustomerTemplate = DEFAULT_WA_CUSTOMER_TPL;
+      storeProfile.waReceiptFooter = DEFAULT_WA_RECEIPT_FOOTER;
+      storeProfile.waReportFooter = DEFAULT_WA_REPORT_FOOTER;
+      const waCustEl = document.getElementById("settingWaCustomerTemplate");
+      const waFootEl = document.getElementById("settingWaReceiptFooter");
+      const waRepEl = document.getElementById("settingWaReportFooter");
+      if (waCustEl) waCustEl.value = DEFAULT_WA_CUSTOMER_TPL;
+      if (waFootEl) waFootEl.value = DEFAULT_WA_RECEIPT_FOOTER;
+      if (waRepEl) waRepEl.value = DEFAULT_WA_REPORT_FOOTER;
+      saveState();
+      updateWaTemplatePreview();
+      showToast(appLang === "id" ? "↺ Template pesan WhatsApp dikembalikan ke default" : "↺ WhatsApp message templates reset to default");
+    }
 
     // QRIS Payment & MDR State
     let qrisMdrRate = 0.003; // Default 0.3% (Small Business Standard)
@@ -3274,9 +3406,15 @@ Minimum version required to store current data is: `+i+`.
       const nameEl = document.getElementById("settingStoreName");
       const phoneEl = document.getElementById("settingStorePhone");
       const addrEl = document.getElementById("settingStoreAddress");
+      const waCustEl = document.getElementById("settingWaCustomerTemplate");
+      const waFootEl = document.getElementById("settingWaReceiptFooter");
+      const waRepEl = document.getElementById("settingWaReportFooter");
       if (nameEl && nameEl.value.trim()) storeProfile.name = nameEl.value.trim();
       if (phoneEl && phoneEl.value.trim()) storeProfile.phone = phoneEl.value.trim();
       if (addrEl && addrEl.value.trim()) storeProfile.address = addrEl.value.trim();
+      if (waCustEl && waCustEl.value.trim()) storeProfile.waCustomerTemplate = waCustEl.value.trim();
+      if (waFootEl && waFootEl.value.trim()) storeProfile.waReceiptFooter = waFootEl.value.trim();
+      if (waRepEl && waRepEl.value.trim()) storeProfile.waReportFooter = waRepEl.value.trim();
 
       return {
         version: 2,
@@ -3346,9 +3484,16 @@ Minimum version required to store current data is: `+i+`.
       const nameEl = document.getElementById("settingStoreName");
       const phoneEl = document.getElementById("settingStorePhone");
       const addrEl = document.getElementById("settingStoreAddress");
+      const waCustEl = document.getElementById("settingWaCustomerTemplate");
+      const waFootEl = document.getElementById("settingWaReceiptFooter");
+      const waRepEl = document.getElementById("settingWaReportFooter");
       if (nameEl) nameEl.value = storeProfile.name || "Rana Petshop";
       if (phoneEl) phoneEl.value = storeProfile.phone || "+62 812-3456-7890";
       if (addrEl) addrEl.value = storeProfile.address || "Rana Petshop • Solo Counter";
+      if (waCustEl) waCustEl.value = storeProfile.waCustomerTemplate || DEFAULT_WA_CUSTOMER_TPL;
+      if (waFootEl) waFootEl.value = storeProfile.waReceiptFooter || DEFAULT_WA_RECEIPT_FOOTER;
+      if (waRepEl) waRepEl.value = storeProfile.waReportFooter || DEFAULT_WA_REPORT_FOOTER;
+      updateWaTemplatePreview();
 
       const posCb = document.getElementById("posTaxCheckbox");
       const revCb = document.getElementById("modalReviewTaxCheckbox");
@@ -4412,7 +4557,8 @@ Minimum version required to store current data is: `+i+`.
       if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
       if (!cleanPhone.startsWith("62")) cleanPhone = "62" + cleanPhone;
 
-      const customerMsg = `Hi ${storeName}! Please send my digital receipt for Invoice ${tx.invoice} (Total: ${fmt(tx.grandTotal)}) 🐾`;
+      const customerMsg = getRenderedWaCustomerMessage(tx, storeName);
+      const receiptFooter = getRenderedWaReceiptFooter(storeName);
       const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
 
       let qrSvg = "";
@@ -4472,6 +4618,8 @@ Minimum version required to store current data is: `+i+`.
           `}
         </div>
 
+        <div class="mt-2 pt-2 border-t border-dashed border-neutral-300 text-center text-[11px] italic text-neutral-600">${receiptFooter}</div>
+
         <!-- Option 1 Dynamic WhatsApp QR Block -->
         <div class="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-center space-y-1.5">
           <div class="text-xs font-extrabold text-emerald-800">📲 SCAN FOR WHATSAPP RECEIPT</div>
@@ -4493,7 +4641,7 @@ Minimum version required to store current data is: `+i+`.
       let cleanPhone = storePhone.replace(/[^0-9]/g, "");
       if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
 
-      const customerMsg = `Hi ${storeName}! Please send my digital receipt for Invoice ${tx.invoice} (${tx.paymentMethod}${tx.rrn ? ' RRN:' + tx.rrn : ''}, Total: ${fmt(tx.grandTotal)}) 🐾`;
+      const customerMsg = getRenderedWaCustomerMessage(tx, storeName);
       document.getElementById("waSimStoreName").innerText = storeName;
       document.getElementById("waSimCustomerMsg").innerText = customerMsg;
 
@@ -4514,7 +4662,7 @@ Minimum version required to store current data is: `+i+`.
         botReceipt += `Bank RRN: *${tx.rrn || "241112008491"}*\n`;
       }
       botReceipt += `────────────────────\n`;
-      botReceipt += `_Thank you for visiting! 🐶🐱_`;
+      botReceipt += `_${getRenderedWaReceiptFooter(storeName)}_`;
 
       document.getElementById("waSimBotReceipt").innerText = botReceipt;
       document.getElementById("waRealDeepLink").href = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
@@ -4857,9 +5005,10 @@ Minimum version required to store current data is: `+i+`.
       const aov = orders > 0 ? Math.round(totalRev / orders) : 0;
       const mdrStr = qrisMdrRate === 0 ? "0.0% UMI" : "0.3% Regular";
       const monthName = now.toLocaleString("id-ID", { month: "long", year: "numeric" }).toUpperCase();
-      const storeName = (document.getElementById("settingStoreName")?.value || storeProfile.name || "Rana Petshop").toUpperCase();
+      const rawStoreName = document.getElementById("settingStoreName")?.value || storeProfile.name || "Rana Petshop";
+      const storeName = rawStoreName.toUpperCase();
 
-      const text = `🐾 *${storeName} — MTD FINANCIAL AUDIT*\nPeriod: ${monthName}\n--------------------------------\nGross Turnover: *${fmt(totalRev)}*\nTotal Orders: ${orders}x\nAvg. Order Value (AOV): ${fmt(aov)}\n--------------------------------\n💵 *CASH COLLECTED MTD*\nCash Total (${cashTx.length}x): *${fmt(cashSum)}*\n--------------------------------\n🏦 *BCA QRIS SETTLEMENT MTD*\nQRIS Gross (${qrisTx.length}x): ${fmt(qrisSum)}\nBI MDR Fee (${mdrStr}): -${fmt(qrisMdrFee)}\nNet Bank Deposit: *${fmt(qrisNet)}*\n--------------------------------\n🏛️ Est. UMKM Final Tax (0.5% PP 55): *${fmt(umkmTax)}*\nReconciliation Status: ✓ 100% Balanced & Verified`;
+      const text = `🐾 *${storeName} — MTD FINANCIAL AUDIT*\nPeriod: ${monthName}\n--------------------------------\nGross Turnover: *${fmt(totalRev)}*\nTotal Orders: ${orders}x\nAvg. Order Value (AOV): ${fmt(aov)}\n--------------------------------\n💵 *CASH COLLECTED MTD*\nCash Total (${cashTx.length}x): *${fmt(cashSum)}*\n--------------------------------\n🏦 *BCA QRIS SETTLEMENT MTD*\nQRIS Gross (${qrisTx.length}x): ${fmt(qrisSum)}\nBI MDR Fee (${mdrStr}): -${fmt(qrisMdrFee)}\nNet Bank Deposit: *${fmt(qrisNet)}*\n--------------------------------\n🏛️ Est. UMKM Final Tax (0.5% PP 55): *${fmt(umkmTax)}*\nReconciliation Status: ✓ 100% Balanced & Verified\n--------------------------------\n_${getRenderedWaReportFooter(rawStoreName)}_`;
 
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
       showToast("📲 Exporting MTD Financial Audit to WhatsApp...");
@@ -5362,7 +5511,7 @@ Minimum version required to store current data is: `+i+`.
       }
 
       zMsg += `────────────────────────────\n`;
-      zMsg += `_Z-Report verified & sealed by Paw POS_\n`;
+      zMsg += `_${getRenderedWaReportFooter(storeName)}_\n`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(zMsg).catch(() => {});
@@ -5435,7 +5584,7 @@ Minimum version required to store current data is: `+i+`.
         zMsg += `📝 *NOTES*: "${s.notes}"\n`;
       }
       zMsg += `────────────────────────────\n`;
-      zMsg += `_Archived record from Paw POS_\n`;
+      zMsg += `_${getRenderedWaReportFooter(storeName)}_\n`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(zMsg).catch(() => {});
@@ -5769,6 +5918,17 @@ Minimum version required to store current data is: `+i+`.
       // Settings Pane
       setTxt("settingsProfileTitle", isId ? "Profil Toko & Identitas Digital" : "Store Profile & Digital Identity");
       setTxt("settingsProfileSub", isId ? "Digunakan pada struk QR WhatsApp dan faktur pelanggan" : "Used on digital WhatsApp QR receipts and customer invoices");
+      setTxt("settingStoreNameLabel", isId ? "Nama Pet Shop" : "Pet Shop Name");
+      setTxt("settingStorePhoneLabel", isId ? "Nomor WhatsApp Toko (untuk Struk QR)" : "Store WhatsApp Number (for QR Receipt)");
+      setTxt("settingStoreAddressLabel", isId ? "Alamat / Tagline Struk" : "Receipt Tagline / Address");
+      setTxt("settingsWaSectionTitle", isId ? "Template Pesan WhatsApp & Struk" : "WhatsApp Message & Receipt Templates");
+      setTxt("settingsWaSectionSub", isId ? "Sesuaikan teks pesan otomatis saat pelanggan scan QR struk atau saat kirim laporan" : "Customize the automated message when customers scan QR receipts or when sharing reports");
+      setTxt("settingsWaResetBtnLabel", isId ? "Reset Default" : "Reset Default");
+      setTxt("settingWaCustomerTplLabel", isId ? "Template Pesan Pelanggan (Saat Scan QR Struk)" : "Customer Message Template (On Receipt QR Scan)");
+      setTxt("settingWaInsertTagHint", isId ? "Sisipkan otomatis:" : "Insert variable:");
+      setTxt("settingWaReceiptFooterLabel", isId ? "Ucapan Penutup Struk (Footer)" : "Receipt Closing Greeting (Footer)");
+      setTxt("settingWaReportFooterLabel", isId ? "Catatan Kaki Laporan WhatsApp (Z-Report & Rekap)" : "WhatsApp Report Footer (Z-Report & Recap)");
+      setTxt("settingWaPreviewHeader", isId ? "👁️ Pratinjau Pesan WhatsApp Langsung:" : "👁️ Live WhatsApp Message Preview:");
       setTxt("settingsOfflineTitle", isId ? "Aplikasi Offline & Keamanan Data" : "Offline App & Data Safety");
       setTxt("settingsOfflineSub", isId ? "Instal layar penuh untuk mode kasir offline & cadangan JSON 1-ketuk" : "Install full-screen for offline counter use & keep 1-tap JSON backups");
       setTxt("pwaCacheStatusLabel", isId ? "Cache Offline" : "Offline Cache");
@@ -5832,6 +5992,7 @@ Minimum version required to store current data is: `+i+`.
       setTxt("navLabelSettings", isId ? "Setelan" : "Settings");
 
       updateTabHeaderText();
+      updateWaTemplatePreview();
       updateCheckoutCalculatorUI();
       updateShiftAuditUI();
       renderAll();
@@ -6308,13 +6469,21 @@ Minimum version required to store current data is: `+i+`.
       includeTax = false;
       qrisMdrRate = 0.003;
       selectedCategory = "ALL";
-      storeProfile = { name: "Rana Petshop", phone: "+62 812-3456-7890", address: "Rana Petshop • Solo Counter" };
+      storeProfile = {
+        name: "Rana Petshop",
+        phone: "+62 812-3456-7890",
+        address: "Rana Petshop • Solo Counter",
+        waCustomerTemplate: DEFAULT_WA_CUSTOMER_TPL,
+        waReceiptFooter: DEFAULT_WA_RECEIPT_FOOTER,
+        waReportFooter: DEFAULT_WA_REPORT_FOOTER
+      };
       backupMeta = { lastBackupAt: null, salesSinceBackup: 0, reminderDismissedAt: null };
       currentReceiptTx = transactions[0] || null;
 
       closeResetConfirmModal();
       syncControlsFromState();
       updateTabHeaderText();
+      updateWaTemplatePreview();
       renderAll();
       showToast(appLang === "id" ? "🔄 Katalog & data demo telah direset" : "🔄 Demo catalog & data reset");
     }
@@ -6573,7 +6742,7 @@ Minimum version required to store current data is: `+i+`.
         });
       }
       msg += `────────────────────────────\n`;
-      msg += `_Generated automatically by Paw POS_\n`;
+      msg += `_${getRenderedWaReportFooter(storeName)}_\n`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(msg).catch(() => {});
@@ -6608,6 +6777,8 @@ Minimum version required to store current data is: `+i+`.
         case "setRecapTimeframe": setRecapTimeframe(arg); break;
         case "exportMtdWhatsApp": exportMtdWhatsApp(); break;
         case "shareRecapWhatsApp": shareRecapWhatsApp(); break;
+        case "insertWaTemplateTag": insertWaTemplateTag(arg); break;
+        case "resetWaTemplates": resetWaTemplates(); break;
         case "prevRecapPeriod": prevRecapPeriod(); break;
         case "nextRecapPeriod": nextRecapPeriod(); break;
         case "downloadFinancialSummary": downloadFinancialSummary(); break;
@@ -6968,10 +7139,11 @@ Minimum version required to store current data is: `+i+`.
     document.getElementById("modalReviewTaxCheckbox")?.addEventListener("change", (e) => setIncludeTax(e.target.checked));
     document.getElementById("settingsDefaultTaxCheckbox")?.addEventListener("change", (e) => setIncludeTax(e.target.checked));
 
-    ["settingStoreName", "settingStorePhone", "settingStoreAddress"].forEach(id => {
+    ["settingStoreName", "settingStorePhone", "settingStoreAddress", "settingWaCustomerTemplate", "settingWaReceiptFooter", "settingWaReportFooter"].forEach(id => {
       document.getElementById(id)?.addEventListener("input", () => {
         saveState();
         updateTabHeaderText();
+        updateWaTemplatePreview();
       });
     });
 
