@@ -1668,6 +1668,33 @@
                 <div id="settingWaLivePreviewText" class="text-xs font-medium leading-snug break-words" style="color: var(--oneui-text);"></div>
                 <div id="settingWaLivePreviewFooter" class="text-[11px] italic pt-1" style="color: var(--oneui-text-secondary); border-top: 1px dashed var(--oneui-divider);"></div>
               </div>
+
+              <!-- Setup 1: Free Offline Auto-Reply Bridge (Auto-Clipboard + MacroDroid) -->
+              <div class="p-3.5 rounded-2xl space-y-2.5" style="background-color: var(--oneui-surface-2); border: 1px solid var(--oneui-divider);">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="space-y-0.5">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span id="settingAutoClipTitle" class="text-xs sm:text-sm font-extrabold">🤖 Setup 1: Auto-Reply Struk WA (Auto-Clipboard)</span>
+                      <span id="settingAutoClipBadge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold" style="background: var(--oneui-green-tint); color: var(--oneui-green);">Aktif</span>
+                    </div>
+                    <p id="settingAutoClipSub" class="text-[11px] leading-snug" style="color: var(--oneui-text-muted);">
+                      Otomatis menyalin struk resmi ke Clipboard HP begitu transaksi selesai, sehingga MacroDroid / AutoResponder langsung membalas chat pelanggan saat scan QR.
+                    </p>
+                  </div>
+                  <label class="inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+                    <input id="settingsAutoClipboardCheckbox" type="checkbox" checked class="w-5 h-5 rounded accent-emerald-600 cursor-pointer">
+                  </label>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 pt-1">
+                  <button type="button" data-action="openWaAutoReplyGuideModal" class="flex-1 min-h-[44px] px-3.5 rounded-xl text-xs font-extrabold text-white flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition shadow-xs" style="background-color: var(--oneui-blue);">
+                    <span>📖</span> <span id="btnOpenAutoReplyGuideLabel">Cara Setting Auto-Reply (2 Menit)</span>
+                  </button>
+                  <button type="button" data-action="testAutoClipboardReceipt" class="min-h-[44px] px-3.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-surface); color: var(--oneui-green); border: 1px solid var(--oneui-divider);">
+                    <span>🧪</span> <span id="btnTestAutoClipLabel">Tes Clipboard</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2694,6 +2721,86 @@
     </div>
   </div>
 
+  <!-- =========================================================================== -->
+  <!-- MODAL 13: SETUP 1 WHATSAPP AUTO-REPLY GUIDE (AUTO-CLIPBOARD + MACRODROID)   -->
+  <!-- =========================================================================== -->
+  <div id="waAutoReplyGuideModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="w-full max-w-md rounded-[28px] p-5 sm:p-6 flex flex-col gap-3.5 shadow-2xl max-h-[92vh] overflow-hidden" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+      <div class="flex items-center justify-between gap-2 shrink-0">
+        <div>
+          <h3 id="waAutoGuideTitle" class="text-base sm:text-lg font-extrabold tracking-tight">🤖 Panduan Auto-Reply Struk WA (Setup 1)</h3>
+          <p id="waAutoGuideSub" class="text-xs" style="color: var(--oneui-text-muted);">100% Gratis &amp; Offline • Pelanggan scan QR → WA Toko otomatis kirim struk resmi</p>
+        </div>
+        <button type="button" data-action="closeWaAutoReplyGuideModal" class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer" style="background: var(--oneui-surface-2);" aria-label="Close auto-reply guide">✕</button>
+      </div>
+
+      <div class="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-3 text-xs">
+        <!-- How it works summary -->
+        <div class="p-3 rounded-2xl space-y-1" style="background: var(--oneui-green-tint); color: var(--oneui-green);">
+          <div id="waAutoGuideHowHeading" class="font-extrabold">⚡ Cara Kerja Otomatis di Kasir:</div>
+          <div id="waAutoGuideHowBody" class="leading-snug font-medium">
+            Setiap kali Anda menekan <b>✓ Selesaikan Transaksi</b>, Paw POS otomatis menyalin struk resmi ke Clipboard HP. Saat pelanggan scan QR dan tekan Send, aplikasi <b>MacroDroid</b> di HP Anda langsung membalas chat pelanggan dengan isi Clipboard tersebut!
+          </div>
+        </div>
+
+        <!-- Step 1 -->
+        <div class="p-3.5 rounded-2xl space-y-1.5" style="background-color: var(--oneui-surface-2);">
+          <div id="waAutoStep1Title" class="font-extrabold text-sm" style="color: var(--oneui-blue-text);">1. Instal MacroDroid &amp; Buat Macro Baru</div>
+          <p id="waAutoStep1Body" style="color: var(--oneui-text-secondary);">
+            Instal aplikasi gratis <b>MacroDroid</b> dari Google Play Store di HP toko Anda, buka aplikasinya, lalu ketuk <b>➕ Add Macro</b>.
+          </p>
+        </div>
+
+        <!-- Step 2: Trigger -->
+        <div class="p-3.5 rounded-2xl space-y-2" style="background-color: var(--oneui-surface-2);">
+          <div id="waAutoStep2Title" class="font-extrabold text-sm" style="color: var(--oneui-blue-text);">2. Atur Pemicu (Triggers — Kotak Merah)</div>
+          <p id="waAutoStep2Body" style="color: var(--oneui-text-secondary);">
+            Ketuk <b>＋</b> di kotak <b>Triggers</b> → pilih <b>Notifications</b> → <b>Notification Received</b> → pilih <b>Select Application(s)</b> → centang <b>WhatsApp Business</b> (atau WhatsApp).<br>
+            Pada bagian <b>Text Content</b>, pilih <b>Contains (Berisi)</b> lalu masukkan kata kunci:
+          </p>
+          <div class="flex items-center justify-between gap-2 p-2 rounded-xl" style="background-color: var(--oneui-surface);">
+            <code class="font-mono font-extrabold text-xs px-2" style="color: var(--oneui-green);">INV-</code>
+            <button type="button" data-action="copyMacroTriggerKeyword" class="min-h-[44px] px-3.5 rounded-xl text-xs font-bold cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
+              📋 <span id="waAutoCopyKeyBtn">Salin "INV-"</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Action -->
+        <div class="p-3.5 rounded-2xl space-y-2" style="background-color: var(--oneui-surface-2);">
+          <div id="waAutoStep3Title" class="font-extrabold text-sm" style="color: var(--oneui-blue-text);">3. Atur Balasan Otomatis (Actions — Kotak Biru)</div>
+          <p id="waAutoStep3Body" style="color: var(--oneui-text-secondary);">
+            Ketuk <b>＋</b> di kotak <b>Actions</b> → pilih <b>Notifications</b> → <b>Reply to Notification</b>.<br>
+            Pada kolom <b>Reply Text</b>, ketuk tombol <b>⋯ (Magic Text)</b> lalu pilih <b>Clipboard Text</b>, atau tempel kode berikut:
+          </p>
+          <div class="flex items-center justify-between gap-2 p-2 rounded-xl" style="background-color: var(--oneui-surface);">
+            <code class="font-mono font-extrabold text-xs px-2" style="color: var(--oneui-green);">[clipboard]</code>
+            <button type="button" data-action="copyMacroClipboardTag" class="min-h-[44px] px-3.5 rounded-xl text-xs font-bold cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
+              📋 <span id="waAutoCopyClipTagBtn">Salin "[clipboard]"</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 4: Save & Android Tip -->
+        <div class="p-3.5 rounded-2xl space-y-1.5" style="background-color: var(--oneui-surface-2);">
+          <div id="waAutoStep4Title" class="font-extrabold text-sm" style="color: var(--oneui-blue-text);">4. Simpan &amp; Tips Penting Android</div>
+          <p id="waAutoStep4Body" style="color: var(--oneui-text-secondary);">
+            Beri nama macro <b>"Auto Struk PawPOS"</b> lalu ketuk <b>✓ Simpan</b>. Pastikan layar struk Paw POS tetap terbuka saat pelanggan memindai QR Code agar Clipboard HP selalu berisi struk terbaru.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 pt-2 shrink-0" style="border-top: 1px solid var(--oneui-divider);">
+        <button type="button" data-action="testAutoClipboardReceipt" class="min-h-[44px] px-4 rounded-full text-xs font-bold transition active:scale-95 cursor-pointer" style="background-color: var(--oneui-surface-2); color: var(--oneui-green);">
+          🧪 <span id="waAutoModalTestBtn">Tes Salin Struk</span>
+        </button>
+        <button type="button" data-action="closeWaAutoReplyGuideModal" class="min-h-[44px] px-6 rounded-full text-xs font-bold text-white transition active:scale-95 shadow cursor-pointer" style="background-color: var(--oneui-blue);">
+          <span id="waAutoModalDoneBtn">Mengerti</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST NOTIFICATION -->
   <div id="oneUiToast" class="fixed top-2.5 left-1/2 -translate-x-1/2 max-w-[92vw] truncate px-4 py-2 rounded-full text-xs font-bold shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2" style="background-color: #1C1C1E; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2);">
     Notification
@@ -3297,8 +3404,74 @@ Minimum version required to store current data is: `+i+`.
       address: "Rana Petshop • Solo Counter",
       waCustomerTemplate: DEFAULT_WA_CUSTOMER_TPL,
       waReceiptFooter: DEFAULT_WA_RECEIPT_FOOTER,
-      waReportFooter: DEFAULT_WA_REPORT_FOOTER
+      waReportFooter: DEFAULT_WA_REPORT_FOOTER,
+      autoCopyReceiptOnSale: true
     };
+
+    function writeTextToClipboard(text) {
+      if (!text) return false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).catch(() => {});
+        }
+      } catch (e) {}
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-9999px";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function updateAutoClipBadgeUI() {
+      const isId = appLang === "id";
+      const enabled = storeProfile.autoCopyReceiptOnSale !== false;
+      const badge = document.getElementById("settingAutoClipBadge");
+      const cb = document.getElementById("settingsAutoClipboardCheckbox");
+      if (cb) cb.checked = enabled;
+      if (badge) {
+        badge.innerText = enabled ? (isId ? "✓ Aktif" : "✓ Active") : (isId ? "Nonaktif" : "Off");
+        badge.style.background = enabled ? "var(--oneui-green-tint)" : "var(--oneui-surface)";
+        badge.style.color = enabled ? "var(--oneui-green)" : "var(--oneui-text-muted)";
+      }
+    }
+
+    function openWaAutoReplyGuideModal() {
+      document.getElementById("waAutoReplyGuideModal")?.classList.remove("hidden");
+    }
+
+    function closeWaAutoReplyGuideModal() {
+      document.getElementById("waAutoReplyGuideModal")?.classList.add("hidden");
+    }
+
+    function copyMacroTriggerKeyword() {
+      writeTextToClipboard("INV-");
+      showToast(appLang === "id" ? "📋 Kata kunci 'INV-' disalin! Tempel di Triggers MacroDroid." : "📋 Keyword 'INV-' copied! Paste in MacroDroid Trigger.");
+    }
+
+    function copyMacroClipboardTag() {
+      writeTextToClipboard("[clipboard]");
+      showToast(appLang === "id" ? "📋 Tag '[clipboard]' disalin! Tempel di Reply Text MacroDroid." : "📋 Tag '[clipboard]' copied! Paste in MacroDroid Reply Text.");
+    }
+
+    function testAutoClipboardReceipt() {
+      const sampleTx = currentReceiptTx || transactions[0];
+      if (!sampleTx) return;
+      const txt = buildOfficialWaReceiptText(sampleTx);
+      writeTextToClipboard(txt);
+      showToast(appLang === "id"
+        ? `🧪 Berhasil! Struk ${sampleTx.invoice} sudah di Clipboard HP (Siap Auto-Reply)`
+        : `🧪 Success! Receipt ${sampleTx.invoice} is in Phone Clipboard (Ready for Auto-Reply)`);
+    }
 
     function formatWaTemplate(tpl, vars = {}) {
       const storeName = vars.store || document.getElementById("settingStoreName")?.value?.trim() || storeProfile.name || "Rana Petshop";
@@ -3418,12 +3591,14 @@ Minimum version required to store current data is: `+i+`.
       const waCustEl = document.getElementById("settingWaCustomerTemplate");
       const waFootEl = document.getElementById("settingWaReceiptFooter");
       const waRepEl = document.getElementById("settingWaReportFooter");
+      const autoClipCb = document.getElementById("settingsAutoClipboardCheckbox");
       if (nameEl && nameEl.value.trim()) storeProfile.name = nameEl.value.trim();
       if (phoneEl && phoneEl.value.trim()) storeProfile.phone = phoneEl.value.trim();
       if (addrEl && addrEl.value.trim()) storeProfile.address = addrEl.value.trim();
       if (waCustEl && waCustEl.value.trim()) storeProfile.waCustomerTemplate = waCustEl.value.trim();
       if (waFootEl && waFootEl.value.trim()) storeProfile.waReceiptFooter = waFootEl.value.trim();
       if (waRepEl && waRepEl.value.trim()) storeProfile.waReportFooter = waRepEl.value.trim();
+      if (autoClipCb) storeProfile.autoCopyReceiptOnSale = Boolean(autoClipCb.checked);
 
       return {
         version: 2,
@@ -3503,6 +3678,7 @@ Minimum version required to store current data is: `+i+`.
       if (waFootEl) waFootEl.value = storeProfile.waReceiptFooter || DEFAULT_WA_RECEIPT_FOOTER;
       if (waRepEl) waRepEl.value = storeProfile.waReportFooter || DEFAULT_WA_REPORT_FOOTER;
       updateWaTemplatePreview();
+      updateAutoClipBadgeUI();
 
       const posCb = document.getElementById("posTaxCheckbox");
       const revCb = document.getElementById("modalReviewTaxCheckbox");
@@ -4617,9 +4793,7 @@ Minimum version required to store current data is: `+i+`.
       const tx = targetTx || currentReceiptTx || transactions[0];
       if (!tx) return;
       const receiptText = buildOfficialWaReceiptText(tx);
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(receiptText).catch(() => {});
-      }
+      writeTextToClipboard(receiptText);
       tx.waSent = true;
       tx.waSentAt = Date.now();
       saveState();
@@ -4634,9 +4808,7 @@ Minimum version required to store current data is: `+i+`.
       const tx = targetTx || currentReceiptTx || transactions[0];
       if (!tx) return;
       const receiptText = buildOfficialWaReceiptText(tx);
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(receiptText).catch(() => {});
-      }
+      writeTextToClipboard(receiptText);
       const rawCustPhone = (!targetTx && document.getElementById("receiptCustomerWaInput")?.value) || tx.customerPhone || "";
       let cleanCustPhone = rawCustPhone.replace(/[^0-9]/g, "");
       if (cleanCustPhone.startsWith("0")) cleanCustPhone = "62" + cleanCustPhone.slice(1);
@@ -4684,6 +4856,10 @@ Minimum version required to store current data is: `+i+`.
     function showReceiptModal(tx) {
       currentReceiptTx = tx;
       const isId = appLang === "id";
+      const autoClipEnabled = storeProfile.autoCopyReceiptOnSale !== false;
+      if (autoClipEnabled && tx) {
+        writeTextToClipboard(buildOfficialWaReceiptText(tx));
+      }
       const container = document.getElementById("thermalReceiptContent");
       const storeName = document.getElementById("settingStoreName")?.value || storeProfile.name || "Rana Petshop";
       const storePhone = document.getElementById("settingStorePhone")?.value || storeProfile.phone || "+62 812-3456-7890";
@@ -4756,15 +4932,22 @@ Minimum version required to store current data is: `+i+`.
 
         <div class="mt-2 pt-2 border-t border-dashed border-neutral-300 text-center text-[11px] italic text-neutral-600">${receiptFooter}</div>
 
-        <!-- Option 2: Cashier 1-Tap Official WhatsApp Receipt Sender + Customer QR -->
+        <!-- Option 2 + Setup 1: Auto-Clipboard + Cashier 1-Tap Official WhatsApp Receipt Sender -->
         <div class="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-300 space-y-2 text-left">
-          <div class="text-center">
+          <div class="text-center space-y-1">
             <div class="text-xs font-extrabold text-emerald-900">
               ${isId ? "📲 KIRIM STRUK RESMI KE WA PELANGGAN" : "📲 SEND OFFICIAL RECEIPT TO CUSTOMER WA"}
             </div>
-            <div class="text-[11px] text-emerald-800/80 leading-tight">
-              ${isId ? "Dikirim dari WA Toko — aman & tidak bisa dipalsukan" : "Sent from Store WA — tamper-proof & official"}
-            </div>
+            ${autoClipEnabled ? `
+              <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-200/80 text-emerald-950">
+                <span>🤖</span>
+                <span>${isId ? "Auto-Clipboard Aktif: Struk sudah di Clipboard HP" : "Auto-Clipboard Active: Receipt in Phone Clipboard"}</span>
+              </div>
+            ` : `
+              <div class="text-[11px] text-emerald-800/80 leading-tight">
+                ${isId ? "Dikirim dari WA Toko — aman & tidak bisa dipalsukan" : "Sent from Store WA — tamper-proof & official"}
+              </div>
+            `}
           </div>
 
           <!-- Way A: Type Customer Number & Send Official Receipt -->
@@ -4781,11 +4964,11 @@ Minimum version required to store current data is: `+i+`.
             <span>${isId ? "Salin Struk Resmi (1-Ketuk Paste)" : "Copy Official Receipt (1-Tap Paste)"}</span>
           </button>
 
-          <!-- Compact Customer QR to initiate chat if customer doesn't dictate number -->
+          <!-- Compact Customer QR to initiate chat (MacroDroid auto-replies with Clipboard) -->
           <div class="pt-2 border-t border-dashed border-emerald-300/80 flex items-center justify-between gap-2.5">
             <div class="text-[11px] text-neutral-700 leading-snug">
-              <div class="font-extrabold text-emerald-900">${isId ? "Atau Scan QR Chat Toko:" : "Or Scan QR to Chat Store:"}</div>
-              <div>${isId ? "Pelanggan scan untuk menyapa toko, lalu kasir Paste struk resmi." : "Customer scans to say hi, then cashier pastes official receipt."}</div>
+              <div class="font-extrabold text-emerald-900">${isId ? "Scan QR Pelanggan (Auto-Reply):" : "Customer Scan QR (Auto-Reply):"}</div>
+              <div>${isId ? "Pelanggan scan & tekan Send → MacroDroid membalas struk dari Clipboard." : "Customer scans & taps Send → MacroDroid replies with Clipboard receipt."}</div>
             </div>
             <div data-action="openWhatsAppSimulator" class="bg-white p-1.5 rounded-xl border border-neutral-200 cursor-pointer shrink-0 shadow-xs" title="Tap to preview WhatsApp chat">
               ${qrSvg}
@@ -6085,6 +6268,23 @@ Minimum version required to store current data is: `+i+`.
       setTxt("settingWaReceiptFooterLabel", isId ? "Ucapan Penutup Struk (Footer)" : "Receipt Closing Greeting (Footer)");
       setTxt("settingWaReportFooterLabel", isId ? "Catatan Kaki Laporan WhatsApp (Z-Report & Rekap)" : "WhatsApp Report Footer (Z-Report & Recap)");
       setTxt("settingWaPreviewHeader", isId ? "👁️ Pratinjau Pesan WhatsApp Langsung:" : "👁️ Live WhatsApp Message Preview:");
+      setTxt("settingAutoClipTitle", isId ? "🤖 Setup 1: Auto-Reply Struk WA (Auto-Clipboard)" : "🤖 Setup 1: WA Receipt Auto-Reply (Auto-Clipboard)");
+      setTxt("settingAutoClipSub", isId
+        ? "Otomatis menyalin struk resmi ke Clipboard HP begitu transaksi selesai, sehingga MacroDroid / AutoResponder langsung membalas chat pelanggan saat scan QR."
+        : "Automatically copies the official receipt to your phone's Clipboard when a sale completes, so MacroDroid / AutoResponder instantly replies when a customer scans the QR.");
+      setTxt("btnOpenAutoReplyGuideLabel", isId ? "Cara Setting Auto-Reply (2 Menit)" : "How to Set Up Auto-Reply (2 Min)");
+      setTxt("btnTestAutoClipLabel", isId ? "Tes Clipboard" : "Test Clipboard");
+      setTxt("waAutoGuideTitle", isId ? "🤖 Panduan Auto-Reply Struk WA (Setup 1)" : "🤖 WA Receipt Auto-Reply Guide (Setup 1)");
+      setTxt("waAutoGuideSub", isId ? "100% Gratis & Offline • Pelanggan scan QR → WA Toko otomatis kirim struk resmi" : "100% Free & Offline • Customer scans QR → Store WA auto-replies with official receipt");
+      setTxt("waAutoGuideHowHeading", isId ? "⚡ Cara Kerja Otomatis di Kasir:" : "⚡ How It Works Automatically at the Counter:");
+      setTxt("waAutoStep1Title", isId ? "1. Instal MacroDroid & Buat Macro Baru" : "1. Install MacroDroid & Create New Macro");
+      setTxt("waAutoStep2Title", isId ? "2. Atur Pemicu (Triggers — Kotak Merah)" : "2. Set Trigger (Triggers — Red Box)");
+      setTxt("waAutoCopyKeyBtn", isId ? 'Salin "INV-"' : 'Copy "INV-"');
+      setTxt("waAutoStep3Title", isId ? "3. Atur Balasan Otomatis (Actions — Kotak Biru)" : "3. Set Auto-Reply (Actions — Blue Box)");
+      setTxt("waAutoCopyClipTagBtn", isId ? 'Salin "[clipboard]"' : 'Copy "[clipboard]"');
+      setTxt("waAutoStep4Title", isId ? "4. Simpan & Tips Penting Android" : "4. Save & Important Android Tip");
+      setTxt("waAutoModalTestBtn", isId ? "Tes Salin Struk" : "Test Copy Receipt");
+      setTxt("waAutoModalDoneBtn", isId ? "Mengerti" : "Got It");
       setTxt("settingsOfflineTitle", isId ? "Aplikasi Offline & Keamanan Data" : "Offline App & Data Safety");
       setTxt("settingsOfflineSub", isId ? "Instal layar penuh untuk mode kasir offline & cadangan JSON 1-ketuk" : "Install full-screen for offline counter use & keep 1-tap JSON backups");
       setTxt("pwaCacheStatusLabel", isId ? "Cache Offline" : "Offline Cache");
@@ -6149,6 +6349,7 @@ Minimum version required to store current data is: `+i+`.
 
       updateTabHeaderText();
       updateWaTemplatePreview();
+      updateAutoClipBadgeUI();
       updateCheckoutCalculatorUI();
       updateShiftAuditUI();
       renderAll();
@@ -7266,6 +7467,11 @@ Minimum version required to store current data is: `+i+`.
         case "copyHistoryInvoiceWa": copyHistoryInvoiceWa(Number(arg)); break;
         case "sendHistoryInvoiceWa": sendHistoryInvoiceWa(Number(arg)); break;
         case "toggleHistoryWaStatus": toggleHistoryWaStatus(Number(arg)); break;
+        case "openWaAutoReplyGuideModal": openWaAutoReplyGuideModal(); break;
+        case "closeWaAutoReplyGuideModal": closeWaAutoReplyGuideModal(); break;
+        case "testAutoClipboardReceipt": testAutoClipboardReceipt(); break;
+        case "copyMacroTriggerKeyword": copyMacroTriggerKeyword(); break;
+        case "copyMacroClipboardTag": copyMacroClipboardTag(); break;
         case "clearPosSearch":
           document.getElementById("posSearchInput").value = "";
           document.getElementById("clearPosSearchBtn").classList.add("hidden");
@@ -7299,6 +7505,14 @@ Minimum version required to store current data is: `+i+`.
     document.getElementById("posTaxCheckbox")?.addEventListener("change", (e) => setIncludeTax(e.target.checked));
     document.getElementById("modalReviewTaxCheckbox")?.addEventListener("change", (e) => setIncludeTax(e.target.checked));
     document.getElementById("settingsDefaultTaxCheckbox")?.addEventListener("change", (e) => setIncludeTax(e.target.checked));
+    document.getElementById("settingsAutoClipboardCheckbox")?.addEventListener("change", (e) => {
+      storeProfile.autoCopyReceiptOnSale = Boolean(e.target.checked);
+      saveState();
+      updateAutoClipBadgeUI();
+      showToast(storeProfile.autoCopyReceiptOnSale
+        ? (appLang === "id" ? "🤖 Auto-Clipboard Struk WA diaktifkan" : "🤖 WA Receipt Auto-Clipboard enabled")
+        : (appLang === "id" ? "Auto-Clipboard Struk WA dinonaktifkan" : "WA Receipt Auto-Clipboard disabled"));
+    });
 
     ["settingStoreName", "settingStorePhone", "settingStoreAddress", "settingWaCustomerTemplate", "settingWaReceiptFooter", "settingWaReportFooter"].forEach(id => {
       document.getElementById(id)?.addEventListener("input", () => {
