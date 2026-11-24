@@ -4059,19 +4059,45 @@ Minimum version required to store current data is: `+i+`.
             const d = new Date(tx.timestamp);
             const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const totalUnits = tx.items.reduce((s, it) => s + (it.quantity || 1), 0);
+            const itemsSummary = (tx.items || []).map(it => `${it.quantity}x ${it.product.name}`).join(", ");
+            const isSent = Boolean(tx.waSent);
+            const statusBadge = isSent
+              ? `<button type="button" data-action="toggleHistoryWaStatus" data-arg="${idx}" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-flex items-center gap-1 shrink-0 cursor-pointer" style="background: var(--oneui-green-tint); color: var(--oneui-green);" title="${isId ? 'Ketuk untuk ubah status' : 'Tap to toggle status'}">✓ ${isId ? "WA Terkirim" : "WA Sent"}</button>`
+              : `<button type="button" data-action="toggleHistoryWaStatus" data-arg="${idx}" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-flex items-center gap-1 shrink-0 cursor-pointer" style="background: var(--oneui-amber-tint); color: var(--oneui-amber);" title="${isId ? 'Ketuk untuk ubah status' : 'Tap to toggle status'}">⏳ ${isId ? "Belum Dikirim" : "Pending WA"}</button>`;
+
             return `
               <div>
-                <div data-action="viewHistoryReceipt" data-arg="${idx}" class="px-3 sm:px-4 py-3 rounded-2xl flex items-center justify-between gap-2 cursor-pointer transition hover:opacity-85 min-h-[56px]">
-                  <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold shrink-0" style="background: var(--oneui-green-tint); color: var(--oneui-green);">✓</div>
-                    <div class="min-w-0">
-                      <div class="text-xs sm:text-sm font-bold tabular-nums whitespace-nowrap truncate">${tx.invoice} • ${tx.paymentMethod}</div>
-                      <div class="text-[11px] sm:text-xs whitespace-nowrap" style="color: var(--oneui-text-muted);">${timeStr} • ${totalUnits} ${isId ? "item" : "items"}</div>
+                <div class="px-3 sm:px-4 py-3 rounded-2xl space-y-2.5 transition">
+                  <!-- Top Info Row (Tapping opens full receipt modal) -->
+                  <div data-action="viewHistoryReceipt" data-arg="${idx}" class="flex items-start justify-between gap-2 cursor-pointer">
+                    <div class="flex items-start gap-2.5 sm:gap-3 min-w-0">
+                      <div class="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold shrink-0 mt-0.5" style="background: ${isSent ? 'var(--oneui-green-tint)' : 'var(--oneui-amber-tint)'}; color: ${isSent ? 'var(--oneui-green)' : 'var(--oneui-amber)'};">${isSent ? "✓" : "⏳"}</div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="text-xs sm:text-sm font-extrabold tabular-nums whitespace-nowrap">${tx.invoice} • ${tx.paymentMethod}</span>
+                          ${statusBadge}
+                        </div>
+                        <div class="text-[11px] sm:text-xs mt-0.5 truncate" style="color: var(--oneui-text-muted);" title="${itemsSummary}">
+                          ${timeStr} • ${totalUnits} ${isId ? "item" : "items"} (${itemsSummary})
+                        </div>
+                      </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                      <div class="text-xs sm:text-sm font-extrabold tabular-nums whitespace-nowrap" style="color: var(--oneui-blue-text);">${fmt(tx.grandTotal)}</div>
                     </div>
                   </div>
-                  <div class="text-right shrink-0">
-                    <div class="text-xs sm:text-sm font-extrabold tabular-nums whitespace-nowrap" style="color: var(--oneui-blue-text);">${fmt(tx.grandTotal)}</div>
-                    <div class="text-[11px] sm:text-xs font-semibold whitespace-nowrap" style="color: var(--oneui-green);">📲 WhatsApp QR ➔</div>
+
+                  <!-- Direct 1-Tap Actions Bar (No need to open popup first) -->
+                  <div class="flex items-center gap-1.5 pt-1">
+                    <button type="button" data-action="copyHistoryInvoiceWa" data-arg="${idx}" class="flex-1 min-h-[44px] px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-surface-2); color: var(--oneui-text);">
+                      <span>📋</span> <span>${isId ? "Salin Struk" : "Copy Receipt"}</span>
+                    </button>
+                    <button type="button" data-action="sendHistoryInvoiceWa" data-arg="${idx}" class="flex-1 min-h-[44px] px-2.5 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition shadow-xs" style="background-color: #047857; color: #FFFFFF;">
+                      <span>📲</span> <span>${isId ? "Kirim WA" : "Send WA"}</span>
+                    </button>
+                    <button type="button" data-action="viewHistoryReceipt" data-arg="${idx}" class="min-h-[44px] px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition shrink-0" style="background-color: var(--oneui-blue-tint); color: var(--oneui-blue-text);">
+                      <span>🧾</span> <span>${isId ? "Detail" : "Receipt"}</span>
+                    </button>
                   </div>
                 </div>
                 ${idx < transactions.length - 1 ? '<div class="oneui-inset-divider"></div>' : ''}
@@ -4587,30 +4613,40 @@ Minimum version required to store current data is: `+i+`.
       return botReceipt;
     }
 
-    function copyOfficialWaReceipt() {
-      const tx = currentReceiptTx || transactions[0];
+    function copyOfficialWaReceipt(targetTx = null) {
+      const tx = targetTx || currentReceiptTx || transactions[0];
       if (!tx) return;
       const receiptText = buildOfficialWaReceiptText(tx);
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(receiptText).catch(() => {});
       }
+      tx.waSent = true;
+      tx.waSentAt = Date.now();
+      saveState();
+      renderHistoryList();
       const isId = appLang === "id";
       showToast(isId
-        ? "📋 Struk resmi disalin! Tempel (Paste) di chat WA pelanggan."
-        : "📋 Official receipt copied! Paste in customer's WhatsApp chat.");
+        ? `📋 Struk ${tx.invoice} disalin! Status: ✓ WA Terkirim`
+        : `📋 Receipt ${tx.invoice} copied! Status: ✓ WA Sent`);
     }
 
-    function sendOfficialReceiptToCustomerWa() {
-      const tx = currentReceiptTx || transactions[0];
+    function sendOfficialReceiptToCustomerWa(targetTx = null) {
+      const tx = targetTx || currentReceiptTx || transactions[0];
       if (!tx) return;
       const receiptText = buildOfficialWaReceiptText(tx);
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(receiptText).catch(() => {});
       }
-      const rawCustPhone = document.getElementById("receiptCustomerWaInput")?.value || "";
+      const rawCustPhone = (!targetTx && document.getElementById("receiptCustomerWaInput")?.value) || tx.customerPhone || "";
       let cleanCustPhone = rawCustPhone.replace(/[^0-9]/g, "");
       if (cleanCustPhone.startsWith("0")) cleanCustPhone = "62" + cleanCustPhone.slice(1);
       else if (cleanCustPhone.length >= 8 && !cleanCustPhone.startsWith("62")) cleanCustPhone = "62" + cleanCustPhone;
+
+      if (cleanCustPhone) tx.customerPhone = cleanCustPhone;
+      tx.waSent = true;
+      tx.waSentAt = Date.now();
+      saveState();
+      renderHistoryList();
 
       const waUrl = cleanCustPhone
         ? `https://wa.me/${cleanCustPhone}?text=${encodeURIComponent(receiptText)}`
@@ -4618,9 +4654,31 @@ Minimum version required to store current data is: `+i+`.
 
       const isId = appLang === "id";
       showToast(cleanCustPhone
-        ? (isId ? `📲 Membuka WA pelanggan (${cleanCustPhone}) dengan struk resmi...` : `📲 Opening customer WA (${cleanCustPhone}) with official receipt...`)
-        : (isId ? "📲 Struk resmi disalin! Pilih kontak pelanggan di WhatsApp..." : "📲 Official receipt copied! Pick customer contact in WhatsApp..."));
+        ? (isId ? `📲 Membuka WA pelanggan (${cleanCustPhone}) • ${tx.invoice}` : `📲 Opening customer WA (${cleanCustPhone}) • ${tx.invoice}`)
+        : (isId ? `📲 Struk ${tx.invoice} disalin! Pilih kontak pelanggan di WA...` : `📲 Receipt ${tx.invoice} copied! Pick customer contact in WA...`));
       window.open(waUrl, "_blank");
+    }
+
+    function copyHistoryInvoiceWa(idx) {
+      const tx = transactions[Number(idx)];
+      if (tx) copyOfficialWaReceipt(tx);
+    }
+
+    function sendHistoryInvoiceWa(idx) {
+      const tx = transactions[Number(idx)];
+      if (tx) sendOfficialReceiptToCustomerWa(tx);
+    }
+
+    function toggleHistoryWaStatus(idx) {
+      const tx = transactions[Number(idx)];
+      if (!tx) return;
+      tx.waSent = !tx.waSent;
+      saveState();
+      renderHistoryList();
+      const isId = appLang === "id";
+      showToast(tx.waSent
+        ? (isId ? `✓ ${tx.invoice} ditandai: WA Terkirim` : `✓ ${tx.invoice} marked: WA Sent`)
+        : (isId ? `⏳ ${tx.invoice} ditandai: Belum Dikirim` : `⏳ ${tx.invoice} marked: Pending WA`));
     }
 
     function showReceiptModal(tx) {
@@ -4711,7 +4769,7 @@ Minimum version required to store current data is: `+i+`.
 
           <!-- Way A: Type Customer Number & Send Official Receipt -->
           <div class="flex items-center gap-1.5">
-            <input id="receiptCustomerWaInput" type="tel" placeholder="${isId ? 'No. WA Pelanggan (0812...)' : 'Customer WA (0812...)'}" class="flex-1 min-w-0 min-h-[44px] px-3 rounded-xl bg-white border border-emerald-300 text-neutral-900 text-xs font-semibold tabular-nums focus:outline-none focus:border-emerald-600">
+            <input id="receiptCustomerWaInput" type="tel" value="${tx.customerPhone || ''}" placeholder="${isId ? 'No. WA Pelanggan (0812...)' : 'Customer WA (0812...)'}" class="flex-1 min-w-0 min-h-[44px] px-3 rounded-xl bg-white border border-emerald-300 text-neutral-900 text-xs font-semibold tabular-nums focus:outline-none focus:border-emerald-600">
             <button type="button" data-action="sendOfficialReceiptToCustomerWa" class="min-h-[44px] px-3.5 rounded-xl text-white text-xs font-extrabold shrink-0 cursor-pointer active:scale-95 transition shadow-sm" style="background-color: #047857; color: #FFFFFF;">
               📲 ${isId ? "Kirim WA" : "Send WA"}
             </button>
@@ -7205,6 +7263,9 @@ Minimum version required to store current data is: `+i+`.
           if (tx) showReceiptModal(tx);
           break;
         }
+        case "copyHistoryInvoiceWa": copyHistoryInvoiceWa(Number(arg)); break;
+        case "sendHistoryInvoiceWa": sendHistoryInvoiceWa(Number(arg)); break;
+        case "toggleHistoryWaStatus": toggleHistoryWaStatus(Number(arg)); break;
         case "clearPosSearch":
           document.getElementById("posSearchInput").value = "";
           document.getElementById("clearPosSearchBtn").classList.add("hidden");
