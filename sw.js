@@ -1,5 +1,5 @@
 /* Paw POS Offline-First Service Worker (GitHub Pages & Localhost Ready) */
-const CACHE_VERSION = "v18";
+const CACHE_VERSION = "v19";
 const CACHE_NAME = `pawpos-offline-${CACHE_VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -15,7 +15,15 @@ const PRECACHE_ASSETS = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
+      .then((cache) =>
+        Promise.all(
+          PRECACHE_ASSETS.map((assetUrl) =>
+            fetch(new Request(assetUrl, { cache: "no-cache" }))
+              .then((res) => (res && res.ok ? cache.put(assetUrl, res) : cache.add(assetUrl)))
+              .catch(() => cache.add(assetUrl))
+          )
+        )
+      )
       .then(() => self.skipWaiting())
   );
 });
@@ -63,11 +71,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Navigation requests (HTML): Network-First so GitHub Pages updates apply immediately,
+  // Navigation requests (HTML): Network-First with cache: "no-cache" so GitHub Pages updates apply immediately,
   // with guaranteed instant Cache fallback when offline or in airplane mode.
   if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: "no-cache" })
         .then((networkRes) => {
           if (networkRes && networkRes.ok) {
             const copy = networkRes.clone();

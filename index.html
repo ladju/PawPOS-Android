@@ -4145,6 +4145,16 @@ Minimum version required to store current data is: `+i+`.
       }
 
       if (!listEl) return;
+      const addCard = document.getElementById("invAddProductCard");
+      const isAddingProduct = Boolean(addCard && !addCard.classList.contains("hidden"));
+      const listBlock = document.getElementById("invListFocusBlock");
+      const toolbarRow = document.getElementById("invToolbarRow");
+      if (listBlock) listBlock.classList.toggle("hidden", isAddingProduct);
+      if (toolbarRow) toolbarRow.classList.toggle("hidden", isAddingProduct);
+      if (isAddingProduct) {
+        listEl.innerHTML = "";
+        return;
+      }
       const q = (document.getElementById("invSearchInput")?.value || "").trim().toLowerCase();
       const filtered = products.filter(p => {
         const matchFilter = invFilter === "ALL" || (invFilter === "LOW" && p.stock <= p.minStock && p.minStock > 0);
@@ -6708,8 +6718,11 @@ Minimum version required to store current data is: `+i+`.
 
       // Register Service Worker on HTTP/HTTPS origins (GitHub Pages / localhost)
       if ("serviceWorker" in navigator && (window.location.protocol === "https:" || window.location.protocol === "http:")) {
-        navigator.serviceWorker.register("./sw.js", { scope: "./" })
+        navigator.serviceWorker.register("./sw.js", { scope: "./", updateViaCache: "none" })
           .then((reg) => {
+            if (navigator.onLine !== false && typeof reg.update === "function") {
+              reg.update().catch(() => {});
+            }
             if (reg.active) {
               pwaRuntime.swReady = true;
               querySwCacheStatus(reg);
@@ -8041,6 +8054,7 @@ Minimum version required to store current data is: `+i+`.
     function setAddProductFormOpen(isOpen) {
       const addCard = document.getElementById("invAddProductCard");
       const listBlock = document.getElementById("invListFocusBlock");
+      const listEl = document.getElementById("inventoryFocusList");
       const toolbarRow = document.getElementById("invToolbarRow");
       const tabInv = document.getElementById("tab-inventory");
       if (addCard) addCard.classList.toggle("hidden", !isOpen);
@@ -8048,9 +8062,12 @@ Minimum version required to store current data is: `+i+`.
       if (toolbarRow) toolbarRow.classList.toggle("hidden", Boolean(isOpen));
       if (tabInv) tabInv.scrollTop = 0;
       if (isOpen) {
+        if (listEl) listEl.innerHTML = "";
         setTimeout(() => {
           document.getElementById("newProdName")?.focus();
         }, 50);
+      } else {
+        renderInventoryFocusList();
       }
     }
 
