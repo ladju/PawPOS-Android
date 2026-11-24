@@ -2117,25 +2117,26 @@
   </div>
 
   <!-- =========================================================================== -->
-  <!-- MODAL 2: DIGITAL RECEIPT & DYNAMIC WHATSAPP QR MODAL (Option 1)             -->
+  <!-- =========================================================================== -->
+  <!-- MODAL 2: DIGITAL RECEIPT & CASHIER 1-TAP WHATSAPP SENDER (Option 2)         -->
   <!-- =========================================================================== -->
   <div id="receiptModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 hidden">
     <div class="w-full max-w-sm flex flex-col items-center max-h-[92vh]">
-      <div id="thermalReceiptContent" class="thermal-paper p-5 w-full text-xs shadow-2xl max-h-[72vh] overflow-y-auto hide-scrollbar">
+      <div id="thermalReceiptContent" class="thermal-paper p-4 sm:p-5 w-full text-xs shadow-2xl max-h-[75vh] overflow-y-auto hide-scrollbar">
         <!-- Populated via JS -->
       </div>
 
-      <div class="w-full flex flex-col gap-2 mt-3 shrink-0">
+      <div class="w-full flex flex-col gap-2 mt-2.5 shrink-0">
         <div class="flex items-center gap-2">
-          <button data-action="openWhatsAppSimulator" class="flex-1 min-h-[44px] rounded-full text-xs font-bold text-white flex items-center justify-center gap-1.5 shadow" style="background-color: #075E54;">
-            <span>💬</span> <span id="receiptWaPreviewLabel">WhatsApp Preview</span>
+          <button data-action="openWhatsAppSimulator" class="flex-1 min-h-[44px] px-3 rounded-full text-xs font-bold text-white flex items-center justify-center gap-1.5 shadow cursor-pointer active:scale-95 transition" style="background-color: #075E54;">
+            <span>💬</span> <span id="receiptWaPreviewLabel">Pratinjau WA</span>
           </button>
-          <button data-action="printThermalReceipt" class="flex-1 min-h-[44px] rounded-full text-xs font-bold flex items-center justify-center gap-1.5" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
-            <span>🖨️</span> <span id="receiptPrintBtnLabel">Print ESC/POS</span>
+          <button data-action="printThermalReceipt" class="flex-1 min-h-[44px] px-3 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-surface); color: var(--oneui-text);">
+            <span>🖨️</span> <span id="receiptPrintBtnLabel">Cetak Struk</span>
           </button>
         </div>
-        <button id="receiptNewSaleBtn" data-action="closeReceiptModal" class="w-full h-12 rounded-full text-sm font-bold text-white" style="background-color: var(--oneui-blue);">
-          New Sale ➔
+        <button id="receiptNewSaleBtn" data-action="closeReceiptModal" class="w-full h-12 rounded-full text-sm font-bold text-white cursor-pointer active:scale-95 transition" style="background-color: var(--oneui-blue);">
+          ✓ Transaksi Baru
         </button>
       </div>
     </div>
@@ -2162,8 +2163,8 @@
       </div>
 
       <div class="flex-1 p-3.5 space-y-3 overflow-y-auto bg-[#0b141a] text-white text-xs hide-scrollbar">
-        <div class="bg-[#182229] text-amber-200 text-xs p-2.5 rounded-2xl text-center">
-          🔒 Customer scanned the POS QR Code & tapped Send
+        <div id="waSimBannerNote" class="bg-[#182229] text-amber-200 text-xs p-2.5 rounded-2xl text-center">
+          🔒 Struk resmi dikirim dari WhatsApp Toko (Tidak bisa dipalsukan pelanggan)
         </div>
         <div class="flex justify-end">
           <div class="max-w-[85%] bg-[#005c4b] text-white p-3 rounded-2xl rounded-tr-xs">
@@ -2172,18 +2173,26 @@
         </div>
         <div class="flex justify-start">
           <div class="max-w-[92%] bg-[#202c33] text-slate-100 p-3 rounded-2xl rounded-tl-xs space-y-2">
-            <div class="text-xs font-bold text-emerald-400">🤖 PawPOS Instant Receipt Bot</div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs font-bold text-emerald-400">🐾 Official Store Receipt</div>
+              <button type="button" data-action="copyOfficialWaReceipt" class="min-h-[36px] px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs cursor-pointer active:scale-95 transition">
+                📋 <span id="waSimInlineCopyLabel">Salin</span>
+              </button>
+            </div>
             <pre id="waSimBotReceipt" class="font-mono text-xs text-slate-100 whitespace-pre-wrap bg-[#111b21] p-2.5 rounded-xl"></pre>
           </div>
         </div>
       </div>
 
       <div class="bg-[#182229] p-3 flex items-center gap-2">
-        <a id="waRealDeepLink" href="#" target="_blank" rel="noopener noreferrer" class="flex-1 min-h-[44px] rounded-full bg-[#25D366] text-slate-950 font-bold text-xs flex items-center justify-center gap-1">
-          💬 Open Real WhatsApp
+        <button type="button" data-action="copyOfficialWaReceipt" class="flex-1 min-h-[44px] px-3 rounded-full bg-[#202c33] border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition">
+          📋 <span id="waSimCopyBtnLabel">Salin Struk</span>
+        </button>
+        <a id="waRealDeepLink" href="#" target="_blank" rel="noopener noreferrer" class="flex-1 min-h-[44px] px-3 rounded-full bg-[#25D366] text-slate-950 font-bold text-xs flex items-center justify-center gap-1">
+          📲 <span id="waSimOpenWaBtnLabel">Kirim WA</span>
         </a>
-        <button data-action="closeWhatsAppSimulator" class="min-h-[44px] px-4 rounded-full bg-slate-800 text-white font-bold text-xs">
-          Back to Receipt
+        <button data-action="closeWhatsAppSimulator" class="min-h-[44px] px-3.5 rounded-full bg-slate-800 text-white font-bold text-xs cursor-pointer">
+          <span id="waSimBackBtnLabel">Kembali</span>
         </button>
       </div>
     </div>
@@ -4546,8 +4555,77 @@ Minimum version required to store current data is: `+i+`.
       showToast(isQris ? "✓ QRIS verified via BCA! Receipt ready." : "✓ Cash sale completed! Receipt ready.");
     }
 
+    function buildOfficialWaReceiptText(tx) {
+      if (!tx) tx = currentReceiptTx || transactions[0];
+      if (!tx) return "";
+      const storeName = document.getElementById("settingStoreName")?.value || storeProfile.name || "Rana Petshop";
+      const storeAddr = document.getElementById("settingStoreAddress")?.value || storeProfile.address || "Rana Petshop • Solo Counter";
+      const d = new Date(tx.timestamp || Date.now());
+      const dateStr = d.toLocaleDateString("id-ID") + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+      let botReceipt = `🐾 *${storeName.toUpperCase()}*\n`;
+      botReceipt += `${storeAddr}\n`;
+      botReceipt += `Invoice: *${tx.invoice}* • ${dateStr}\n`;
+      botReceipt += `────────────────────\n`;
+      (tx.items || []).forEach(it => {
+        botReceipt += `• ${it.quantity}x ${it.product.name}\n  ${fmt(it.product.price * it.quantity)}\n`;
+      });
+      botReceipt += `────────────────────\n`;
+      botReceipt += `Subtotal: ${fmt(tx.subtotal)}\n`;
+      if (tx.tax > 0) botReceipt += `Tax (PPN): ${fmt(tx.tax)}\n`;
+      if (tx.discount > 0) botReceipt += `Discount: -${fmt(tx.discount)}\n`;
+      botReceipt += `*TOTAL: ${fmt(tx.grandTotal)}* (${tx.paymentMethod})\n`;
+      if (tx.paymentMethod === "QRIS") {
+        botReceipt += `Status: *SETTLED (BCA Direct)*\n`;
+        botReceipt += `NMID: ${tx.nmid || "ID1020038192019"}\n`;
+        botReceipt += `Bank RRN: *${tx.rrn || "241112008491"}*\n`;
+      } else {
+        botReceipt += `Paid: ${fmt(tx.tender)} • Change: ${fmt(tx.change)}\n`;
+      }
+      botReceipt += `────────────────────\n`;
+      botReceipt += `_${getRenderedWaReceiptFooter(storeName)}_`;
+      return botReceipt;
+    }
+
+    function copyOfficialWaReceipt() {
+      const tx = currentReceiptTx || transactions[0];
+      if (!tx) return;
+      const receiptText = buildOfficialWaReceiptText(tx);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(receiptText).catch(() => {});
+      }
+      const isId = appLang === "id";
+      showToast(isId
+        ? "📋 Struk resmi disalin! Tempel (Paste) di chat WA pelanggan."
+        : "📋 Official receipt copied! Paste in customer's WhatsApp chat.");
+    }
+
+    function sendOfficialReceiptToCustomerWa() {
+      const tx = currentReceiptTx || transactions[0];
+      if (!tx) return;
+      const receiptText = buildOfficialWaReceiptText(tx);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(receiptText).catch(() => {});
+      }
+      const rawCustPhone = document.getElementById("receiptCustomerWaInput")?.value || "";
+      let cleanCustPhone = rawCustPhone.replace(/[^0-9]/g, "");
+      if (cleanCustPhone.startsWith("0")) cleanCustPhone = "62" + cleanCustPhone.slice(1);
+      else if (cleanCustPhone.length >= 8 && !cleanCustPhone.startsWith("62")) cleanCustPhone = "62" + cleanCustPhone;
+
+      const waUrl = cleanCustPhone
+        ? `https://wa.me/${cleanCustPhone}?text=${encodeURIComponent(receiptText)}`
+        : `https://wa.me/?text=${encodeURIComponent(receiptText)}`;
+
+      const isId = appLang === "id";
+      showToast(cleanCustPhone
+        ? (isId ? `📲 Membuka WA pelanggan (${cleanCustPhone}) dengan struk resmi...` : `📲 Opening customer WA (${cleanCustPhone}) with official receipt...`)
+        : (isId ? "📲 Struk resmi disalin! Pilih kontak pelanggan di WhatsApp..." : "📲 Official receipt copied! Pick customer contact in WhatsApp..."));
+      window.open(waUrl, "_blank");
+    }
+
     function showReceiptModal(tx) {
       currentReceiptTx = tx;
+      const isId = appLang === "id";
       const container = document.getElementById("thermalReceiptContent");
       const storeName = document.getElementById("settingStoreName")?.value || storeProfile.name || "Rana Petshop";
       const storePhone = document.getElementById("settingStorePhone")?.value || storeProfile.phone || "+62 812-3456-7890";
@@ -4564,7 +4642,7 @@ Minimum version required to store current data is: `+i+`.
       let qrSvg = "";
       try {
         if (typeof QRCodeBundle !== "undefined" && QRCodeBundle.toString) {
-          QRCodeBundle.toString(waUrl, { type: "svg", margin: 1, width: 136 }, (err, svg) => {
+          QRCodeBundle.toString(waUrl, { type: "svg", margin: 1, width: 112 }, (err, svg) => {
             if (!err && svg) qrSvg = svg;
           });
         }
@@ -4620,12 +4698,40 @@ Minimum version required to store current data is: `+i+`.
 
         <div class="mt-2 pt-2 border-t border-dashed border-neutral-300 text-center text-[11px] italic text-neutral-600">${receiptFooter}</div>
 
-        <!-- Option 1 Dynamic WhatsApp QR Block -->
-        <div class="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-center space-y-1.5">
-          <div class="text-xs font-extrabold text-emerald-800">📲 SCAN FOR WHATSAPP RECEIPT</div>
-          <div class="text-xs text-neutral-600">Customer scans with phone camera — zero typing!</div>
-          <div data-action="openWhatsAppSimulator" class="inline-block bg-white p-2 rounded-xl border border-neutral-200 cursor-pointer">
-            ${qrSvg}
+        <!-- Option 2: Cashier 1-Tap Official WhatsApp Receipt Sender + Customer QR -->
+        <div class="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-300 space-y-2 text-left">
+          <div class="text-center">
+            <div class="text-xs font-extrabold text-emerald-900">
+              ${isId ? "📲 KIRIM STRUK RESMI KE WA PELANGGAN" : "📲 SEND OFFICIAL RECEIPT TO CUSTOMER WA"}
+            </div>
+            <div class="text-[11px] text-emerald-800/80 leading-tight">
+              ${isId ? "Dikirim dari WA Toko — aman & tidak bisa dipalsukan" : "Sent from Store WA — tamper-proof & official"}
+            </div>
+          </div>
+
+          <!-- Way A: Type Customer Number & Send Official Receipt -->
+          <div class="flex items-center gap-1.5">
+            <input id="receiptCustomerWaInput" type="tel" placeholder="${isId ? 'No. WA Pelanggan (0812...)' : 'Customer WA (0812...)'}" class="flex-1 min-w-0 min-h-[44px] px-3 rounded-xl bg-white border border-emerald-300 text-neutral-900 text-xs font-semibold tabular-nums focus:outline-none focus:border-emerald-600">
+            <button type="button" data-action="sendOfficialReceiptToCustomerWa" class="min-h-[44px] px-3.5 rounded-xl bg-emerald-700 text-white text-xs font-extrabold shrink-0 cursor-pointer active:scale-95 transition shadow-sm">
+              📲 ${isId ? "Kirim WA" : "Send WA"}
+            </button>
+          </div>
+
+          <!-- Way B: 1-Tap Copy Official Receipt to Paste in Any Chat -->
+          <button type="button" data-action="copyOfficialWaReceipt" class="w-full min-h-[44px] px-3 rounded-xl bg-white border border-emerald-400 text-emerald-900 text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition">
+            <span>📋</span>
+            <span>${isId ? "Salin Struk Resmi (1-Ketuk Paste)" : "Copy Official Receipt (1-Tap Paste)"}</span>
+          </button>
+
+          <!-- Compact Customer QR to initiate chat if customer doesn't dictate number -->
+          <div class="pt-2 border-t border-dashed border-emerald-300/80 flex items-center justify-between gap-2.5">
+            <div class="text-[11px] text-neutral-700 leading-snug">
+              <div class="font-extrabold text-emerald-900">${isId ? "Atau Scan QR Chat Toko:" : "Or Scan QR to Chat Store:"}</div>
+              <div>${isId ? "Pelanggan scan untuk menyapa toko, lalu kasir Paste struk resmi." : "Customer scans to say hi, then cashier pastes official receipt."}</div>
+            </div>
+            <div data-action="openWhatsAppSimulator" class="bg-white p-1.5 rounded-xl border border-neutral-200 cursor-pointer shrink-0 shadow-xs" title="Tap to preview WhatsApp chat">
+              ${qrSvg}
+            </div>
           </div>
         </div>
       `;
@@ -4637,35 +4743,22 @@ Minimum version required to store current data is: `+i+`.
       const tx = currentReceiptTx || transactions[0];
       if (!tx) return;
       const storeName = document.getElementById("settingStoreName")?.value || storeProfile.name || "Rana Petshop";
-      const storePhone = document.getElementById("settingStorePhone")?.value || storeProfile.phone || "+62 812-3456-7890";
-      let cleanPhone = storePhone.replace(/[^0-9]/g, "");
-      if (cleanPhone.startsWith("0")) cleanPhone = "62" + cleanPhone.slice(1);
 
       const customerMsg = getRenderedWaCustomerMessage(tx, storeName);
+      const botReceipt = buildOfficialWaReceiptText(tx);
+
       document.getElementById("waSimStoreName").innerText = storeName;
       document.getElementById("waSimCustomerMsg").innerText = customerMsg;
-
-      let botReceipt = `🐾 *${storeName.toUpperCase()}*\n`;
-      botReceipt += `Invoice: *${tx.invoice}*\n`;
-      botReceipt += `────────────────────\n`;
-      tx.items.forEach(it => {
-        botReceipt += `• ${it.quantity}x ${it.product.name}\n  ${fmt(it.product.price * it.quantity)}\n`;
-      });
-      botReceipt += `────────────────────\n`;
-      botReceipt += `Subtotal: ${fmt(tx.subtotal)}\n`;
-      if (tx.tax > 0) botReceipt += `Tax (PPN): ${fmt(tx.tax)}\n`;
-      if (tx.discount > 0) botReceipt += `Discount: -${fmt(tx.discount)}\n`;
-      botReceipt += `*TOTAL: ${fmt(tx.grandTotal)}* (${tx.paymentMethod})\n`;
-      if (tx.paymentMethod === "QRIS") {
-        botReceipt += `Status: *SETTLED (BCA Direct)*\n`;
-        botReceipt += `NMID: ${tx.nmid || "ID1020038192019"}\n`;
-        botReceipt += `Bank RRN: *${tx.rrn || "241112008491"}*\n`;
-      }
-      botReceipt += `────────────────────\n`;
-      botReceipt += `_${getRenderedWaReceiptFooter(storeName)}_`;
-
       document.getElementById("waSimBotReceipt").innerText = botReceipt;
-      document.getElementById("waRealDeepLink").href = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
+
+      const rawCustPhone = document.getElementById("receiptCustomerWaInput")?.value || "";
+      let cleanCustPhone = rawCustPhone.replace(/[^0-9]/g, "");
+      if (cleanCustPhone.startsWith("0")) cleanCustPhone = "62" + cleanCustPhone.slice(1);
+      else if (cleanCustPhone.length >= 8 && !cleanCustPhone.startsWith("62")) cleanCustPhone = "62" + cleanCustPhone;
+
+      document.getElementById("waRealDeepLink").href = cleanCustPhone
+        ? `https://wa.me/${cleanCustPhone}?text=${encodeURIComponent(botReceipt)}`
+        : `https://wa.me/?text=${encodeURIComponent(botReceipt)}`;
 
       document.getElementById("receiptModal").classList.add("hidden");
       document.getElementById("whatsappSimulatorModal").classList.remove("hidden");
@@ -5872,9 +5965,14 @@ Minimum version required to store current data is: `+i+`.
       setTxt("qrisSimulatePaidLabel", isId ? "Simulasi Pelanggan Sudah Bayar QRIS" : "Simulate Customer Scanned & Paid");
 
       // Receipt, Category, Scanner & Close Shift Modals (Modals 2, 4, 5, 6)
-      setTxt("receiptWaPreviewLabel", isId ? "📲 Pratinjau Chat Struk WhatsApp ➔" : "📲 Preview Customer WhatsApp Chat ➔");
+      setTxt("receiptWaPreviewLabel", isId ? "Pratinjau Chat WA" : "Preview WA Chat");
       setTxt("receiptPrintBtnLabel", isId ? "Cetak Struk" : "Print Thermal");
       setTxt("receiptNewSaleBtn", isId ? "✓ Transaksi Baru" : "✓ New Sale");
+      setTxt("waSimBannerNote", isId ? "🔒 Struk resmi dikirim dari WhatsApp Toko (Tidak bisa dipalsukan pelanggan)" : "🔒 Official receipt sent from Store WhatsApp (Tamper-proof for customers)");
+      setTxt("waSimInlineCopyLabel", isId ? "Salin" : "Copy");
+      setTxt("waSimCopyBtnLabel", isId ? "Salin Struk" : "Copy Receipt");
+      setTxt("waSimOpenWaBtnLabel", isId ? "Kirim WA" : "Send WA");
+      setTxt("waSimBackBtnLabel", isId ? "Kembali" : "Back");
       setTxt("catModalTitle", isId ? "Pilih atau Tambah Kategori" : "Select or Create Category");
       setTxt("catModalCreateLabel", isId ? "Buat Kategori Kustom" : "Create Custom Category");
       setPlaceholder("customCatLabel", isId ? "Nama kategori (cth. Reptil)" : "Category name (e.g. Reptiles)");
@@ -6936,6 +7034,8 @@ Minimum version required to store current data is: `+i+`.
           showToast("🖨️ Sent receipt to Bluetooth Thermal Printer");
           break;
         case "openWhatsAppSimulator": openWhatsAppSimulator(); break;
+        case "copyOfficialWaReceipt": copyOfficialWaReceipt(); break;
+        case "sendOfficialReceiptToCustomerWa": sendOfficialReceiptToCustomerWa(); break;
         case "closeWhatsAppSimulator":
           document.getElementById("whatsappSimulatorModal").classList.add("hidden");
           document.getElementById("receiptModal").classList.remove("hidden");
@@ -7145,6 +7245,13 @@ Minimum version required to store current data is: `+i+`.
         updateTabHeaderText();
         updateWaTemplatePreview();
       });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.target && e.target.id === "receiptCustomerWaInput" && e.key === "Enter") {
+        e.preventDefault();
+        sendOfficialReceiptToCustomerWa();
+      }
     });
 
     // Auto-format IDR input
