@@ -129,3 +129,31 @@ PawPOS is a high-speed, offline-first **Point of Sale & Inventory Control** app 
 
 ### E. Settings (`SettingsScreen`)
 - Active Currency (`IDR ACTIVE`), **Light / OLED Dark Mode** switcher, Store Profile, Optional Tax (`0%`, `5%`, `11% PPN`), and **Bank Indonesia QRIS MDR Rate** (`0.0% UMI Mikro` vs `0.3% Small Business`).
+
+---
+
+## 6. Mobile-First UX Rules & Specialist UI Architecture (`learn-taste` Memory)
+
+To keep PawPOS feeling like a dedicated Android native tool rather than a generic web template, always enforce these user-verified rules:
+
+1. **Single-Task Focus on Mobile (`+ New Product` in Stock)**:
+   - Opening `+ New Product` in Stock must completely hide and unmount (`innerHTML = ""`) the background product list (`#inventoryFocusList`), category chips, search pill, and sort bar so the user cannot accidentally scroll past the form down through inventory items.
+   - Closing or saving the form immediately restores the stock list and filter controls.
+2. **Fat-Finger Protection in Cashier Catalog**:
+   - When an item is not yet in the cart (`qty === 0`), tapping the product row or `+ Add` pill adds `1` unit.
+   - Once `qty > 0`, **row-tap-to-add is disabled** on the card body; quantity adjustments happen exclusively through the widely separated `44×44px` circular `−` and `＋` steppers (`min-width: 144px` pill with a `56px+` center gap) so cashiers never double-add by accident.
+3. **Zero-Friction Mobile Inventory Inputs**:
+   - **Barcode / SKU**: Numeric keypad (`inputmode="numeric" pattern="[0-9]*"`) + inline camera scanner button (`📷`), sanitizing non-digits automatically.
+   - **Cost (Modal) & Price (Harga Jual)**: Live Indonesian Rupiah dot-thousand formatting (`45.000`) as the user types.
+   - **Unit**: Standardized `<select>` dropdown (`pcs`, `Kg`, `can`, `bag`, `pack`, `btl`, `box`, `sachet`, `unit`) instead of free-text typing.
+4. **Specialist Mobile UI Primitives (Zero-CDN Offline Engines)**:
+   - **Vaul Touch-Draggable Bottom Sheets**: All mobile modal dialogs anchor to the bottom thumb zone with a `42×5px` grab pill, real-time `touchmove` tracking, backdrop dimming scaling, and flick/threshold swipe-down dismissal.
+   - **Sonner 3D Stacked Swipeable Toast**: Bottom-floating toast pill with tactile status badge, spring transition, and swipe-down/up touch dismissal.
+   - **NumberFlow Rolling IDR Counters**: Per-character 3D vertical digit-wheel transitions (`cubic-bezier(0.22, 1, 0.36, 1)`) on live cart and checkout totals.
+5. **`mobile-native` Platform Hardening**:
+   - Gate all `:hover` rules behind `@media (hover: hover) and (pointer: fine)` so touch taps never leave sticky hover states on phones.
+   - Enforce `font-size: max(16px, 1em)` on mobile form inputs/selects to prevent mobile browser viewport auto-zoom on focus.
+   - Apply `touch-action: manipulation`, `-webkit-touch-callout: none`, and `user-select: none` on all interactive buttons, chips, and steppers, plus `overscroll-behavior-y: contain` on scrollable sheets and lists.
+6. **High-Contrast Photo Lightbox Hint**:
+   - Always render the `"Tap outside photo or press ESC to return"` badge inside `#imagePreviewModal` with an explicit dark pill background (`rgba(15, 23, 42, 0.82)`), `#FFFFFF` text, and subtle border so it remains legible in both Light Mode and Dark Mode.
+
