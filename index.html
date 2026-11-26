@@ -904,6 +904,71 @@
       font-family: 'Courier New', Courier, monospace;
       border-radius: 22px;
     }
+
+    /* ========================================================================= */
+    /* SPECIALIST MOBILE UI: VAUL BOTTOM SHEETS, SONNER TOAST, NUMBERFLOW POP    */
+    /* ========================================================================= */
+    .vaul-sheet-card {
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+      will-change: transform;
+    }
+    .vaul-sheet-card.vaul-dragging {
+      transition: none !important;
+    }
+    .vaul-drag-handle {
+      width: 100%;
+      padding: 2px 0 8px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .vaul-drag-handle:active {
+      cursor: grabbing;
+    }
+    .vaul-drag-pill {
+      width: 42px;
+      height: 5px;
+      border-radius: 9999px;
+      background-color: var(--oneui-text-muted);
+      opacity: 0.38;
+    }
+    @media (max-width: 640px) {
+      .vaul-modal-backdrop {
+        align-items: flex-end !important;
+        padding: 0 !important;
+      }
+      .vaul-modal-backdrop > .vaul-sheet-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 28px 28px 0 0 !important;
+        border-bottom-width: 0 !important;
+        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+      }
+    }
+    body.phone-sheet-mode .vaul-modal-backdrop {
+      align-items: flex-end !important;
+      padding: 0 !important;
+    }
+    body.phone-sheet-mode .vaul-modal-backdrop > .vaul-sheet-card {
+      max-width: 440px !important;
+      width: 100% !important;
+      border-radius: 28px 28px 0 0 !important;
+      border-bottom-width: 0 !important;
+    }
+
+    @keyframes oneUiBadgePop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.22); }
+      100% { transform: scale(1); }
+    }
+    .oneui-badge-pop {
+      animation: oneUiBadgePop 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+    }
   </style>
 </head>
 <body class="dark-theme min-h-screen flex flex-col items-center justify-start p-2 sm:px-4 sm:py-2">
@@ -2849,9 +2914,13 @@
     </div>
   </div>
 
-  <!-- TOAST NOTIFICATION -->
-  <div id="oneUiToast" class="fixed top-2.5 left-1/2 -translate-x-1/2 max-w-[92vw] truncate px-4 py-2 rounded-full text-xs font-bold shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2" style="background-color: #1C1C1E; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2);">
-    Notification
+  <!-- MOBILE SONNER TOAST STACK (3D Peek + Swipe-Up to Dismiss) -->
+  <div id="oneUiToastWrap" class="fixed top-2.5 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none" style="width: min(92vw, 400px);">
+    <div id="oneUiToastBackPeek" class="w-[88%] h-8 rounded-full transition-all duration-200 opacity-0 -mb-6 scale-95 pointer-events-none" style="background-color: var(--oneui-surface-2); border: 1px solid var(--oneui-hairline); box-shadow: 0 8px 20px rgba(0,0,0,0.25);"></div>
+    <div id="oneUiToast" class="w-full px-4 py-2.5 rounded-full text-xs font-bold shadow-2xl transition-all duration-250 opacity-0 pointer-events-none flex items-center justify-between gap-2 select-none" style="background-color: #1C1C1E; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.22); touch-action: none; transform: translateY(-14px) scale(0.95);">
+      <span id="oneUiToastText" class="truncate">Notification</span>
+      <span class="text-[10px] opacity-60 shrink-0 font-semibold">↑</span>
+    </div>
   </div>
 
   <script>
@@ -3764,15 +3833,89 @@ Minimum version required to store current data is: `+i+`.
       return "Rp " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
+    let __activeToastDepth = 0;
+
+    function dismissToastImmediate() {
+      const t = document.getElementById("oneUiToast");
+      const peek = document.getElementById("oneUiToastBackPeek");
+      clearTimeout(window.__toastTimer);
+      __activeToastDepth = 0;
+      if (peek) {
+        peek.style.opacity = "0";
+        peek.style.transform = "translateY(0px) scale(0.92)";
+      }
+      if (t) {
+        t.style.opacity = "0";
+        t.style.pointerEvents = "none";
+        t.style.transform = "translateY(-18px) scale(0.94)";
+      }
+    }
+
     function showToast(msg) {
       const t = document.getElementById("oneUiToast");
+      const txt = document.getElementById("oneUiToastText");
+      const peek = document.getElementById("oneUiToastBackPeek");
       if (!t) return;
-      t.innerText = msg;
+      const isAlreadyOpen = t.style.opacity === "1";
+      __activeToastDepth = isAlreadyOpen ? Math.min(3, __activeToastDepth + 1) : 1;
+
+      if (txt) txt.innerText = msg;
+      else t.innerText = msg;
+
+      t.style.pointerEvents = "auto";
       t.style.opacity = "1";
+      t.style.transform = "translateY(-10px) scale(0.96)";
+      requestAnimationFrame(() => {
+        t.style.transform = "translateY(0px) scale(1)";
+      });
+
+      if (peek) {
+        if (__activeToastDepth > 1) {
+          peek.style.opacity = "0.75";
+          peek.style.transform = "translateY(-4px) scale(0.95)";
+        } else {
+          peek.style.opacity = "0";
+          peek.style.transform = "translateY(0px) scale(0.92)";
+        }
+      }
+
       clearTimeout(window.__toastTimer);
       window.__toastTimer = setTimeout(() => {
-        t.style.opacity = "0";
-      }, 2400);
+        dismissToastImmediate();
+      }, 2500);
+    }
+
+    // NumberFlow-Style Smooth Rolling IDR Counter
+    function animateIdrText(elOrId, targetAmount) {
+      const el = typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
+      if (!el) return;
+      const target = Math.round(Number(targetAmount) || 0);
+      const prev = typeof el.__lastIdrVal === "number" ? el.__lastIdrVal : null;
+      el.__lastIdrVal = target;
+
+      if (prev === null || prev === target) {
+        el.innerText = fmt(target);
+        return;
+      }
+
+      if (el.__idrRafId) cancelAnimationFrame(el.__idrRafId);
+      const diff = target - prev;
+      const duration = 260;
+      const startTime = performance.now();
+
+      const step = (now) => {
+        const progress = Math.min(1, (now - startTime) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(prev + diff * eased);
+        el.innerText = fmt(current);
+        if (progress < 1) {
+          el.__idrRafId = requestAnimationFrame(step);
+        } else {
+          el.innerText = fmt(target);
+          el.__idrRafId = null;
+        }
+      };
+      el.__idrRafId = requestAnimationFrame(step);
     }
 
     function getCartTotals() {
@@ -4018,18 +4161,20 @@ Minimum version required to store current data is: `+i+`.
       `;
     }
 
+    let __prevCartItemCount = -1;
+
     function renderLiveCart() {
       const listEl = document.getElementById("liveCartItemsList");
       const { subtotal, count, tax, discount, grandTotal, detailedItems } = getCartTotals();
       const isId = appLang === "id";
 
-      document.getElementById("viewingLiveTotal").innerText = fmt(grandTotal);
+      animateIdrText("viewingLiveTotal", grandTotal);
       document.getElementById("cartCountLabel").innerText = count;
       document.getElementById("cartSubtotalLabel").innerText = fmt(subtotal);
       document.getElementById("cartTaxLabel").innerText = includeTax ? fmt(tax) : (isId ? "Rp 0 (Mati)" : "Rp 0 (Off)");
       document.getElementById("cartDiscountLabel").innerText = discount > 0 ? "-" + fmt(discount) : "Rp 0";
-      document.getElementById("cartTotalBigLabel").innerText = fmt(grandTotal);
-      document.getElementById("chargeBtnAmount").innerText = fmt(grandTotal);
+      animateIdrText("cartTotalBigLabel", grandTotal);
+      animateIdrText("chargeBtnAmount", grandTotal);
 
       const nextInvTag = `#INV-${String(491 + transactions.length).padStart(4, "0")}`;
       const liveBadge = document.getElementById("liveOrderBadge");
@@ -4045,7 +4190,7 @@ Minimum version required to store current data is: `+i+`.
       }
 
       const todayTotal = transactions.reduce((acc, t) => acc + t.grandTotal, 0);
-      document.getElementById("viewingTodaySales").innerText = fmt(todayTotal);
+      animateIdrText("viewingTodaySales", todayTotal);
 
       // Update phone bottom cart bar (ONLY on Cashier screen)
       const phoneBar = document.getElementById("phoneBottomCartBar");
@@ -4054,12 +4199,20 @@ Minimum version required to store current data is: `+i+`.
           phoneBar.classList.remove("hidden");
           const phoneCount = document.getElementById("phoneCartItemCount");
           if (phoneCount) phoneCount.innerText = count;
-          const phoneTotal = document.getElementById("phoneCartTotalLabel");
-          if (phoneTotal) phoneTotal.innerText = fmt(grandTotal);
+          animateIdrText("phoneCartTotalLabel", grandTotal);
+          if (__prevCartItemCount !== -1 && __prevCartItemCount !== count) {
+            const iconCircle = phoneBar.querySelector(".w-11.h-11.rounded-full");
+            if (iconCircle) {
+              iconCircle.classList.remove("oneui-badge-pop");
+              void iconCircle.offsetWidth;
+              iconCircle.classList.add("oneui-badge-pop");
+            }
+          }
         } else {
           phoneBar.classList.add("hidden");
         }
       }
+      __prevCartItemCount = count;
 
       // Update checkout order summary text (strip redundant "Rana " brand prefix)
       const orderSummaryText = document.getElementById("checkoutOrderSummaryText");
@@ -4087,8 +4240,8 @@ Minimum version required to store current data is: `+i+`.
           document.getElementById("modalReviewSubtotalLabel").innerText = fmt(subtotal);
           document.getElementById("modalReviewTaxLabel").innerText = includeTax ? fmt(tax) : (isId ? "Rp 0 (Mati)" : "Rp 0 (Off)");
           document.getElementById("modalReviewDiscountLabel").innerText = discount > 0 ? "-" + fmt(discount) : "Rp 0";
-          document.getElementById("modalReviewGrandTotalLabel").innerText = fmt(grandTotal);
-          document.getElementById("modalReviewPayAmount").innerText = fmt(grandTotal);
+          animateIdrText("modalReviewGrandTotalLabel", grandTotal);
+          animateIdrText("modalReviewPayAmount", grandTotal);
         }
       }
 
@@ -8463,6 +8616,164 @@ Minimum version required to store current data is: `+i+`.
       history.replaceState({ pawposBase: true }, "");
       ensureNavHistoryGuard();
     } catch (e) {}
+
+    // =========================================================================
+    // VAUL MOBILE BOTTOM SHEET ENGINE & MOBILE SONNER SWIPE-UP HANDLER
+    // =========================================================================
+    (function initSpecialistMobileTouchUI() {
+      // Sync phone-sheet-mode class with form factor
+      const syncPhoneSheetMode = () => {
+        document.body.classList.toggle("phone-sheet-mode", currentFormFactor === "phone" || window.innerWidth <= 640);
+      };
+      syncPhoneSheetMode();
+      window.addEventListener("resize", syncPhoneSheetMode);
+      const origSetFormFactorForSheets = setFormFactor;
+      setFormFactor = function(mode, silent) {
+        origSetFormFactorForSheets(mode, silent);
+        syncPhoneSheetMode();
+      };
+
+      // 1. Mobile Sonner Toast Swipe-Up or Tap to Dismiss
+      const toastEl = document.getElementById("oneUiToast");
+      if (toastEl) {
+        let tStartY = null;
+        let tCurrentDy = 0;
+        toastEl.addEventListener("pointerdown", (e) => {
+          tStartY = e.clientY;
+          tCurrentDy = 0;
+          try { toastEl.setPointerCapture(e.pointerId); } catch (err) {}
+        });
+        toastEl.addEventListener("pointermove", (e) => {
+          if (tStartY === null) return;
+          tCurrentDy = Math.min(8, e.clientY - tStartY);
+          toastEl.style.transform = `translateY(${tCurrentDy}px) scale(1)`;
+        });
+        toastEl.addEventListener("pointerup", () => {
+          if (tStartY === null) return;
+          if (tCurrentDy < -10) {
+            dismissToastImmediate();
+          } else {
+            toastEl.style.transform = "translateY(0px) scale(1)";
+          }
+          tStartY = null;
+          tCurrentDy = 0;
+        });
+      }
+
+      // 2. Vaul Touch-Draggable Bottom Sheets (Swipe Down Handle / Header or Tap Backdrop to Close)
+      const sheetConfigs = [
+        { id: "cartReviewModal", closeFn: () => closeCartReviewModal() },
+        { id: "checkoutModal", closeFn: () => closeCheckoutModal() },
+        { id: "categoryEditModal", closeFn: () => { editingCategoryId = null; document.getElementById("categoryEditModal")?.classList.add("hidden"); } },
+        { id: "scannerModal", closeFn: () => closeScannerModal() },
+        { id: "closeShiftModal", closeFn: () => closeCloseShiftModal() },
+        { id: "editProductModal", closeFn: () => closeEditProductModal() },
+        { id: "restoreBackupModal", closeFn: () => closeRestoreBackupModal() },
+        { id: "pwaInstallGuideModal", closeFn: () => closePwaGuideModal() },
+        { id: "confirmResetModal", closeFn: () => closeResetConfirmModal() },
+        { id: "confirmVoidInvoiceModal", closeFn: () => closeVoidInvoiceModal() }
+      ];
+
+      sheetConfigs.forEach(({ id, closeFn }) => {
+        const modalEl = document.getElementById(id);
+        if (!modalEl) return;
+        const cardEl = modalEl.firstElementChild;
+        if (!cardEl) return;
+
+        modalEl.classList.add("vaul-modal-backdrop");
+        cardEl.classList.add("vaul-sheet-card");
+
+        // Inject thumb-reachable drag handle pill at top of sheet card
+        const dragHandle = document.createElement("div");
+        dragHandle.className = "vaul-drag-handle";
+        dragHandle.setAttribute("aria-label", "Swipe down to close");
+        dragHandle.innerHTML = `<div class="vaul-drag-pill"></div>`;
+        cardEl.insertBefore(dragHandle, cardEl.firstChild);
+
+        // Tap outside on backdrop closes the sheet
+        modalEl.addEventListener("click", (e) => {
+          if (e.target === modalEl) {
+            closeFn();
+          }
+        });
+
+        // Animate sheet up smoothly whenever modal becomes visible
+        let wasHidden = modalEl.classList.contains("hidden");
+        const observer = new MutationObserver(() => {
+          const isHidden = modalEl.classList.contains("hidden");
+          if (wasHidden && !isHidden) {
+            cardEl.classList.remove("vaul-dragging");
+            cardEl.style.transform = "translateY(100%)";
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                cardEl.style.transform = "translateY(0px)";
+              });
+            });
+          } else if (!wasHidden && isHidden) {
+            cardEl.classList.remove("vaul-dragging");
+            cardEl.style.transform = "translateY(0px)";
+          }
+          wasHidden = isHidden;
+        });
+        observer.observe(modalEl, { attributes: true, attributeFilter: ["class"] });
+
+        // Touch / pointer drag physics on the top drag handle (and top header row)
+        let startY = null;
+        let startTime = 0;
+        let currentDy = 0;
+
+        const onPointerDown = (e) => {
+          if (e.target.closest("button, input, select, textarea, a, label")) return;
+          startY = e.clientY;
+          startTime = performance.now();
+          currentDy = 0;
+          cardEl.classList.add("vaul-dragging");
+          try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+        };
+
+        const onPointerMove = (e) => {
+          if (startY === null) return;
+          const rawDy = e.clientY - startY;
+          // Allow downward drag freely; apply rubber-band resistance if pulled upward
+          currentDy = rawDy >= 0 ? rawDy : rawDy * 0.18;
+          cardEl.style.transform = `translateY(${currentDy}px)`;
+        };
+
+        const onPointerUp = () => {
+          if (startY === null) return;
+          cardEl.classList.remove("vaul-dragging");
+          const elapsed = Math.max(1, performance.now() - startTime);
+          const velocityY = currentDy / elapsed; // px per ms
+
+          if (currentDy >= 68 || (currentDy >= 28 && velocityY > 0.55)) {
+            cardEl.style.transform = "translateY(105%)";
+            setTimeout(() => {
+              closeFn();
+              cardEl.style.transform = "translateY(0px)";
+            }, 190);
+          } else {
+            cardEl.style.transform = "translateY(0px)";
+          }
+          startY = null;
+          currentDy = 0;
+        };
+
+        dragHandle.addEventListener("pointerdown", onPointerDown);
+        dragHandle.addEventListener("pointermove", onPointerMove);
+        dragHandle.addEventListener("pointerup", onPointerUp);
+        dragHandle.addEventListener("pointercancel", onPointerUp);
+
+        // Also allow dragging down from the modal's top title header row
+        const headerRow = dragHandle.nextElementSibling;
+        if (headerRow) {
+          headerRow.style.touchAction = "none";
+          headerRow.addEventListener("pointerdown", onPointerDown);
+          headerRow.addEventListener("pointermove", onPointerMove);
+          headerRow.addEventListener("pointerup", onPointerUp);
+          headerRow.addEventListener("pointercancel", onPointerUp);
+        }
+      });
+    })();
   </script>
 </body>
 </html>
